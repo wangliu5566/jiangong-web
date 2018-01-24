@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title id="readerTitle">视频阅读</title>
+  <link rel="stylesheet" href="../css/multimediaView.css">
+  <link href="http://vjs.zencdn.net/6.4.0/video-js.css" rel="stylesheet">
+  <link rel="stylesheet" href="../css/message.css">
+
+  <script src="../js/ajax.js"></script>
+  <script src="../js/jquery-1.11.0.min.js"></script>
+  <script src="../js/vue.js"></script>
+  <style>
+      [v-cloak]{
+          display: none;
+      }
+  </style>
+</head>
+
+<body>
+  <div class="img-view" id="videoView">
+    <!--      <p><img src="" alt="" ></p> -->
+    <div>&nbsp;</div>
+    <div class="container">
+      <div>&nbsp;</div>
+      <div class="content">
+        <div class="video-content">
+          <video id="my-video" class="video-js vjs-big-play-centered" controls width="1080" height="720" preload="auto" 
+           data-setup="{}">
+            <source :src="videoData.Url" type='video/mp4'>
+            <p class="vjs-no-js">
+              To view this video please enable JavaScript, and consider upgrading to a web browser that
+            </p>
+          </video>
+
+
+<!--           <video id="example-video" width="1080" height="720" class="video-js vjs-default-skin" controls="controls">
+          </video> -->
+          <ul class="media-controll">
+            <li v-if="isCourseMedia"><img src="../images/目录.png" alt="" @click="isLibShow = !isLibShow"></li>
+            <li><img :src=" !hasCollect ? '../images/收藏(16).png': '../images/收藏(成功6).png'" alt="" @click="collect"></li>
+            <div class="lib-right" ref="libRight" v-show="isLibShow">
+              <ul class="lib-right-content">
+                <li v-for="(item,index) in libList" @click="changeVideoSrc(item)" v-cloak>
+                  {{item.Title}}
+                </li>
+              </ul>
+            </div>
+            <img src="../images/三角形2.png" class="right-arrow" alt="" v-show="isLibShow">
+          </ul>
+        </div>
+        <ul class="media-title" v-if="isCourseMedia" v-cloak>
+          <li> <b v-cloak>{{video.Title}}</b> </li>
+          <li>本视频学习次数:
+            <span>2522次</span>
+          </li>
+          <li>习题正确率:
+            <span>20%</span>
+          </li>
+          <li class="media-button">
+            <button>
+              测试
+            </button>
+          </li>
+        </ul>
+
+        <ul class="media-title" v-else v-cloak>
+          <li> <b v-cloak>{{video.Title}}</b> </li>
+        </ul>
+        <ul class="media-related-label" >
+          <li class="no-relate-css"> 知识标签： </li>
+          <li 
+          :class="{active:index == activeLabelIndex ? true : false,'normalLable':true}" 
+          v-for="(item,index) in relatedExpList" 
+          v-cloak 
+          v-if="relatedExpList.length !== 0 && item.ExplicitWord"
+          @click="toExpDetail(item.ExplicitWord.Id,index)"
+          >
+            {{item.ExplicitWord.Title}}
+          </li>
+
+          <li class="no-relate-css" v-else>
+            暂无标签
+          </li>
+        </ul>
+      </div>
+    </div>
+    <!--      <div class="view-relatedexp-list">
+       <b>知识标签：</b> 
+       <span v-for="(item,index) in relatedExpList" v-show="relatedExpList.length !== 0">{{item.Title}}</span>
+       <span v-show="relatedExpList.length == 0">暂无标签</span>
+     </div>
+ -->
+    <div class="message" id="message">
+      <img class="el-message__img" src="" id="messageType">
+      <div class="el-message__group">
+        <p id="messageText"></p>
+      </div>
+    </div>
+  </div>
+
+ 
+  <script src="../js/message.js"></script>
+  <script>
+  'use strict';
+
+  var $vm = new Vue({
+    el: '#videoView',
+    data: {
+      winWidth: window.innerWidth,
+      winHeight: window.innerHeight,
+      videoSrc: 'C:/Users/admin/Desktop/wind.mp4',
+      audioSrc: '',
+      isVideo: true,
+      videoData:{},
+      relatedExpList: [],
+      isPlaying: false,
+      message: null,
+      activeLabelIndex: 0,
+      video: {},
+      hasCollect: false,
+      isLibShow: false,
+      libList: [{
+        Title: '课程视频一'
+      }, {
+        Title: '课程视频二'
+      }, {
+        Title: '课程视频三'
+      }], //目录列表
+      isCourseMedia: false //是否是课程视频
+    },
+    methods: {
+      setWindow: function setWindow() {
+        this.winWidth = window.innerWidth;
+        this.winHeight = window.innerHeight;
+      },
+        
+      toExpDetail:function toExpDetail(id,index) {
+         this.activeLabelIndex = index;
+         location.href= '/index.html#/wrap/details/exp?id='+ id;
+      },
+
+
+      // /**
+      //  * [getContentDetail 获取资源详情]
+      //  * @Author   罗文
+      //  * @DateTime 2017-12-22
+      //  * @return   {[type]}   [description]
+      //  */
+      // getContentDetail: function getContentDetail() {
+      //   var _this = this;
+      //   $.ajax({
+      //     type: "GET",
+      //     url: baseUrl + "/Content/Detail",
+      //     data: Object.assign({}, {
+      //       id: _this.videoData.objectId,
+      //       objectType: _this.videoData.objectType,
+      //       deviceToken: sessionStorage.deviceToken,
+      //       apiname: '/Content/Detail'
+      //     }, systemParams),
+      //     success: function success(res) {
+      //       if (res.Success) {
+      //         this.video = res.Data;
+      //       } else {
+      //         _this.message.showMessage('error', res.Description);
+      //       }
+      //     }
+      //   });
+      // },
+
+
+      /**
+       * [addRecordReadHistory 添加一条阅读历史]
+       * @Author   罗文
+       * @DateTime 2017-12-06
+       */
+      addRecordReadHistory: function addRecordReadHistory() {
+        var _this = this;
+        $.ajax({
+          type: "POST",
+          url: baseUrl + "/History/Record",
+          data: Object.assign({}, {
+            id: _this.videoData.objectId,
+            userId: localStorage.userId,
+            objectType: _this.videoData.objectType,
+            deviceToken: sessionStorage.deviceToken,
+            apiname: '/History/Record',
+            actionType: 3 //操作动作，3-阅读（点击阅读按钮），4-分享，5-打印，6-点赞
+          }, systemParams),
+          success: function success(res) {
+            if (res.Success) {} else {
+              _this.message.showMessage('error', res.Description);
+            }
+          }
+        });
+      },
+
+
+      /**
+       * [getRelatedExpList 获取相关知识标签列表]
+       * @Author   罗文
+       * @DateTime 2017-12-04
+       * @return   {[type]}   [description]
+       */
+      getRelatedExpList: function getRelatedExpList() {
+        var _this = this;
+        $.ajax({
+          type: "GET",
+          url: baseUrl + "/ExplicitWordLabel/List",
+          data: Object.assign({}, {
+            objectId: _this.videoData.objectId,
+            type: _this.videoData.objectType,
+            deviceToken: sessionStorage.deviceToken,
+            apiname: '/ExplicitWordLabel/List',
+            level: 0
+          }, systemParams),
+          success: function success(res) {
+            if (res.Success) {
+              //根据echats需求，重组数据
+              // console.log(res.Data);
+              _this.relatedExpList = res.Data; 
+            } else {
+              // this.$message.warning(res.data.Description);
+            }
+          }
+        });
+      },
+
+
+      /**
+       * [changeVideoSrc 改变课程目录视频]
+       * @Author   罗文
+       * @DateTime 2017-12-22
+       * @param    {[type]}   item [description]
+       * @return   {[type]}        [description]
+       */
+      changeVideoSrc: function changeVideoSrc(item) {
+        console.log(item);
+      },
+
+
+      /**
+       * [collect 收藏]
+       * @Author   罗文
+       * @DateTime 2017-12-05
+       * @return   {[type]}   [description]
+       */
+      collect: function collect() {
+        var _this = this;
+        $.ajax({
+          type: "POST",
+          url: baseUrl + "/Favorite/CreateOrUpdate",
+          data: Object.assign({}, {
+            objectId: _this.videoData.objectId,
+            objectType: _this.videoData.objectType,
+            deviceToken: sessionStorage.deviceToken,
+            apiname: '/Favorite/CreateOrUpdate'
+          }, systemParams),
+          success: function success(res) {
+            if (res.Success) {
+
+              if (res.Description.indexOf('取消') !== -1) {
+                _this.hasCollect = false;
+              } else {
+                _this.hasCollect = true;
+              }
+              _this.message.showMessage('success', res.Description);
+            } else {
+              _this.message.showMessage('error', res.Description);
+            }
+          }
+        });
+      },
+
+
+      //检查是否已经收藏
+      gethasCollect: function gethasCollect() {
+        var _this = this;
+        $.ajax({
+          type: "GET",
+          url: baseUrl + "/Content/Detail",
+          data: Object.assign({}, {
+            id: _this.videoData.objectId,
+            deviceToken: sessionStorage.deviceToken,
+            apiname: '/Content/Detail'
+          }, systemParams),
+          success: function success(res) {
+            $('#readerTitle').text(res.Data.Title);
+            if (res.Success) {
+              _this.video = res.Data;
+
+              console.log(_this.video)
+              if (res.Data.ExtendData.IsFavorited) {
+                _this.hasCollect = true;
+              } else {
+                _this.hasCollect = false;
+              }
+            } else {
+              _this.message.showMessage('error', res.Description);
+            }
+          }
+        });
+      }
+    },
+    created: function created() {
+      var data = decodeURIComponent(location.href.slice(location.href.indexOf('data=') + 5));
+
+      var videoData = {};
+
+      this.videoData = JSON.parse(data)
+    },
+    mounted: function mounted() {
+
+       var modalDiv = document.createElement('div');
+          modalDiv.style.cssText = 'position: fixed;left: 0;top:0;z-index: 99999;display: flex;justify-content: center;align-items: center; width: 100%;height: 100%;background: white;';
+          modalDiv.setAttribute('id', 'loadMenban');
+          document.body.appendChild(modalDiv);
+
+      var imgNode = document.createElement('img');
+          imgNode.setAttribute('src', '../images/loading.gif');
+          document.getElementById('loadMenban').appendChild(imgNode);    
+
+      // setTimeout(()=>{
+      //     document.getElementById('loadMenban').parentNode.removeChild(document.getElementById('loadMenban'));
+      //  },3000)
+
+
+
+      var _this2 = this;
+
+      // ShowDevTools();
+      this.setWindow();
+      this.message = new Message();
+
+      //获取资源详情
+      // this.getContentDetail();
+
+      //添加阅读历史
+      this.addRecordReadHistory();
+
+      //获取关联标签
+      this.getRelatedExpList();
+
+      //获取收藏
+      this.gethasCollect();
+
+      this.isCourseMedia = this.videoData.ObjectType == 107 ? true : false;
+
+      var _this = this;
+      window.onresize = function() {
+        _this2.setWindow();
+      };
+
+
+    },
+    updated: function updated() {
+
+    }
+  });
+
+  </script>
+
+
+  <script>
+  //添加收藏
+  function addCollect() {
+    $vm.collect();
+  }
+
+
+
+  </script>
+
+   <script src="http://vjs.zencdn.net/6.4.0/video.js"></script>
+
+   <script>
+     document.getElementById('loadMenban').parentNode.removeChild(document.getElementById('loadMenban'));
+   </script>
+</body>
+
+</html>

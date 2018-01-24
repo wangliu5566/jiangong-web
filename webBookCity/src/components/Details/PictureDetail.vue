@@ -1,0 +1,269 @@
+<template>
+  <div class="detail-wrap" v-loading="detailLoading"
+    element-loading-text="拼命加载中"
+    element-loading-spinner="el-icon-loading"
+    customClass="detail-loading">
+    <div class="book-container"  v-if="detailsData.Id&&detailsData.IsOnShelf==true">
+      <!-- 导航路径 -->
+      <HeaderNav></HeaderNav>
+      <!-- 图书详情介绍 -->
+      <div class="detail-intro">
+        <div class="book-cover">
+          <DetailsCover></DetailsCover>
+        </div>
+        <div class="book-intro" v-show="detailsData.Id" style="margin-left: 420px;">
+          <div>
+            <h2 class="title ellipsis"  id="detailsTitle">
+          {{detailsData.Title}}
+        </h2>
+          </div>
+          <div class="book-intro-main">
+            <div class="book-intro-header">
+              <p>
+                <span>原图宽：-</span>
+                <span>原图高：-</span>
+              </p>
+              <p>
+                <span>作者：{{detailsData.Author?detailsData.Author:'-'}}</span>
+              </p>
+            </div>
+          </div>
+          <RecommendedExp :objectType="108"></RecommendedExp>
+          <div class="price-handle">
+            <p class="ovh">
+              <span class="name">
+            促销价格：
+            </span>
+              <span class="price-main">
+              <span>&yen;{{formatPrice(typeAndPrice.bookCurrentPrice,2)}}</span>
+              <b class="original-price">&yen;{{formatPrice(typeAndPrice.bookMarketPrice,2)}}</b>
+              </span>
+              <ul class="special">
+                <li class="special-list red" v-show="detailsData.ExtendData.SaleStrategy">{{detailsData.ExtendData.SaleStrategy}}</li>
+              </ul>
+               <span class="name" v-show="detailsData.ExtendData.countDown&&detailsData.ExtendData.countDown>0">
+              剩余时间：
+              </span>
+              <span class="expiration-time" v-show="detailsData.ExtendData.countDown&&detailsData.ExtendData.countDown>0">
+                {{secondToHMS(detailsData.ExtendData.countDown?detailsData.ExtendData.countDown:0)}}
+              </span>
+            </p>
+            <!-- <div class="ovh type-btns">
+              <span class="name">选择类型：</span>
+              <ul class="type-btns-list">
+                <li class="selected">原图</li>
+                <li>非原图</li>
+              </ul>
+            </div> -->
+          </div>
+          <div class="handle-container">
+            <el-button type="button" class="handle-btn red-red" @click="buyResource">立即购买</el-button>
+            <el-button type="button" class="handle-btn red-white" @click="pushInShoppingCar">加入购物车</el-button>
+
+            <div class="pull-right">
+              <el-button type="button" class="handle-btn no-margin gray-red" v-if="detailsData.ExtendData.IsOrdered" @click="readResource">立即查看</el-button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- 图书其它 -->
+    </div>
+    <div class="detail-footer"  v-if="detailsData.Id&&detailsData.IsOnShelf==true">
+      <div class="detail-footer-container">
+        <div class="footer-left">
+          <BookRecommended :detailType="detailType"></BookRecommended>
+        </div>
+        <div class="footer-right">
+          <IntroOnly :detailsData="detailsData"></IntroOnly>
+          <CommentPart :objectType="108"></CommentPart>
+          <RelatedResources :objectType="true"></RelatedResources>
+        </div>
+      </div>
+    </div>
+    <div class="detail-unshelve" v-if="detailsData.Id&&detailsData.IsOnShelf==false">
+      <HeaderNav></HeaderNav>
+      <DetailsUnShelve :objectType="true"></DetailsUnShelve>
+    </div>
+  </div>
+</template>
+<script>
+import HeaderNav from "details/common/HeaderNav"
+import DetailsCover from 'details/common/DetailsCover'
+import BookRecommended from 'details/common/BookRecommended'
+import IntroOnly from 'details/common/IntroOnly'
+import CommentPart from 'details/common/CommentPart'
+import RelatedResources from 'details/common/RelatedResources'
+import RecommendedExp from "details/common/RecommendedExp"
+import DetailsUnShelve from "details/common/DetailsUnShelve"
+
+import {mapGetters} from "vuex"
+export default {
+  components: {
+    HeaderNav,
+    DetailsCover,
+    BookRecommended,
+    IntroOnly,
+    CommentPart,
+    RelatedResources,
+    RecommendedExp,
+    DetailsUnShelve
+
+  },
+  data() {
+    return {
+      detailType:{
+        name:'图片',
+        type:'108',
+        flag:1
+      }
+    }
+  },
+  created() {
+    this.getDetails();
+  },
+  computed: mapGetters([
+    'detailsData',
+    'typeAndPrice',
+    'loginModal',
+    'callbackAfterLogin',
+    'detailLoading'
+  ]),
+  watch: {
+    '$route': 'getDetails',
+    'loginModal': function(val, oldVal) {
+      if (!val && this.callbackAfterLogin.position == 'detail') {
+        this.$store.dispatch('getDeatilsByAjaxAndCallback', {
+          params: {
+            id: this.$route.query.id
+          },
+          callback: this.callbackAfterLogin.callback,
+        })
+      }
+    }
+  },
+  methods: {
+    readResource() {
+      this.$http({
+        url: '',
+        baseURL: this.detailsData.AuthorizeUrl,
+        method: 'post',
+        data: {
+          extId: this.detailsData.ExternalId,
+          authorizeToken: this.detailsData.ExtendData.AuthorizeToken,
+          appId: 7
+        }
+      }).then((res) => {
+          if (res.data.Success) {
+            this.readMyResource(this.detailsData.DefaultFileExtension, this.detailsData.Id, this.detailsData.ObjectType, res.data.Data)
+          } else {
+            this.$message({
+              message: res.data.Description,
+              type: 'warning'
+            })
+          }
+      })
+
+
+    },
+    buyResource() {
+      let hasLogin = window.sessionStorage.getItem('accessToken') && JSON.parse(window.sessionStorage.getItem('bg_user_info')).Id ? true : false;
+      if (!hasLogin) {
+        this.$store.dispatch('setLoginByModal', true);
+        this.$store.dispatch('loginByModalAndCallback', {
+          callback: 'buyResourceDetail',
+          position: 'detail'
+        })
+      } else {
+        if (this.detailsData.ExtendData.IsOrdered == 'true' && this.bookType == 'Elec') {
+          this.$confirm('您已购买过该资源，请勿重复购买', '', {
+              showCancelButton: false,
+              showConfirmButton: false,
+              type: 'warning',
+              customClass: 'detail-confirm',
+              center: true
+            })
+            .then(() => {
+
+            })
+            .catch(() => {
+
+            })
+        } else {
+          this.buyResourceByAjax();
+        }
+      }
+    },
+    buyResourceByAjax() {
+      let type = this.typeAndPrice.bookType;
+      let sourceData = [Object.assign({},this.detailsData,{
+        MediaType:type,
+        ObjectId:this.detailsData.Id,
+        Count:1
+      })]
+      localStorage.shoppingObj = JSON.stringify(sourceData);
+
+      let typeNumber = type=='Elec'?1:2;
+      if (type=='Elec') {
+        this.$router.push({ path:'/wrap/deatilElecPaid', query: { type: typeNumber } })
+      }else{
+        this.$router.push({ path:'/wrap/detailPaperPaid', query: { type: typeNumber } })
+      }
+    },
+    pushInShoppingCar() {
+      let hasLogin = window.sessionStorage.getItem('accessToken') && JSON.parse(window.sessionStorage.getItem('bg_user_info')).Id ? true : false;
+      if (!hasLogin) {
+       this.$store.dispatch('setLoginByModal', true);
+        this.$store.dispatch('loginByModalAndCallback', {
+          callback: 'pushInShoppingCarDetail',
+          position: 'detail'
+        })
+
+      } else {
+        let type = this.typeAndPrice.bookType;
+        this.$http.post('/ShoppingCart/Create', {
+            mediaType: type,
+            count: 1,
+            objectId: this.$route.query.id,
+            objectType: '108'
+          })
+          .then((res) => {
+            if (res.data.Success) {
+              this.$message({
+                message: '已成功加入购物车',
+                type: 'success'
+              });
+              this.$store.dispatch('getShoppingCount');
+            }else {
+              this.$confirm(res.data.Description, '', {
+                  showCancelButton: false,
+                  showConfirmButton: false,
+                  type: 'warning',
+                  customClass: 'detail-confirm',
+                  center: true
+                })
+                .then(() => {
+
+                })
+                .catch(() => {
+
+                })
+            }
+          })
+      }
+    },
+    showOrHide() {
+      this.isShowIntroOther = !this.isShowIntroOther;
+    },
+    getDetails() {
+      if (this.$route.query.id && this.$route.query.id != '' && this.$route.query.id != undefined) {
+        this.$store.dispatch('resetDetailData');
+        this.$store.dispatch('getDeatilsByAjax', { id: this.$route.query.id })
+      } else {
+        this.$router.back();
+      }
+
+    }
+  },
+}
+
+</script>

@@ -1,0 +1,2003 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title id="readerTitle">图书阅读</title>
+    <link rel="stylesheet" href="../css/reader.css">
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/message.css">
+    
+    <script src="../js/vue.js"></script>
+    <script src="../js/jquery-1.11.0.min.js"></script>
+    <script src="../js/ajax.js"></script>
+    <script src="../js/bootstrap.min.js"></script>
+    <script src="../js/localStorage.js"></script>
+    <style>
+        [v-cloak]{
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="index-cont" :style="{height:winHeight-10 +'px'}" id="bookCont" ref="bookCont" @mouseleave="bodyMouseenter = false">
+        <div style="position: fixed;left: 0;top:0;z-index: 99999;display: flex;justify-content: center;align-items: center; width: 100%;height: 100%;background: white;" id="loadMenban">
+            
+        </div>
+
+
+        <!-- <div class="book-cont-bottom" :style="{background:bottomBg}">
+            <span style="font-style: italic;font-family:'微软雅黑'">
+                 {{sectionName}}
+            </span>
+            <span style="font-style: italic;font-family:'微软雅黑'">
+                 {{readPercent}}%
+            </span>
+        </div> -->
+
+        <!-- 容器顶部 -->
+        <div class="book-cont-top wrap-cont-top">
+            <!-- <span class="wrap-cont-top-btn wrap-cont-margin" @click="toBugContent">
+                购买本书
+            </span> -->
+            
+            <div class="book-or-section-lib wrap-cont-switch wrap-cont-margin" >
+                <span :class="!libIsActive?'lib-active':''" @click="libIsActive = false" style="margin-left: -15px">瀑布阅读</span>
+                <span :class="!libIsActive?'':'lib-active'" @click="libIsActive = true">传统翻页</span>
+            </div>
+
+            <ul class="wrap-cont-margin">
+                <li @click="isFontModalShow = false;isBgModalShow = !isBgModalShow">
+                    <img src="../images/图片.png" alt="" >
+                    <ul class="bg-colors" v-show="isBgModalShow">
+                        <li style="background: white" @click="setBgColor('#fff')"></li>
+                        <!-- <li style="background: #e2e3d9" @click="setBgColor('#e2e3d9')"></li> -->
+                        <li style="background: #eeeeee" @click="setBgColor('#eeeeee')"></li>
+                        <li style="background: #f6efce" @click="setBgColor('#f6efce')"></li>
+                        <li style="background: #f3e7aa" @click="setBgColor('#f3e7aa')"></li>
+                    </ul>
+
+                    <img src="../images/三角形1.png" class="top-arrow" alt="" v-show="isBgModalShow">
+                </li>
+                <li  @click="isBgModalShow = false;isFontModalShow = !isFontModalShow"> 
+                    <img src="../images/字体.png" alt="">
+                    <ul class="bg-colors set-fonts" v-show="isFontModalShow">
+                        <li @click="setFontSize(1)">A + </li>
+                        <li @click="setFontSize(-1)">A - </li>
+                    </ul>
+                    <img src="../images/三角形1.png" class="top-arrow" alt="" v-show="isFontModalShow">
+                </li>
+                <li @click="fullScreen">
+                    <img src="../images/全屏.png" alt="">
+                </li>
+            </ul>
+        </div>
+        
+        <!-- 图书顶部 -->
+        <div class="book-cont-top" ref="bookContTop">
+            <div class="book-content" >
+                <img src="../images/上一步.png" alt="" class="book-content-back" style="cursor: pointer;" onclick="window.opener=null;window.close();"> 
+                <span class="book-content-cur-tag tag-next" @click="changeTag(-1)">
+                    <img src="../images/jian1.png" alt="">
+                </span>
+
+                <span class="book-content-cur-tag" style="margin: 0 10px">
+                    {{curTag}}
+                </span>
+
+                <span class="book-content-cur-tag tag-next" @click="changeTag(1)">
+                    <img src="../images/jian2.png" alt="">
+                </span>
+
+                 <div class="exp-map-level">
+                  <i>
+                    显示级别
+                  </i>
+                  <span :class="ralationLevel == 1 ? 'active':''" @click="getExplicitWordLabelList(1)">1</span>
+                  <b></b>
+                  <span :class="ralationLevel == 2 ? 'active':''" @click="getExplicitWordLabelList(2)">2</span>
+                  <b></b>
+                  <span :class="ralationLevel == 3 ? 'active':''" @click="getExplicitWordLabelList(3)">3</span>
+                </div>
+
+                <span class="book-content-cur-tag tag-next book-search" @click="changeTag(1)" v-show="isBookSearchNextShow">
+                   <span>
+                       <img src="../images/shangyige.png" alt="" @click="openBookSearch(-1)">
+                   </span>
+
+                   <span>
+                       <img src="../images/xiayige.png" alt="" @click="openBookSearch(1)">
+                   </span>
+
+                   <span>
+                       <img src="../images/guanbi.png" alt="" @click="clearBookSearch">
+                   </span>
+                </span>
+
+                <input 
+                type="text" 
+                v-model="searchKey" 
+                class="book-content-input" 
+                placeholder="文内检索"
+                @keyup.enter="openBookSearch(0)"
+                >
+
+            </div>
+        </div>
+
+<!--         <div class="lib-cate" :style="{left:libLeft + 'px',boxShadow:libLeft >= -20 ?'5px 5px 10px #ccc':'' }">
+            <div class="book-or-section-lib">
+                <span :class="libIsActive?'lib-active':''" style="margin-left: -15px">章节目录</span>
+            </div>
+            <div class="lib-list-wrap">
+                <div class="book-or-section-lib-list">
+                    <ul v-if="libIsActive">
+                        <li v-for="(item,index) in sectionLibList" @click="changeIframeSrc(item.Src,index)" v-cloak>
+                            {{item.Title}}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div> -->
+
+        
+
+
+        <!-- 左右切换 -->
+<!--         <div class="page-exchange page-exchange-left"  v-show="bodyMouseenter">
+             <div >
+                <img :src="leftArrow" alt="" @mouseenter="enterArrowSrc(-1)" @mouseleave="leaveArrowSrc(-1)" @click="pageExchange(-1)">
+            </div>
+        </div>
+       <div class="page-exchange page-exchange-right"  v-show="bodyMouseenter">
+            <div >
+                <img :src="rightArrow" alt="" @mouseenter="enterArrowSrc(1)" @mouseleave="leaveArrowSrc(1)" @click="pageExchange(1)">
+            </div>
+       </div> -->
+       
+        <iframe 
+        :src="iframeSrc" 
+        frameborder="0" 
+        class="iframe-css" 
+        width="90%" 
+        height="100%" 
+        id="bookContIframe" 
+        ref="bookIframe"  
+        :style="{marginTop:winHeight > 900 ? '-111px' :'-96px'}"
+        ></iframe>
+
+        
+        <!-- 章节目录 -->
+        <div class="right-bar" :style="{right:winWidth >= 1200 ? '5.8%':'1%'}">
+            <img src="../images/目录.png" alt="" @click="isLibShow = !isLibShow">
+            <img :src=" !hasCollect ? '../images/收藏(16).png': '../images/收藏(成功6).png'" alt="" @click="addCollect">
+            <div class="right-bar-switch" v-show="libIsActive">
+                <span @mouseenter="topActiveArrow = true" @mouseleave="topActiveArrow = false" @click="pageExchange(-1)">
+                    <img :src="!topActiveArrow? '../images/箭头深.png' : '../images/箭头浅2.png'" alt="">
+                </span>
+                <span @mouseenter="bottomActiveArrow = true" @mouseleave="bottomActiveArrow = false" @click="pageExchange(1)">
+                    <img :src="bottomActiveArrow? '../images/箭头浅.png' : '../images/箭头深1.png'" alt="">
+                </span>
+            </div>
+
+
+            <div class="lib-right" ref="libRight" v-show="isLibShow">
+                <ul class="lib-right-content">
+                    <li v-for="(item,index) in sectionLibList" @click="changeIframeSrc(item.Src,index)" v-cloak>
+                        {{item.Title}}
+                    </li>
+                </ul>
+            </div>
+
+
+            <img src="../images/三角形2.png" class="right-arrow" alt="" v-show="isLibShow">
+        </div>
+
+
+
+
+        <div class="loading-content" v-show="loading">
+             
+        </div>
+
+        <div class="loading-content load-other" v-show="loading" v-cloak>
+             <!-- <p>{{downLoadPercent}} %</p> -->
+             <p>正在为您排版，请稍候...</p>
+        </div>
+
+
+        <!-- 切换设备 -->
+        <div class="modal fade" tabindex="-1" role="dialog" id="equipement">
+          <div class="modal-dialog" role="document" style="width: 480px;height:400px;margin:0 auto">
+            <div class="modal-content">
+              <div class="modal-header nopadding" id="activeTitle">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="equipement">设备切换</h4>
+              </div>
+              <div class="modal-body">
+                <div class="select">
+                    <span>我的设备：<b id="myEqu"></b></span>
+                    <input type="button" name="" class='mybtn1' value="确定" id="changeEquip">
+                </div>
+                <div class="checkbox" id="equipList">
+                     <!-- 设备列表 -->
+                </div>
+              </div>
+
+            </div><!-- /.modal-content -->
+          </div><!-- /.modal-dialog -->
+        </div>
+
+
+
+<!--         <ul class="context-menu" :style="{left:conMenuLeft+'px',top:conMenuTop + 'px'}" v-show="conMenuShow">
+            <li :class="menuListDisable.copy?'':'menu-disabled'" @click="closeMenuAndDo($event,'copy')">复制</li>
+            <li @click="closeMenuAndDo($event,'collect')">{{menuListDisable.collect?'收藏':'取消收藏'}}</li>
+        </ul> -->
+
+        <div class="message" id="message">
+            <img class="el-message__img" src="" id="messageType">
+            <div class="el-message__group">
+              <p id="messageText"></p>
+            </div>
+        </div>
+     </div>
+    <script src="../js/message.js"></script>
+    <script>
+    //因为jquery是在引入第三方模态框时引入吗，所以vue中也会有地方用到，更方便的操作节点
+      'use strict';
+
+var $vm = new Vue({
+    el: '#bookCont',
+    data: {
+
+        //建工书城阅读器
+        ralationLevel: 0,
+        isQueryOpen: true,
+        maplistData: [],
+        isShowLibList: true,
+        isBgModalShow: false, //是否显示背景显示面板
+        isFontModalShow: false, //是否显示字体面板
+        isFullScreen: false, //全屏
+        isLibShow: false, //是否显示目录
+        isBookSearchNextShow:false,
+        topActiveArrow: false,
+        bottomActiveArrow: false,
+        searchKey: '', //文内检索
+
+        curTag:'当前标签', //当前选中的标签
+
+
+        //下面是通用属性
+        //true - 目录  
+        sectionid: '',
+        sectionType: 102, //有102 - 章节 104 - 图书  103 - 标准
+        bookSecret: '',
+        nativeUrl: '',
+        curSectionIndex: 0,
+        winWidth: 1080,
+        winHeight: 768,
+        libIsActive: true,
+        loading: false,
+        downLoadPercent: 0,
+        libLeft: -300,
+        // libLeft: 0,
+        iframeSrc: '',
+        sectionName: '',
+        radio3: '章节目录',
+        bookIframeBody: null,
+        bookIframeWindow: null,
+        thisIframeSectionTops: [],
+        thisIframeSections: null,
+        firstEle: null, //每次滚动结束保存左上角第一个元素
+        readPercent: 0,
+        bottomBg: 'white',
+        pageNumShow: true,
+        canIaddNote: true,
+        markTime: null,
+        fontCount: 0,
+        isTwoCol: false,
+        countLeft: 0,
+        scrollTimer: null,
+        // scrollAvoid:false,
+        scrollCount: 0,
+        conMenuLeft: 100,
+        conMenuTop: 100,
+        conMenuShow: false,
+        preOrNextSearch: true,
+        menuListDisable: {
+            copy: false,
+            collect: false,
+            bookSearch: false
+        },
+        hasCollect: false,
+        hasMark: false,
+        bodyMouseenter: false,
+        leftArrow: '../images/未选中-左.png',
+        rightArrow: '../images/未选中-右.png',
+        sectionLibList: [
+            // {
+            //     Title: '一、东突厥归隋（584年前后）',
+            //     src: "./OPS/chapter8.html#A73d60164-a993-46f5-b2ff-3493d00b979d",
+            // }
+        ],
+        bookLibList: [
+            // {
+            //     Title: '一、东突厥归隋（584年前后）',
+            //     Id:100,
+            //     hasDown:false,
+            //     
+            // }
+        ],
+        tableofSections: [],
+        fileId: null,
+        message: null,
+        searchConf: null,
+        formId: '',
+
+        expLableData: []
+    },
+    methods: {
+        setWindow: function setWindow() {
+            var _this2 = this;
+
+            $('.book-cont-top').css('width', $('#bookContIframe').get(0).offsetWidth * 0.8 + 'px');
+            $('.book-cont-top').css('width', $('#bookContIframe').get(0).offsetWidth * 0.8 + 'px');
+            if (this.bookIframeWindow) this.firstEle = this.firstEle ? this.firstEle : this.getScreenStartEle()[0];
+
+            this.winWidth = window.innerWidth;
+            this.winHeight = window.innerHeight;
+            if (env == 'prod') {
+                // var winformWidth = GetFormWidth();
+                var winformWidth = 1920;
+                if (this.winWidth >= parseInt(winformWidth) - 50) {
+                    this.isTwoCol = true;
+                } else {
+                    this.isTwoCol = false;
+                }
+
+                // if(this.bookIframeWindow) this.setIframeImg();
+            }
+
+            if (this.firstEle && this.bookIframeWindow) {
+                //缩放始终保证当前阅读位置
+                this.$nextTick(function () {
+                    _this2.countLeft = _this2.firstEle.offsetLeft;
+                    _this2.bookIframeWindow.document.body.scrollLeft = _this2.countLeft;
+                });
+            }
+        },
+
+        /**
+         * [fullScreen 开启关闭全屏]
+         * @Author   罗文
+         * @DateTime 2017-12-18
+         * @return   {[type]}   [description]
+         */
+        fullScreen: function fullScreen() {
+            if (this.isFullScreen) {
+                var el = document;
+                var cfs = el.cancelFullScreen || el.webkitCancelFullScreen || el.mozCancelFullScreen || el.exitFullScreen;
+                if (cfs) {
+                    //typeof cfs != "undefined" && cfs
+                    cfs.call(el);
+                } else if (typeof window.ActiveXObject != "undefined") {
+                    //for IE，这里和fullScreen相同，模拟按下F11键退出全屏
+                    var wscript = new ActiveXObject("WScript.Shell");
+                    if (wscript != null) {
+                        wscript.SendKeys("{F11}");
+                    }
+                }
+
+                this.isFullScreen = false;
+            } else {
+                var el = document.documentElement;
+                var rfs = el.requestFullScreen || el.webkitRequestFullScreen || el.mozRequestFullScreen || el.msRequestFullScreen;
+                if (rfs) {
+                    //typeof rfs != "undefined" && rfs
+                    rfs.call(el);
+                } else if (typeof window.ActiveXObject != "undefined") {
+                    //for IE，这里其实就是模拟了按下键盘的F11，使浏览器全屏
+                    var wscript = new ActiveXObject("WScript.Shell");
+                    if (wscript != null) {
+                        wscript.SendKeys("{F11}");
+                    }
+                }
+
+                this.isFullScreen = true;
+            }
+        },
+
+        //設置文內圖片适应屏幕
+        setIframeImg: function setIframeImg() {
+            if (!this.bookIframeWindow) return;
+            //遍历文内所有图片的宽
+            var listofImg = $(this.bookIframeWindow.document.body).find('img');
+            // var winWidthRate = this.winWidth/GetFormWidth();
+            var winformWidth = 1500;
+            // var winHeightRate = this.winHeight/GetFormHeight();
+            var winHeightRate = this.winHeight / 1080;
+
+            var _this = this;
+
+            for (var i = 0; i < listofImg.length; i++) {
+                if ($(listofImg[i]).attr('src') && $(listofImg[i]).attr('src').indexOf('/static/images') !== -1) continue;
+                if (!$(listofImg[i]).parent().hasClass('center')) continue;
+
+                // maxHeight:_this.winHeight * 0.8 +'px'
+                var imgHeight = parseInt($(listofImg[i]).css('height'));
+                imgHeight = imgHeight >= _this.winHeight * 0.8 ? _this.winHeight * 0.8 : imgHeight;
+
+                $(listofImg[i]).parent().css({
+                    '-webkit-column-break-inside': 'avoid',
+                    'height': imgHeight + 30 + 'px'
+                });
+
+                $(listofImg[i]).attr('class', '');
+
+                $(listofImg[i]).css({
+                    maxWidth: _this.isTwoCol ? '40%' : '95%',
+                    maxHeight: '90%'
+                });
+
+                // if(winWidthRate > winHeightRate) {
+                //     $(listofImg[i]).css('width',parseInt(getComputedStyle(listofImg[i],null).width)*winHeightRate + 'px');
+                //     $(listofImg[i]).css('height',parseInt(getComputedStyle(listofImg[i],null).height)*winHeightRate + 'px');
+                // }else {
+                //     $(listofImg[i]).css('width',parseInt(getComputedStyle(listofImg[i],null).width)*winWidthRate + 'px');
+                //     $(listofImg[i]).css('height',parseInt(getComputedStyle(listofImg[i],null).height)*winWidthRate + 'px');
+                // }
+            }
+        },
+
+        //根据屏幕缩放文内图片变化
+        setIframeImgWithWindow: function setIframeImgWithWindow(nv, ov) {
+            // if(!this.bookIframeWindow) return;
+            // var listofImg = $(this.bookIframeWindow.document.body).find('img')
+            // var winRate = nv/ov;
+
+            // for(var i = 0 ; i < listofImg.length ; i ++) {
+            //     if($(listofImg[i]).attr('src').indexOf('/static/images') !== -1) continue;
+            //     $(listofImg[i]).css('width',parseInt(getComputedStyle(listofImg[i],null).width)*winRate + 'px');
+            //     $(listofImg[i]).css('height',parseInt(getComputedStyle(listofImg[i],null).height)*winRate + 'px');
+            // }
+        },
+
+        //右键菜单操作
+        closeMenuAndDo: function closeMenuAndDo(e, operate) {
+            if (e.target.className !== '') return;
+            switch (operate) {
+                case 'copy':
+                    if (this.bookIframeWindow.document.getSelection().toString().length > 200) {
+                        this.message.showMessage('error', '复制字数超过200！');
+                        return;
+                    }
+
+                    //添加到剪贴板
+                    Clip(this.bookIframeWindow.document.getSelection().toString());
+
+                    console.log(GetClip());
+
+                    // 将复制的文字交给后台      
+                    break;
+                case 'collect':
+                    this.addCollect();
+                    // 根据书      
+                    break;
+                case 'bookSearch':
+                    this.openBookSearch();
+                    // 根据书      
+                    break;
+                default:
+                    // statements_def
+                    break;
+            }
+
+            this.conMenuShow = false;
+        },
+
+        //获取复制文字下一个最近的页码标签
+        getCopyTextNestestPageNum: function getCopyTextNestestPageNum() {
+            //首先判断整个文档有没有页码，如果没有直接return
+            var aimNode = null;
+            var isComments = false;
+
+            if ($(this.bookIframeWindow.document.body).find('a[href^="http"]').length !== 0) {
+                //这里使用jquery获取页码标签，更快捷
+                var _getTagHasPageNum = function _getTagHasPageNum(aimNode) {
+                    if ($(aimNode).find('a[href^="http"]').length !== 0) {
+                        tagNode = $(aimNode).find('a[href^="http"]')[0];
+                        return;
+                    } else {
+                        //根据当前节点是否是最后一个段落 或者 是注释节点来判断，应该向前找还是向后找
+                        if (!_this.preOrNextSearch) {
+                            _getTagHasPageNum($(aimNode).prev().get(0));
+                        } else {
+                            _getTagHasPageNum($(aimNode).next().get(0));
+                        }
+                    }
+                };
+
+                // 获取当前copy的标签下一个页码标签
+                var activeNode = this.bookIframeWindow.document.getSelection().anchorNode;
+
+                // 特殊标签，需要获取它的父级的兄弟级
+                var prevNodeArr = ['A', 'B', 'I', 'SPAN', 'FONT', 'EM', 'STRONG'];
+
+                var aimNode = null;
+
+                if (activeNode.parentNode.nodeName.toUpperCase() == 'BODY') {
+                    aimNode = activeNode.nextSibling;
+                } else if (prevNodeArr.indexOf(activeNode.parentNode.nodeName.toUpperCase()) !== -1) {
+                    aimNode = activeNode.parentNode.parentNode;
+                } else if (activeNode.parentNode.className == 'imgtitle') {
+                    aimNode = activeNode.parentNode.parentNode;
+                } else {
+                    aimNode = activeNode.parentNode;
+                }
+
+                var tagNode = null;
+                this.preOrNextSearch = true; //true -- 向后查找   false  -- 向前查找
+
+                if ($(aimNode).hasClass('footnote') || $(aimNode).next().get(0).nodeName.toUpperCase() == 'HR') {
+                    if ($(aimNode).find('a[href^="http"]').length !== 0) {
+                        this.preOrNextSearch = true;
+                    } else {
+                        this.preOrNextSearch = false;
+                    }
+                } else {
+                    this.preOrNextSearch = true;
+                }
+
+                var _this = this;
+
+                _getTagHasPageNum(aimNode);
+            } else {
+                tagNode = false;
+            }
+
+            var fontNum = 0;
+            //获取当前标签之前所有标签的文字数
+            fontNum = this.getBeforeCurTagAllFonts(aimNode);
+
+            return {
+                tagNode: tagNode,
+                fontNum: fontNum
+            };
+        },
+
+
+        /**
+         * [toBugContent 购买本书]
+         * @Author   罗文
+         * @DateTime 2017-12-24
+         * @return   {[type]}   [description]
+         */
+        toBugContent: function toBugContent() {
+            location.href = '/index.html#/wrap/details/book?id=213994';
+        },
+        toPath: function toPath(path) {
+            this.$router.push(path);
+        },
+
+        // 打开目录
+        openLibCate: function openLibCate(type) {
+            var _this3 = this;
+
+            type = type || 0;
+
+            // //如果切换为目录
+            // if(type == 0 && !this.isShowLibList) {
+            //    var setTime = setInterval(() => {
+            //         if (this.libLeft >= -20) {
+            //             this.libLeft = 0;
+            //             clearInterval(setTime);
+            //             return;
+            //         }
+            //         this.libLeft += 20;
+            //     }, 16)
+            //    this.isShowLibList = type == 0 ? true : false;
+            //    return ;
+            // }
+
+            // //如果切换为地图
+            // if(type == 1 && this.isShowLibList) {
+            //    var setTime = setInterval(() => {
+            //         if (this.libLeft >= -20) {
+            //             this.libLeft = 0;
+            //             clearInterval(setTime);
+            //             return;
+            //         }
+            //         this.libLeft += 20;
+            //     }, 16)
+            //    this.isShowLibList = type == 0 ? true : false;
+            //    return ;
+            // }
+
+
+            //如果切换为打开目录
+            // this.isShowLibList = type == 0 ? true : false;
+            if (this.libLeft <= -280) {
+                var setTime = setInterval(function () {
+                    console.log(1111);
+                    if (_this3.libLeft >= -20) {
+                        _this3.libLeft = 0;
+                        clearInterval(setTime);
+                        return;
+                    }
+                    _this3.libLeft += 20;
+                }, 16);
+            } else if (this.libLeft >= -20) {
+                var setTime = setInterval(function () {
+                    if (_this3.libLeft <= -280) {
+                        _this3.libLeft = -300;
+                        clearInterval(setTime);
+                        return;
+                    }
+                    _this3.libLeft -= 20;
+                }, 16);
+            }
+        },
+
+
+        //关闭任意图窗口
+        closeLibOper: function closeLibOper() {
+            var _this4 = this;
+
+            if (this.libLeft >= -280) {
+                var setTime = setInterval(function () {
+                    if (_this4.libLeft <= -280) {
+                        _this4.libLeft = -300;
+                        clearInterval(setTime);
+                        return;
+                    }
+                    _this4.libLeft -= 20;
+                }, 16);
+            }
+        },
+
+
+        //获取屏幕左上角第一个节点
+        getScreenStartEle: function getScreenStartEle() {
+            var eleArr = [];
+            var round = 1;
+            var _this = this;
+
+            //获取一个范围里的所有坐标元素
+            function getAreaElements() {
+                for (var i = 0; i < 100 * round; i++) {
+                    var ele = _this.bookIframeWindow.document.elementFromPoint(i, i);
+                    if (ele.nodeName.toUpperCase() !== 'BODY' && ele.nodeName.toUpperCase() !== 'HTML') {
+                        eleArr.push(ele);
+                    }
+                }
+
+                if (eleArr.length == 0) {
+                    round += 1;
+                    eleArr = getAreaElements(round);
+                }
+            }
+
+            getAreaElements();
+
+            return eleArr;
+        },
+
+
+        //获取屏幕右下角第一个节点
+        getScreenEndEle: function getScreenEndEle() {
+            var eleArr = [];
+            var round = 1;
+            var _this = this;
+
+            //获取一个范围里的所有坐标元素
+            function getAreaElements() {
+                for (var i = 0; i < 100 * round; i++) {
+                    var ele = _this.bookIframeWindow.document.elementFromPoint(_this.winWidth - 50 - i, _this.winHeight - 50 - i);
+                    if (!ele) continue;
+
+                    if (ele.nodeName.toUpperCase() !== 'BODY' && ele.nodeName.toUpperCase() !== 'HTML') {
+                        eleArr.push(ele);
+                        break;
+                    }
+                }
+
+                if (eleArr.length == 0) {
+                    round += 1;
+                    getAreaElements();
+                }
+            }
+
+            getAreaElements();
+            return eleArr;
+        },
+
+
+        //添加或取消收藏
+        addCollect: function addCollect() {
+
+            var data = {
+                objectid: this.sectionid,
+                objecttype: this.objectType
+                // userid:localStorage.getItem("userId")
+            };
+
+            var _this = this;
+
+            $.ajax({
+                type: "POST",
+                url: baseUrl + '/Favorite/CreateOrUpdate',
+                data: Object.assign({
+                    deviceToken: sessionStorage.deviceToken,
+                    apiname: '/Favorite/CreateOrUpdate'
+                    // accessToken:sessionStorage.accessToken
+                }, data, systemParams),
+                success: function success(res) {
+                    if (res.Success) {
+                        _this.hasCollect = !_this.hasCollect;
+                        if (res.Description == "收藏成功") {
+                            _this.message.showMessage('success', '收藏成功！');
+                            _this.hasCollect = true;
+                        } else {
+                            _this.hasCollect = false;
+                            _this.message.showMessage('success', '取消收藏成功！');
+                        }
+                    } else {
+                        if(res.Description.indexOf('AccessToken') != -1) {
+                            _this.message.showMessage('error', '您的登录已过期，请重新登录再试！');
+                        }else {
+                            _this.message.showMessage('error', res.Description);
+                        }
+                    }
+                }
+            });
+        },
+        getRelatedMap: function getRelatedMap() {},
+
+        //检查是否已经收藏
+        gethasCollect: function gethasCollect() {
+            var _this = this;
+            $.ajax({
+                type: "GET",
+                url: baseUrl + "/Content/Detail",
+                data: Object.assign({}, {
+                    id: _this.sectionid,
+                    deviceToken: sessionStorage.deviceToken,
+                    // accessToken:sessionStorage.accessToken,
+                    apiname: '/Content/Detail'
+                }, systemParams),
+                success: function success(res) {
+                    $('#readerTitle').text(res.Data.Title);
+                    if (res.Success) {
+                        if (res.Data.ExtendData.IsFavorited) {
+                            _this.hasCollect = true;
+                        } else {
+                            _this.hasCollect = false;
+                        }
+                    } else {
+                        _this.message.showMessage('error', res.Description);
+                    }
+                }
+            });
+        },
+        
+
+        /**
+         * [changeTag description]
+         * @Author   罗文
+         * @DateTime 2017-12-26
+         * @param    {[Number]}   type [上一个还是下一个  1 - 下一个  -1 - 上一个]
+         * @return   {[type]}        [description]
+         */
+        changeTag: function changeTag(type) {
+           if(this.curTag == '当前标签' || this.curTag == '') return; 
+           searchExpLabelByOrder(this.curTag, type);
+        },
+
+        /**
+         * [getExplicitWordLabelList 获取知识标签]
+         * @Author   罗文
+         * @DateTime 2017-12-07
+         * @return   {[type]}   [description]
+         */
+        getExplicitWordLabelList: function getExplicitWordLabelList(level) {
+            this.ralationLevel = level;
+            var data = {
+                objectId: this.sectionid,
+                type: this.objectType,
+                level: level
+            };
+            var _this = this;
+
+            $.ajax({
+                type: "GET",
+                url: baseUrl + '/ExplicitWordLabel/List',
+                data: Object.assign({
+                    deviceToken: sessionStorage.deviceToken,
+                    // accessToken:sessionStorage.accessToken,
+                    apiname: '/ExplicitWordLabel/List'
+                }, data, systemParams),
+                success: function success(res) {
+                    console.log(2222)
+                    console.log(res)
+                    if (res.Success) {
+                        if(res.Data.length === 0) {
+                           if(!level || level === 0) {
+
+                           }else {
+                              _this.message.showMessage('info', '该资源当前层级暂没有相关标签！');
+                           }
+                           
+                        }
+                        _this.expLableData = res.Data;
+                        _this.setExplicitWordLable(res.Data, level);
+                    } else {
+                        _this.message.showMessage('error', res.Description);
+                    }
+                }
+            });
+        },
+
+
+        /**
+         * [setExplicitWordLable 将知识标签绘制到页面上]
+         * @Author   罗文
+         * @DateTime 2017-12-07
+         * @param    {[type]}   data [description]
+         */
+        setExplicitWordLable: function setExplicitWordLable(data, level) {
+            var bgImg = '';
+            // 设置标签背景图片
+            bgImg = '../../.';
+            // bgImg = GetProgramFilePath().replace(/\\/g,'/');
+
+            var bgImgLevel1 = bgImg + '/static/images/标签1@2x.png';
+            var bgImgLevel2 = bgImg + '/static/images/标签2@2x.png';
+            var bgImgLevel3 = bgImg + '/static/images/biaoqian-no@2x.png';
+
+            if (this.bookIframeWindow) {
+
+                //每次渲染前，先清除当前已有的标签节点
+                if ($(this.bookIframeWindow.document.body).find('.exp-lablel').length !== 0) {
+                    this.removeAllExpLabel();
+                }
+
+                //如果是0，清除所有
+                if (level == 0) return;
+
+                this.loading = true;
+
+                //循环所有的容器节点，如h,p,div等body下的子节点
+                //只循环一次，每循环一个节点，就循环所有的知识标签，判断是不是在这个字数内
+                //如果匹配到了，就添加这个知识标签到节点内，并从数组移除这个知识标签的数据
+                //以减少循环次数
+
+                $(this.bookIframeWindow.document.body).children().each(function (index, item) {
+
+                    //用于保存被切的片段
+                    var sectionFrags = [];
+                    var nodeText = ''; //如果这个节点中匹配到知识标签，才取出innerText，只用于匹配字数
+                    var expOffsets = []; //找出这个节点中所有的知识标签的分别各自对应的偏移量
+                    var nodeClone = null; //如果这个节点中匹配到知识标签，就克隆节点
+
+
+                    var fontNum = 0;
+                    var nextFontNum = 0;
+                    //计算出这个节点之前的字数和
+                    $(item).prevAll().each(function (nindex, nitem) {
+                        fontNum += $(nitem).text().length;
+                    });
+
+                    //计算包含这个节点的所有字数和
+                    $(item).next().prevAll().each(function (nindex, nitem) {
+                        nextFontNum += $(nitem).text().length;
+                    });
+
+                    data.forEach(function (citem, cindex) {
+                        if (citem.Position >= fontNum && citem.Position < nextFontNum) {
+                            //滚动到这个位置,此时这个节点中有标签
+                            if (nodeText !== '' || !nodeClone) {
+                                //说明此时没有克隆过这个节点
+                                nodeText = $(item).text();
+                                nodeClone = $(item).clone(true);
+                            }
+
+                            expOffsets.push({
+                                offset: citem.Position - fontNum,
+                                expData: citem
+                            });
+
+                            //删掉当前这条数据，下次就少循环一条
+                            // data.splice(cindex,1);
+                            // console.log('这个节点中有'+citem.ExplicitWord.Title)                        
+                        }
+                    });
+
+                    //判断是否匹配到知识标签，如果匹配到，就将nodeText切片
+                    if (expOffsets.length !== 0) {
+                        //切开头
+                        sectionFrags.push(nodeText.slice(0, expOffsets[0].offset));
+
+                        //切中间和结尾
+                        expOffsets.forEach(function (sitem, sindex) {
+                            if (sindex !== expOffsets.length - 1) {
+                                sectionFrags.push(nodeText.slice(sitem.offset, expOffsets[sindex + 1].offset));
+                            } else {
+                                sectionFrags.push(nodeText.slice(sitem.offset));
+                            }
+                        });
+                    }
+
+                    var str = '';
+                    //取得了当前节点切好的片段，就添加上知识标签
+                    if (sectionFrags.length !== 0) {
+
+                        sectionFrags.forEach(function (sitem, sindex) {
+                            if (sindex !== sectionFrags.length - 1) {
+                                str += sitem + expOffsets[sindex].expData.ExplicitWord.Title;
+                            }
+                        });
+
+                        str += sectionFrags[sectionFrags.length - 1];
+
+                        $(nodeClone).text(str);
+                    }
+
+                    //如果有克隆的节点，说明需要替换原节点
+                    if (nodeClone) {
+                        // var nodeCloneHtml = $(nodeClone).html();
+                        var cssText = 'position:absolute;width:auto;height:24px;line-height:24px;font-size:14px; min-width:120px;opacity:0.5;transform: translateY(-13px);text-indent: initial;color:white;text-align:center;box-shadow:2px 2px 5px #888;background-size:100% 100%;background-position:center center;cursor:pointer;background:#94908a';
+
+                        //切中间和结尾
+                        expOffsets.forEach(function (sitem, sindex) {
+                            //区分层级
+                            var level = sitem.expData.Level;
+                            var bgImgSrc = level == 1 ? bgImgLevel1 : level == 2 ? bgImgLevel2 : bgImgLevel3;
+
+                            // background-image:url('+bgImgSrc+')"
+
+                            str = str.replace(sitem.expData.ExplicitWord.Title, '<span class="exp-lablel" data-lableId="' + sitem.expData.ExplicitWord.Id + '" style="' + cssText + '">' + sitem.expData.ExplicitWord.Title + '</span>');
+                        });
+
+                        $(nodeClone).html(str);
+
+                        $(item).replaceWith(nodeClone);
+                    }
+
+                    // if((curPos >= fontNum && curPos < nextFontNum)) {
+                    //    //滚动到这个位置
+                    //    _this.$data.countLeft =  $(citem).next().offset().left;
+                    //    iframeEle.contentWindow.document.body.scrollLeft = _this.$data.countLeft;
+
+
+                    // }
+                    // }
+                });
+
+                //默认给第一项加活跃状态，用于后面设置上一个下一个
+                var firstLabel = $(this.bookIframeWindow.document.body).find('.exp-lablel').eq(0);
+                $(firstLabel).addClass('active-lable');
+                $(firstLabel).css('outline', '2px solid #000');
+                // ChangeLableName($(firstLabel).text());
+            }
+
+            this.loading = false;
+        },
+
+        /**
+         * [removeAllExpLabel 清除所有的知识元标签]
+         * @Author   罗文
+         * @DateTime 2017-12-07
+         * @return   {[type]}   [description]
+         */
+        removeAllExpLabel: function removeAllExpLabel() {
+
+            $(this.bookIframeWindow.document.body).find('.exp-lablel').each(function (index, item) {
+                $(item).remove();
+            });
+        },
+
+        /**
+         * [openBookSearch 打开文内搜索界面]
+         * @Author   罗文
+         * @DateTime 2017-12-26
+         * @param    {[Number]}   index [上一个下一个匹配项，可选 1 - 下一个 0-当前 -1 - 上一个]
+         * @return   {[type]}         [description]
+         */
+        openBookSearch: function openBookSearch(type) {
+            this.isBookSearchNextShow = true;
+            var index = 0;
+            var fontIndex = 0;
+
+            //如果有传入type，则说明是查找上一个或下一个匹配项，只需要改变当前搜索的索引
+            if(type) {
+               //获取当前点击的是第几个
+               var curIndex = JSON.parse(localStorage.searchArr)[0].clickIndex;
+
+               //取出当前索引
+               if(curIndex == 0 && type == -1) {
+                 this.message.showMessage('info','已经是第一个！');
+                 return;
+               };
+
+               index = curIndex + type;
+               var _this = this;
+               // fontIndex = this.findIndex(this.iframeInnerText,this.searchKey,index);
+
+               // console.log(this.iframeInnerText.substr(fontIndex,10))
+
+               // console.log(this.iframeInnerText)
+               // $(this.bookIframeWindow.document.body).children().each(function (index, citem) {
+               //    if(citem.nodeName == 'div' || citem.nodeName == 'p') {
+               //      console.log(1)
+               //         fontIndex = _this.getFontNumByELe(citem);
+               //     }else if(citem.nodeName.indexOf('h') !== -1) {
+               //      console.log(12)
+               //         fontIndex = _this.getFontNumByELe(citem);
+               //     }
+               // })
+
+
+               // console.log('') 
+
+            }else {
+
+               if(!this.iframeInnerText) this.iframeInnerText = $(this.bookIframeWindow.document.body).text();
+
+               // fontIndex = this.iframeInnerText.indexOf(this.searchKey);
+            }
+
+            localStorage.removeItem('searchArr');
+            localStorage.setItem('searchArr', JSON.stringify([{
+                searchKeyword: this.searchKey,
+                searchIndex: fontIndex,
+                clickIndex: index,
+                formId: '',
+                sectionId: 0
+            }]));
+        },
+        
+        /**
+         * [findIndex 获取一个字符串第几次出现的索引]
+         * @Author   罗文
+         * @DateTime 2017-12-26
+         * @param    {[type]}   str [大字符串]
+         * @param    {[type]}   cha [要查找的字符串]
+         * @param    {[type]}   num [第几次出现]
+         * @return   {[type]}       [description]
+         */
+        findIndex:function find(str,cha,num){
+            var x=str.indexOf(cha);
+            for(var i=0;i<num;i++){
+                x=str.indexOf(cha,x+1);
+            }
+            return x;
+        },
+
+        //获取某个节点之前所有兄弟节点的字数
+          getFontNumByELe(elm) {
+              var a = [];
+              var pageNum = 0;
+
+               $(elm).prevAll().each((nindex, nitem)=>{
+                  pageNum += $(nitem).text().length;
+               })
+              return pageNum;
+          },
+
+        
+        /**
+         * [clearBookSearch 清除文内检索]
+         * @Author   罗文
+         * @DateTime 2017-12-26
+         * @return   {[type]}   [description]
+         */
+        clearBookSearch:function clearBookSearch() {
+            this.searchKey = '';
+            this.isBookSearchNextShow = false;
+            localStorage.removeItem('searchArr');
+            localStorage.setItem('searchArr', JSON.stringify([{
+                searchKeyword: '',
+                searchIndex: 0,
+                clickIndex: 0,
+                formId: '',
+                sectionId: 0
+            }]));
+        },
+
+
+        //改变iframe链接地址
+        changeIframeSrc: function changeIframeSrc(src, index, clickItemId) {
+            var _this5 = this;
+
+            // if ((!index && index !== 0) && !src) return;
+            if (src) {
+                this.iframeSrc = src;
+                this.isLibShow = false;
+
+                if(this.libIsActive) {
+                    this.countLeft = 0;
+                }
+                return;
+            }
+
+            if (index || index == 0) {
+                //验证有没有用户信息
+                var hasUserId = volidUserId();
+                if (!hasUserId) return;
+
+                //单独处理点击切换目录的index的值
+                if (clickItemId) {
+                    //判断是否能匹配到这个id,如果匹配不到，说明是点击的章，不是节，则return
+                    var isIdMatched = false;
+
+                    this.tableofSections.forEach(function (titem, tindex) {
+                        if (titem.Id == clickItemId) {
+                            index = tindex;
+                            isIdMatched = true;
+                        }
+                    });
+
+                    if (!isIdMatched) return;
+                }
+
+                this.curSectionIndex = index;
+                if (this.libLeft >= -280) {
+                    this.openLibCate();
+                }
+
+                //检查是否开启了文内检索，开启了的话就关掉
+                localStorage.setItem('closeBookSearchBySectionId', this.sectionid);
+
+                //防止页面没刷新，用户在下载中心删除了地图，再点这个地图报错，需要再次验证是否有本地文件
+                GetDownLoadedResources(this.tableofSections[index].Id + '', localStorage.getItem('userId'), function (hasDownLoadedContent) {
+
+                    hasDownLoadedContent = JSON.parse(hasDownLoadedContent);
+
+                    if (hasDownLoadedContent.length == 0) {
+                        //此时被用户删除了这个文件，重新去下载
+                        _this5.loading = true;
+                        _this5.downLoadPercent = 0;
+                        var item = _this5.tableofSections[index];
+
+                        //新增一条足迹
+                        ApiTransfer('get', '/resource/detail', JSON.stringify({
+                            resourceid: item.Id,
+                            userid: localStorage.getItem('userId')
+                        }), function (winResult) {});
+
+                        var data = {
+                            fileid: item.DefaultFileId,
+                            isPC: true,
+                            userid: localStorage.getItem('userId'),
+                            type: 2,
+                            resourceid: item.Id,
+                            source: item.Source,
+                            title: item.Title
+
+                            //多线程异步下载
+                        };DownLoadProgress('get', '/file/stream', JSON.stringify(data), function (progress, nativeUrl, err) {
+
+                            if (err) {
+                                OpenForm(480, 500, '/index.html#/userCenter', '个人信息');
+                                localStorage.setItem('fromWhere', 3);
+                                _this5.loading = false;
+                            } else {
+                                item.nativeUrl = nativeUrl;
+                                //获取下载进度
+                                if (Math.floor(progress) >= 100) {
+                                    _this5.downLoadPercent = 100;
+                                    item.hasDown = true;
+
+                                    _this5.sectionid = item.Id;
+                                    _this5.bookSecret = item.Secret;
+                                    _this5.nativeUrl = item.nativeUrl;
+                                    _this5.fileId = item.DefaultFileId;
+
+                                    var a = ReadBook(_this5.nativeUrl, _this5.bookSecret);
+                                    _this5.sectionLibList = JSON.parse(a);
+                                    _this5.iframeSrc = _this5.sectionLibList[0].Src;
+
+                                    //初始化下一章的数据
+                                    SetTabTitle(_this5.sectionLibList[0].Title, GetFormId());
+                                    //获取是否已经收藏
+                                    // //清理文内检索数据
+                                    // this.clearCurBookSearchData();
+                                    _this5.gethasCollect();
+                                    //获取相关地图
+                                    _this5.getCurSectionMapData();
+
+                                    _this5.loading = false;
+                                } else {
+                                    _this5.downLoadPercent = Math.floor(progress);
+                                }
+
+                                // this.$set(this.bookListData, index, item)
+                            }
+                        });
+                    } else {
+
+                        //如果是已经下载完成的
+                        // 要获取本地路径 和 密钥
+                        var item = _this5.tableofSections[index];
+
+                        //新增一条足迹
+                        ApiTransfer('get', '/resource/detail', JSON.stringify({
+                            resourceid: item.Id,
+                            userid: localStorage.getItem('userId')
+                        }), function (winResult) {});
+
+                        _this5.sectionid = item.Id;
+                        _this5.bookSecret = item.Secret;
+                        _this5.nativeUrl = item.nativeUrl;
+                        _this5.fileId = item.DefaultFileId;
+
+                        var a = ReadBook(_this5.nativeUrl, item.Secret);
+                        _this5.sectionLibList = JSON.parse(a);
+                        _this5.iframeSrc = _this5.sectionLibList[0].Src;
+
+                        SetTabTitle(_this5.sectionLibList[0].Title, GetFormId());
+
+                        //获取是否已经收藏
+                        _this5.gethasCollect();
+                        //获取相关地图
+                        _this5.getCurSectionMapData();
+                    }
+                });
+
+                return;
+            }
+        },
+
+        //获取所有的标题的offsetLeft, 不是top
+        getSectionTop: function getSectionTop(type) {
+
+            //防止获取不到h2，依次用h3和h1代替
+            this.thisIframeSections = this.bookIframeWindow.document.getElementsByTagName('h2');
+            if (this.thisIframeSections.length == 0) {
+                this.thisIframeSections = this.bookIframeWindow.document.getElementsByTagName('h3');
+                if (this.thisIframeSections.length == 0) {
+                    this.thisIframeSections = this.bookIframeWindow.document.getElementsByTagName('h1');
+                }
+            }
+
+            //这里实际是获取的left集合，取名字错了成了top，懒得改
+            this.thisIframeSectionTops = [];
+
+            // if (this.isTwoCol) {
+            for (var i = 0; i < this.thisIframeSections.length; i++) {
+                this.thisIframeSectionTops.push(this.thisIframeSections[i].offsetLeft);
+            }
+            // } else {
+            //     for (let i = 0; i < this.thisIframeSections.length; i++) {
+            //         this.thisIframeSectionTops.push(this.thisIframeSections[i].offsetTop);
+            //     }
+            // }
+        },
+
+        // 设置底部显示小节名称及进度
+        setIframeReadingSectionName: function setIframeReadingSectionName() {
+
+            var scrollTop = this.bookIframeWindow.document.body.scrollTop;
+            var scrollLeft = this.bookIframeWindow.document.body.scrollLeft;
+
+            //每次滚动就去除已添加书签 和  此时不允许添加书签
+
+            this.setScreenScroll(scrollLeft, 300); //设置屏幕滚动位置
+
+            this.readPercent = parseInt(scrollLeft / this.bookIframeWindow.document.body.scrollWidth * 100);
+
+            // console.log(this.readPercent)
+            if (this.bookIframeWindow.document.body.scrollWidth - scrollLeft <= this.winWidth * 0.95) {
+                this.readPercent = 100;
+            }
+
+            //刚进入阅读的时候
+            if (scrollLeft < this.thisIframeSectionTops[0] - 100) {
+                this.sectionName = this.bookIframeWindow.document.getElementsByTagName('h1')[0].innerText;
+                return;
+            }
+
+            for (var i = 0; i < this.thisIframeSectionTops.length; i++) {
+
+                //渲染每个小节名
+                if (scrollLeft >= this.thisIframeSectionTops[i] - 100 && scrollLeft < this.thisIframeSectionTops[i + 1] - 100) {
+                    this.sectionName = this.thisIframeSections[i].innerText;
+                    break;
+                }
+
+                //当走到最后的时候
+                if (i == this.thisIframeSectionTops.length - 1) {
+                    this.sectionName = this.thisIframeSections[i].innerText;
+                }
+            }
+
+            // }
+        },
+
+        //设置屏幕滚动a
+        setScreenScroll: function setScreenScroll(scrollLeft, time) {
+            var _this6 = this;
+
+            var type = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
+
+
+            //监听屏幕滚动结束事件
+            if (this.scrollTimer) clearTimeout(this.scrollTimer);
+
+            this.scrollTimer = setTimeout(function () {
+
+                var scrollLeftCount = (scrollLeft - scrollLeft % (_this6.winWidth * 0.95)) / (_this6.winWidth * 0.95);
+
+                //不足半屏向左调整
+                if (scrollLeft % (_this6.winWidth * 0.95) / (_this6.winWidth * 0.95) <= 0.5) {
+
+                    if (!(_this6.bookIframeWindow.document.body.scrollWidth - (_this6.countLeft + _this6.winWidth) <= _this6.winWidth * 0.95 / 2)) {
+                        //如果翻滚到最后一页，不需要调整，防止看不了最后一页
+                        _this6.countLeft = scrollLeftCount * (_this6.winWidth * 0.95);
+                    }
+                } else if (scrollLeft % (_this6.winWidth * 0.95) / (_this6.winWidth * 0.95) > 0.5) {
+                    //大于半屏向右调整
+                    if (type == -1) {
+                        _this6.countLeft = _this6.isTwoCol ? scrollLeftCount * (_this6.winWidth * 0.95) : (scrollLeftCount + 1) * (_this6.winWidth * 0.95);
+                    } else {
+                        _this6.countLeft = (scrollLeftCount + 1) * (_this6.winWidth * 0.95);
+                    }
+                    // this.bookIframeWindow.document.body.scrollLeft = (scrollLeftCount + 1) * (this.winWidth*0.95) ;
+                }
+
+
+                _this6.flexMove1(_this6.bookIframeWindow.document.body, _this6.countLeft, 10);
+
+                // setTimeout(()=>{
+                //    EnableMenuIcon(true,'图文',1); 
+                // }, 600)
+            }, time);
+
+            this.scrollCount++;
+        },
+
+        //设置背景色
+        setBgColor: function setBgColor(color) {
+            if (color) {
+                this.bookIframeWindow.document.body.style.background = color;
+                this.bottomBg = color;
+                // $('#bookCont').css('background',color);
+                $(this.$refs.bookContTop).css('background', color);
+                $(this.$refs.bookIframe).css({
+                    border: '70px solid ' + color,
+                    borderTop: '20px solid ' + color
+                });
+            } else {
+                // color = this.bottomBg;
+                // color = 'rgb('+Math.ceil(Math.random()*255)+','+Math.ceil(Math.random()*255)+','+Math.ceil(Math.random()*255)+')' || color ;
+                this.bookIframeWindow.document.body.style.background = 'white';
+                $(this.$refs.bookCont).css('background', '#e2e3d9');
+                this.bottomBg = '#e2e3d9';
+            }
+
+            this.isBgModalShow = false;
+        },
+
+        // 设置字体
+        setFontSize: function setFontSize(type) {
+
+            // type = -1 --缩小  1 -- 放大
+            var action;
+            var eleMin = null;
+
+            if (!type) {
+                action = this.fontCount * 2;
+            } else {
+                if (type == -1) {
+                    action = -2;
+                    this.fontCount--;
+                } else if (type == 1) {
+                    action = 2;
+                    this.fontCount++;
+                }
+
+                //此时是人为的放大缩小，这个时候如果已经保存就直接使用 如果没保存，就保存左上角第一个元素
+                this.firstEle = this.firstEle ? this.firstEle : this.getScreenStartEle()[0];
+            }
+
+            var listOFIframeNodes = this.bookIframeWindow.document.getElementsByTagName('*');
+            for (var i = 0; i < listOFIframeNodes.length; i++) {
+                listOFIframeNodes[i].style.fontSize = parseInt(getComputedStyle(listOFIframeNodes[i], null).fontSize) + action + 'px';
+            }
+
+            if (this.firstEle) {
+                // 设置回到之前阅读位置,要判断是单栏还是双栏
+                //如果是单栏
+                // if(!this.isTwoCol) {
+                //    this.countLeft = this.firstEle.offsetLeft;
+                //    this.bookIframeWindow.document.body.scrollLeft = this.countLeft;
+                //    // this.flexMove1(this.bookIframeWindow.document.body, this.countLeft);
+                // }else {
+                //    console.log(this.firstEle)
+                //    //此时是双栏，要根据是在左半屏还是右半屏来判断
+                //    console.log(this.firstEle.offsetLeft % (this.winWidth * 0.95 - 0.3) / (this.winWidth * 0.95 - 0.3));
+                //    // if(this.firstEle.offsetLeft % (this.winWidth * 0.95 - 0.3) /) {
+
+                //    // }                    
+                //    this.countLeft = this.firstEle.offsetLeft;
+                //    this.flexMove1(this.bookIframeWindow.document.body, this.countLeft);
+                // }
+                // 
+                this.countLeft = this.firstEle.offsetLeft;
+                this.bookIframeWindow.document.body.scrollLeft = this.countLeft;
+            }
+
+            this.isFontModalShow = false;
+
+            //设置进度
+            this.getSectionTop();
+            this.setIframeReadingSectionName();
+        },
+
+        //页码操作
+        togglePageNum: function togglePageNum(type) {
+            //设置页码
+
+            if (type !== -1) {
+                this.pageNumShow = !this.pageNumShow;
+                if (this.pageNumShow) {} else {
+                    ;
+                }
+            }
+
+            var listOFIframeNodes = $(this.bookIframeWindow.document).find('a[href^="http://"]');
+            var _this = this;
+            listOFIframeNodes.each(function (index, item) {
+                $(item).css({
+                    textDecoration: 'none',
+                    color: '#666',
+                    cursor: 'default',
+                    fontSize: '12px'
+                });
+                var preText = $(item).text().replace(/</g, '');
+                preText = preText.replace(/>/g, '');
+                preText = preText.replace('第', '');
+
+                $(item).text('<' + preText + '>');
+                if (_this.pageNumShow) {
+                    $(item).show();
+                } else {
+                    $(item).hide();
+                }
+            });
+        },
+
+        //鼠标悬浮到窗口左右时出现箭头
+        showExchange: function showExchange(e) {
+
+            if (e.clientX <= 70 || e.clientX >= this.winWidth - 70) {
+                this.bodyMouseenter = true;
+            } else if (e.clientX <= 0 || e.clientX >= this.winWidth) {
+                this.bodyMouseenter = false;
+            } else {
+                this.bodyMouseenter = false;
+            }
+        },
+
+        //进入左右箭头
+        enterArrowSrc: function enterArrowSrc(type) {
+            // -1 左箭头 1 右箭头
+            switch (type) {
+                case -1:
+                    this.leftArrow = '../images/选中-左.png';
+                    break;
+                case 1:
+                    this.rightArrow = '../images/选中-右.png';
+                    break;
+                default:
+                    // statements_def
+                    break;
+            }
+        },
+        leaveArrowSrc: function leaveArrowSrc(type) {
+            // -1 左箭头 1 右箭头
+            switch (type) {
+                case -1:
+                    this.leftArrow = '../images/未选中-左.png';
+                    break;
+                case 1:
+                    this.rightArrow = '../images/未选中-右.png';
+                    break;
+                default:
+                    // statements_def
+                    break;
+            }
+        },
+
+        // 单双栏切换
+        togglePageCol: function togglePageCol(type) {
+
+            if (type !== -1) {
+                // this.countLeft = 0;
+                this.isTwoCol = !this.isTwoCol;
+            }
+
+            var _this = this;
+            var iframeBody = $(_this.bookIframeWindow.document.body);
+            if (_this.isTwoCol) {
+                //此时是双栏
+                iframeBody.css({
+                    columnCount: 2,
+                    columnWidth: 'auto'
+                });
+            } else {
+                //此时是单栏
+                iframeBody.css({
+                    columnCount: 1,
+                    columnWidth: 'auto',
+                    width: '100%'
+                });
+            }
+
+            //单双栏公共
+            iframeBody.css({
+                columnGap: _this.winWidth / 20 + 'px',
+                // columnBreakInside:'avoid',
+                height: _this.winHeight - 80 + 'px',
+                marginTop: '40px',
+                transform: 'scaleY(0.9)'
+            });
+
+            iframeBody.css('-webkit-column-break-inside', 'avoid');
+        },
+
+
+        //上下页切换函数
+        pageExchange: function pageExchange(type) {
+            //手动翻页，清除之前保存的左上角第一个元素
+            if(this.libIsActive) {
+                this.firstEle = null;
+
+                switch (type) {
+                    case -1:
+                        // var left = this.winWidth > 1000 ? this.winWidth:100
+                        this.countLeft -= this.winWidth * 0.95 - 0.3;
+                        this.flexMove1(this.bookIframeWindow.document.body, this.countLeft);
+                        break;
+                    case 1:
+                        if (this.bookIframeWindow.document.body.scrollWidth - (this.countLeft + this.winWidth) <= this.winWidth * 0.95 / 2) {
+                            //当滚动最后一页，只有半页的时候，始终切不过去，所以这种情况下只切半页
+                            this.countLeft += (this.winWidth * 0.95 + 0.3) / 2;
+                        } else {
+                            this.countLeft += this.winWidth * 0.95 + 0.3;
+                        }
+                        this.flexMove1(this.bookIframeWindow.document.body, this.countLeft);
+                        break;
+                    default:
+                        // statements_def
+                        break;
+                } 
+            }
+        },
+
+        //通过按键上下页切换
+        changePageByKeyDown: function changePageByKeyDown(e) {
+            var type = null;
+            if (e.keyCode == 37) {
+                type = -1;
+            } else if (e.keyCode == 39) {
+                type = 1;
+            }
+            //获取向右还是向左 1- 向左 -1 -向右
+            this.pageExchange(type);
+        },
+        flexMove1: function flexMove1(obj, target) {
+            console.log(target)
+            var time = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 30;
+
+            target = Math.round(target * 10) / 10;
+
+            //边界处理
+            if (target < 0) {
+                this.countLeft = 0;
+                return;
+            }
+
+            if (target > this.bookIframeWindow.document.body.scrollWidth) {
+                // this.countLeft = this.bookIframeWindow.document.body.scrollWidth
+                this.countLeft -= this.winWidth * 0.95;
+                return;
+            }
+
+            var _this = this;
+
+            var isSpeed = 0;
+            var left = obj.scrollLeft;
+            clearInterval(obj.timer);
+
+            // console.log(target);
+            // console.log(this.bookIframeWindow.document.body.scrollWidth);
+            // console.log(this.bookIframeWindow.document.body.offsetWidth);
+            // console.log(obj.scrollLeft);
+            obj.timer = setInterval(function () {
+                isSpeed = (target - obj.scrollLeft) / 5; //设置当前速度
+                isSpeed *= 0.7; //当前速度乘以弹性系数
+
+                left += isSpeed; //left随速度不断累加
+                if (Math.abs(isSpeed) < 1 && Math.abs(left - target) < 1) {
+                    clearInterval(obj.timer);
+                    obj.timer = null;
+                    obj.scrollLeft = target;
+                } else {
+                    obj.scrollLeft = left;
+
+                }
+            }, time);
+        },
+
+
+        //开始下载
+        startDownLoad: function startDownLoad(item, index) {
+            var _this7 = this;
+
+            if (item.hasDownLoad) {
+                this.closeLibOper();
+                this.toMapView(item, item.Id);
+                return;
+            };
+            item.startDownLoad = true;
+            item.top = 0;
+
+            if (env == 'dev') {
+                var setTime = setInterval(function () {
+                    if (item.downLoadPercent >= 100) {
+                        item.downLoadPercent = 100;
+                        item.hasDownLoad = true;
+
+                        setTimeout(function () {
+                            var setTime1 = setInterval(function () {
+                                if (item.top <= -153) {
+                                    item.top = -153;
+                                    clearInterval(setTime1);
+                                } else {
+                                    item.top -= 2;
+                                }
+                                _this7.$set(_this7.maplistData, index, item);
+                            }, 1);
+                        }, 500);
+                        clearInterval(setTime);
+                    } else {
+                        item.downLoadPercent += 1;
+                        $(_this.bookIframeWindow).scrollLeft(left);
+                    }
+                    _this7.$set(_this7.maplistData, index, item);
+                }, 1);
+            } else if (env == 'prod') {
+
+                var data = {
+                    resourceid: item.Id,
+                    userid: localStorage.getItem('userId'),
+                    fileid: item.DefaultFileId,
+                    isPC: true,
+                    type: 3,
+                    source: item.Source,
+                    title: item.Title
+
+                    //多线程异步下载
+                };DownLoadProgress('get', '/file/stream', JSON.stringify(data), function (progress, nativeUrl, err) {
+
+                    if (err) {
+                        OpenForm(480, 500, '/index.html#/userCenter', '个人信息');
+                        localStorage.setItem('fromWhere', 3);
+                        item.startDownLoad = false;
+                    } else {
+                        item.nativeUrl = nativeUrl;
+                        //获取下载进度
+                        if (Math.floor(progress) >= 100) {
+                            item.downLoadPercent = 100;
+                            item.hasDownLoad = true;
+                        } else {
+                            item.downLoadPercent = Math.floor(progress);
+                        }
+                    }
+
+                    _this7.$set(_this7.maplistData, index, item);
+                });
+            }
+        },
+
+        //跳转地图阅读页面
+        toMapView: function toMapView(item, resourceid) {
+            if (item.hasDownLoad) {
+                if (env == 'dev') {
+                    window.location.href = './static/map.html?resourceid=' + resourceid;
+                } else if (env == 'prod') {
+                    SaveArgument('imgSrc=' + item.nativeUrl + '&resourceid=' + resourceid);
+                    loadForm('/static/map.html', '地图阅读', item.Title, true);
+                }
+            }
+        },
+        showDownIcon: function showDownIcon(item, index) {
+            if (!item.hasDownLoad) item.showHasDownLoad = !item.showHasDownLoad;
+            this.$set(this.maplistData, index, item);
+        },
+
+
+        //获取当前章节其他信息，如fileid
+        getCurSectionOtherInfo: function getCurSectionOtherInfo() {
+            // 获取资源详情，然后根据详情获得fileid
+            // ApiTransfer('get','/resource/detail',JSON.stringify({resourceid:this.sectionid}),(winResult)=>{
+            //     winResult=JSON.parse(winResult)
+
+            //     this.fileId = winResult.Data.DefaultFileId;
+
+            // }); 
+        },
+
+
+        /**
+        * [scrollToLibIndex 如果是点击的小节进入的]
+        * @Author   罗文
+        * @DateTime 2017-12-14
+        * @return   {[type]}   [description]
+        */
+        scrollToLibIndex: function scrollToLibIndex() {
+            var _this8 = this;
+
+            if (localStorage.sectionLibIndex && localStorage.sectionLibIndex !== '') {
+                this.sectionLibList.forEach(function (item, index) {
+                    //判断是第几个小节
+                    if (item.Title == localStorage.sectionLibIndex) {
+                        _this8.changeIframeSrc(item.Src, index);
+                    }
+                });
+
+                localStorage.removeItem('sectionLibIndex');
+            }
+        },
+
+
+        //清除文内检索数据
+        clearCurBookSearchData: function clearCurBookSearchData() {
+            // var formId = GetFormId();
+            var formId = 'abcd';
+
+            if (localStorage.getItem('searchArr')) {
+                var searchArr = JSON.parse(localStorage.getItem('searchArr'));
+
+                searchArr.forEach(function (item, index) {
+                    if (item.formId == formId) {
+                        searchArr.splice(index, 1);
+                    }
+                });
+
+                localStorage.setItem('searchArr', JSON.stringify(searchArr));
+            }
+        },
+
+
+        //控制右键菜单不让他跑
+        openOrCloseContextMenu: function openOrCloseContextMenu(isopen) {
+            var listOfcontextmenu = document.getElementsByClassName('context-menu');
+
+            for (var i = 0; i < listOfcontextmenu.length; i++) {
+                if (isopen) {
+                    listOfcontextmenu[i].style.display = 'block';
+                } else {
+                    listOfcontextmenu[i].style.display = 'none';
+                }
+            }
+        },
+
+
+        /**
+        * [addRecordReadHistory 添加一条阅读历史]
+        * @Author   罗文
+        * @DateTime 2017-12-06
+        */
+        addRecordReadHistory: function addRecordReadHistory() {
+            var _this = this;
+            $.ajax({
+                type: "POST",
+                url: baseUrl + "/History/Record",
+                data: Object.assign({}, {
+                    id: _this.sectionid,
+                    userId: localStorage.userId,
+                    objectType: _this.sectionType,
+                    deviceToken: sessionStorage.deviceToken,
+                    // accessToken:sessionStorage.accessToken,
+                    apiname: '/History/Record',
+                    actionType: 3 //操作动作，3-阅读（点击阅读按钮），4-分享，5-打印，6-点赞
+                }, systemParams),
+                success: function success(res) {
+                    if (res.Success) {} else {
+                        _this.$message.warning(res.data.Description);
+                    }
+                }
+            });
+        }
+    },
+    created: function created() {
+        // setTimeout(()=>{
+        // if(env == 'prod') {
+
+        //     var sectionData = GetArgument(); 
+
+        //     this.sectionid = sectionData.split('&')[0];
+        //     this.sectionType = sectionData.split('&')[1];
+
+        //     this.formId = GetFormId();
+
+        //     //清理文内检索数据
+        //     this.clearCurBookSearchData();
+
+        // }else if(env == 'dev') {
+        //     this.sectionid = 251576;
+        //     localStorage.removeItem('searchKeyword');
+        // }
+
+        if (location.href.indexOf('data=') !== -1) {
+            var fileData = decodeURIComponent(location.href.slice(location.href.indexOf('data=') + 5));
+
+            fileData = JSON.parse(fileData);
+
+            this.sectionid = fileData.objectId;
+            this.objectType = fileData.objectType;
+
+            console.log(this.sectionid,this.objectType)
+        }
+
+        localStorage.removeItem('searchArr');
+        // },500)
+    },
+    mounted: function mounted() {
+        var _this9 = this;
+
+        // ShowDevTools();
+        //下面这个定时器是为了解决一进入窗口样式错乱的bug
+        setTimeout(function () {
+            var imgNode = document.createElement('img');
+            imgNode.setAttribute('src', '../images/loading.gif');
+            document.getElementById('loadMenban').appendChild(imgNode);
+        }, 100);
+        // setTimeout(()=>{
+        //     document.getElementById('loadMenban').parentNode.removeChild(document.getElementById('loadMenban'));
+        //  },2000)
+
+
+        // var a = ReadBook(this.sectionid);
+
+        // this.sectionLibList = JSON.parse(a);
+
+        var rootUrl = '../OPS/';
+        this.sectionLibList = [{
+            Title: '第六章 木结构的维修',
+            Src: rootUrl + 'chapter8.xhtml#A4d7a0027-4c5f-4839-98db-e56e67b32c48'
+        }, {
+            Title: '第一节 一般规定',
+            Src: rootUrl + 'chapter8.xhtml#A68e90027-746e-4bf1-a9f8-ff1854420a76'
+        }, {
+            Title: '第二节 荷载',
+            Src: rootUrl + 'chapter8.xhtml#A9ab20028-d1c6-48ad-b4ab-2ea1f1694914'
+        }, {
+            Title: '第三节 木材及胶粘剂',
+            Src: rootUrl + 'chapter8.xhtml#Aa3550028-a557-4404-91b3-61c911aa16f8'
+        }, {
+            Title: '第四节 计算原则',
+            Src: rootUrl + 'chapter8.xhtml#A7bdc002d-7308-46b0-bb95-9ab8c27f5333'
+        },{
+            Title: '第五节 木构架的整体维修与加固',
+            Src: rootUrl + 'chapter8.xhtml#A79f1002e-f73e-4ebd-b7f8-b5f9be99cf40'
+        },{
+            Title: '第六节 木柱',
+            Src: rootUrl + 'chapter8.xhtml#A67560030-8336-4c08-8e45-3ef8c934891f'
+        },{
+            Title: '第七节 梁枋',
+            Src: rootUrl + 'chapter8.xhtml#A35170032-c52c-4585-bba9-1afe65a0c7e4'
+        },{
+            Title: '第八节 斗栱',
+            Src: rootUrl + 'chapter8.xhtml#A3c080035-3d73-4b27-9577-13dfb7c761ea'
+        },{
+            Title: '第九节 梁枋、柱的化学加固',
+            Src: rootUrl + 'chapter8.xhtml#A48e80036-70b6-4def-bcf9-7df29783be8e'
+        }];
+
+
+
+        this.iframeSrc = this.sectionLibList[0].Src;
+        // this.iframeSrc = '../toc/txt015.xhtml';
+
+        //初始化提示信息
+        this.message = new Message();
+
+        var _this = this;
+
+        //获取文件其他信息，如文件id
+        this.getCurSectionOtherInfo();
+        //获取是否已经收藏
+        this.gethasCollect();
+
+        //初始化窗口
+        this.setWindow();
+
+        //添加一条历史记录
+        this.addRecordReadHistory();
+
+        //实例化一个消息盒子
+
+
+        document.oncontextmenu = function (e) {
+            e.preventDefault();
+        };
+
+        //按左右键翻页
+        var _this = this;
+        document.onkeydown = function (e) {
+            _this.changePageByKeyDown(e);
+        };
+
+        //显示左右翻页
+        document.addEventListener('mousemove', function (e) {
+            _this.showExchange(e);
+        }, false);
+
+        window.onresize = function () {
+             _this9.setWindow();
+            if(_this9.libIsActive) {
+                _this9.togglePageCol(-1);
+                _this9.getSectionTop();
+                _this9.setIframeReadingSectionName();
+                _this9.setScreenScroll(_this9.bookIframeWindow.document.body.scrollLeft, 100);
+            }
+            
+        };
+        //    }
+        // }); 
+
+    },
+
+
+    watch: {
+        'winWidth': function winWidth(nv, ov) {
+            this.setIframeImgWithWindow(nv, ov);
+        },
+        'winHeight': function winHeight(nv, ov) {
+            this.setIframeImgWithWindow(nv, ov);
+        },
+
+        'libIsActive': function libIsActive(nv, ov) {
+            if(!nv) {
+                var modalDiv = document.createElement('div');
+                    modalDiv.style.cssText = 'position: fixed;left: 0;top:0;z-index: 99999;display: flex;justify-content: center;align-items: center; width: 100%;height: 100%;background: white;';
+                    modalDiv.setAttribute('id', 'loadMenban');
+                    document.body.appendChild(modalDiv);
+
+                var imgNode = document.createElement('img');
+                    imgNode.setAttribute('src', '../images/loading.gif');
+                    document.getElementById('loadMenban').appendChild(imgNode);    
+
+                setTimeout(()=>{
+                    document.getElementById('loadMenban').parentNode.removeChild(document.getElementById('loadMenban'));
+                 },700)
+                //瀑布阅读
+                $(this.bookIframeWindow.document.body).css({
+                    margin: '0 auto',
+                    letterSpacing: '1px',
+                    overflowY: 'auto',
+                    width: '90%',
+                    height: 'auto',
+                    marginTop: '10px',
+                    transform:'scale(1)'
+                });
+
+                this.clearBookSearch();
+
+                this.bookIframeWindow.scrollTo(0,0);
+            }else {
+                window.location.reload();
+            }
+        }
+    }
+});
+    </script>
+    <script src="../js/reader.js"> </script>
+</body>
+
+</html>

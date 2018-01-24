@@ -1,0 +1,11 @@
+C:\Source\VariantHLSPlayer\VariantHLSPlayer\bin\VariantHLSPlayer.dll.config
+C:\Source\VariantHLSPlayer\VariantHLSPlayer\bin\VariantHLSPlayer.dll
+C:\Source\VariantHLSPlayer\VariantHLSPlayer\bin\VariantHLSPlayer.pdb
+C:\Source\VariantHLSPlayer\VariantHLSPlayer\obj\Debug\VariantHLSPlayer.dll
+C:\Source\VariantHLSPlayer\VariantHLSPlayer\obj\Debug\VariantHLSPlayer.pdb
+E:\Source\VariantHLSPlayer\VariantHLSPlayer\bin\VariantHLSPlayer.dll.config
+E:\Source\VariantHLSPlayer\VariantHLSPlayer\bin\VariantHLSPlayer.dll
+E:\Source\VariantHLSPlayer\VariantHLSPlayer\bin\VariantHLSPlayer.pdb
+E:\Source\VariantHLSPlayer\VariantHLSPlayer\obj\Debug\VariantHLSPlayer.csprojResolveAssemblyReference.cache
+E:\Source\VariantHLSPlayer\VariantHLSPlayer\obj\Debug\VariantHLSPlayer.dll
+E:\Source\VariantHLSPlayer\VariantHLSPlayer\obj\Debug\VariantHLSPlayer.pdb
