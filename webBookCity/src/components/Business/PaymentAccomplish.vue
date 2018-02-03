@@ -66,7 +66,7 @@ export default {
     },
     /**
      * [getOrderList 获取订单列表]
-     * @Author   赵雯欣
+     * @Author   王柳
      * @DateTime 2018-01-08
      * @return   {[type]}   [description]
      */
@@ -89,7 +89,7 @@ export default {
     },
     /**
      * [getlist 获取同类资源]
-     * @Author   赵雯欣
+     * @Author   王柳
      * @DateTime 2018-01-08
      * @return   {[type]}   [description]
      */
@@ -109,7 +109,7 @@ export default {
     },
     /**
      * [isReadFn 阅读资源]
-     * @Author   赵雯欣
+     * @Author   王柳
      * @DateTime 2018-01-08
      * @return   {Boolean}  [description]
      */
@@ -122,7 +122,7 @@ export default {
     // },
     /**
      * [getOrderDetail 获取内容详情]
-     * @Author   赵雯欣
+     * @Author   王柳
      * @DateTime 2018-01-08
      * @return   {[type]}   [description]
      */

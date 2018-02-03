@@ -93,7 +93,7 @@ export default {
     },
     /**
      * [PaidFn 支付]
-     * @Author   赵雯欣
+     * @Author   王柳
      * @DateTime 2017-12-25
      */
     PaidFn() {
@@ -130,7 +130,7 @@ export default {
     },
     /**
      * [changePaidMethod 切换支付方式]
-     * @Author   赵雯欣
+     * @Author   王柳
      * @DateTime 2017-12-26
      * @param    {[type]}   index [description]
      * @return   {[type]}         [description]

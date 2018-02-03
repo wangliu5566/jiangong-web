@@ -302,7 +302,7 @@ export default {
     },
     /**
      * [getTotalMoney 获取总价]
-     * @Author   赵雯欣
+     * @Author   王柳
      * @DateTime 2017-12-26
      * @return   {[]}   [description]
      */
@@ -346,7 +346,7 @@ export default {
     },
     /**
      * [PaidFn 生成订单并跳转支付页面]
-     * @Author   赵雯欣
+     * @Author   王柳
      * @DateTime 2017-12-26
      */
     PaidFn() {
@@ -392,7 +392,7 @@ export default {
     },
     /**
      * [getFreight 计算运费]
-     * @Author   赵雯欣
+     * @Author   王柳
      * @DateTime 2018-01-22
      * @return   {[type]}   [description]
      */
@@ -444,7 +444,7 @@ export default {
     },
     /**
      * [addAddressModal 新增修改收货地址模态框]
-     * @Author   赵雯欣
+     * @Author   王柳
      * @DateTime 2017-12-24
      */
     addAddressModal(type, item) {
@@ -455,7 +455,7 @@ export default {
     },
     /**
      * [changeDefaultAd 修改默認收穫地址]
-     * @Author   赵雯欣
+     * @Author   王柳
      * @DateTime 2018-01-15
      * @return   {[type]}   [description]
      */

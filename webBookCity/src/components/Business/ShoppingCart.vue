@@ -322,7 +322,7 @@ export default {
     },
     /**
      * [getSameType 获取同类资源]
-     * @Author   赵雯欣
+     * @Author   王柳
      * @DateTime 2017-12-22
      * @return   {[type]}   [description]
      */
@@ -349,7 +349,7 @@ export default {
     },
     /**
      * [updateShoppingCar 修改购物车]
-     * @Author   赵雯欣
+     * @Author   王柳
      * @DateTime 2017-12-21
      * @param    {[type]}   id    [description]
      * @param    {[type]}   count [description]
@@ -373,7 +373,7 @@ export default {
     },
     /**
      * [cancleCollect 移入收藏]
-     * @Author   赵雯欣
+     * @Author   王柳
      * @DateTime 2018-01-17
      * @param    {[type]}   obj [description]
      * @return   {[type]}       [description]
@@ -392,7 +392,7 @@ export default {
     },
     /**
      * [goPaidPage 跳转确认订单页面]
-     * @Author   赵雯欣
+     * @Author   王柳
      * @DateTime 2017-12-20
      * @return   {[type]}   [description]
      */
@@ -433,7 +433,7 @@ export default {
     },
     /**
      * [orderDelete 删除订单]
-     * @Author   赵雯欣
+     * @Author   王柳
      * @DateTime 2017-12-21
      * @param    {[type]}   id [description]
      * @return   {[type]}      [description]
