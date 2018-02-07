@@ -2195,8 +2195,8 @@ var handleKeyResponse = function handleKeyResponse(segment, finishProcessingFn) 
       return finishProcessingFn(errorObj, segment);
     }
     
-    if(videojs.hooks_["afterHlsKeyRequest"] != 'undefined')
-		response = videojs.hooks_["afterHlsKeyRequest"][0](request, response);
+  //   if(videojs.hooks_["afterHlsKeyRequest"] != 'undefined')
+		// response = videojs.hooks_["afterHlsKeyRequest"][0](request, response);
     
 
     if (response.byteLength !== 16) {

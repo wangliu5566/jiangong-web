@@ -18,18 +18,34 @@
     element-loading-background="rgba(256, 256, 256, 0.8)" class="collect-con">
                 <ul>
                        <el-checkbox-group v-model="checkedId" @change="handleCheckedBookChange">
-                        <li  v-for="(item,index) in checkedBooks">
+                        <li  v-for="(item,index) in checkedBooks" class='collectli'>
+                           
+                           
                             <div><el-checkbox :label="item.ObjectId"></el-checkbox></div>
                             <div></div>
                             
-                            <div @click="judge(item.ObjectType,item.ObjectId,item.Content.IsOnShelf)"  style="background-image:url('/static/images/no_cover_m.jpg');background-size: 100% 100%;" class="imgdiv hover">
-                            <div  :style="{backgroundImage:'url('+item.Content.CoverUrl+')',backgroundSize:'cover',backgroundRepeat:'no-repeat',backgroundPosition:'center center'}" class="imgdiv1 hover"></div>
+                            <div v-if='item.ObjectType!=101' @click="judge(item.ObjectType,item.ObjectId,item.Content.IsOnShelf)"  style="background-image:url('/static/images/no_cover_m.jpg');background-size: 100% 100%;" class="imgdiv hover">
+                                <div  :style="{backgroundImage:'url('+item.Content.CoverUrl+')',backgroundSize:'cover',backgroundRepeat:'no-repeat',backgroundPosition:'center center'}" class="imgdiv1 hover"></div>
                             </div>
                             
-                            <p @click="judge(item.ObjectType,item.ObjectId,item.Content.IsOnShelf)"   class="omit hover">{{item.Content.Title}}</p>
-                            <p style="color: #e71515;font-size: 14px;"><span style='display: inline-block; overflow: hidden;
+                            <p v-if='item.ObjectType!=101' @click="judge(item.ObjectType,item.ObjectId,item.Content.IsOnShelf)"   class="omit hover">{{item.Content.Title}}</p>
+                            <p v-if='item.ObjectType!=101' style="color: #e71515;font-size: 14px;"><span style='display: inline-block; overflow: hidden;
                     text-overflow: ellipsis;
-                    white-space: nowrap;width: 95px;'>&yen;{{formatPrice(item.Content.CurrentPrice,2)}}</span><span style="float: right;color: #999;font-size: 14px" v-if='!item.Content.IsOnShelf'>已下架</span></p>
+                    white-space: nowrap;width: 95px;'>&yen;{{item.ObjectType==108?formatPrice(item.Content.ExtendData.MediumImagePrice,2):formatPrice(item.Content.CurrentPrice,2)}}</span><span style="float: right;color: #999;font-size: 14px" v-if='!item.Content.IsOnShelf'>已下架</span></p>
+                            
+                            
+                            <div v-if='item.ObjectType==101' @click="judge(item.ObjectType,item.ObjectId,true)"  style="background-image:url('/static/images/pic12.jpg');background-size: 100% 100%;" class="imgdiv hover">
+                            </div>
+                            
+                            <p v-if='item.ObjectType==101' @click="judge(item.ObjectType,item.ObjectId,true)"   class="omit hover">{{item.ExplicitWord.Title}}</p>
+                            <p v-if='item.ObjectType==101' style="color: #e71515;font-size: 14px;"><span style='display: inline-block; overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;width: 95px;'> </span></p>
+                       
+                       
+                       
+                       
+                       
                         </li>
                       </el-checkbox-group>
                 </ul>
@@ -69,54 +85,53 @@
             search
         },
         methods: {
-//            判断是否可点击
-            judge(ObjectType,ObjectId,IsOnShelf){
-                if(IsOnShelf){
-                this.goDetail(this.getDetailPath(ObjectType),ObjectId)
-                    }else{
-                        this.$message.warning('该商品已下架')
-                    }
+            //            判断是否可点击
+            judge(ObjectType, ObjectId, IsOnShelf) {
+                if (IsOnShelf) {
+                    this.goDetail(this.getDetailPath(ObjectType), ObjectId)
+                } else {
+                    this.$message.warning('该商品已下架')
+                }
             },
-            changecp(val){
-                this.cp=val;
-                this.checkedId=[]
-                this.bookOptions=[]
-                this.isIndeterminate=false;
-                this.checkAll=false;
+            changecp(val) {
+                this.cp = val;
+                this.checkedId = []
+                this.bookOptions = []
+                this.isIndeterminate = false;
+                this.checkAll = false;
                 this.getlist()
             },
-            clearCollect(){
-                if(this.checkedId.length>0){
+            clearCollect() {
+                if (this.checkedId.length > 0) {
                     this.$confirm('此操作将取消收藏, 是否确定继续?', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
-          this.$http.post('/Favorite/Delete', {
-                           objectIds:this.checkedId.toString()
-                        })
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        this.$http.post('/Favorite/Delete', {
+                                objectIds: this.checkedId.toString()
+                            })
                             .then((res) => {
                                 if (res.data.Code == 200) {
-                                    this.checkedId=[]
-                this.bookOptions=[]
-                                    this.cp=1
-                                      this.checkAll=false;
-                                     this.isIndeterminate=false;
+                                    this.checkedId = []
+                                    this.bookOptions = []
+                                    this.cp = 1
+                                    this.checkAll = false;
+                                    this.isIndeterminate = false;
                                     this.getlist()
                                 } else {
                                     this.$message.error(res.data.Description)
                                 }
                             })
-        }).catch(() => {        
-        });
-                    
-                    
-                    }else{
-                        this.$message.warning('请选择商品')
-                    }
+                    }).catch(() => {});
+
+
+                } else {
+                    this.$message.warning('请选择商品')
+                }
             },
             getlist() {
-                this.loading=true
+                this.loading = true
                 this.$http.get("/Favorite/List", {
                         params: {
                             ps: 20,
@@ -130,7 +145,7 @@
                             })
                             this.checkedBooks = res.data.Data.ItemList
                             this.allcount = res.data.Data.RecordCount ? res.data.Data.RecordCount : 1
-                            this.loading=false
+                            this.loading = false
                         }
                     })
             },
@@ -138,7 +153,7 @@
                 this.$router.push(url)
             },
             handleCheckedBookChange(value) {
-//                console.log(this.checkedId)
+                //                console.log(this.checkedId)
                 let checkedCount = value.length;
                 this.checkAll = checkedCount === this.bookOptions.length;
                 this.isIndeterminate = checkedCount > 0 && checkedCount < this.bookOptions.length;
@@ -157,6 +172,9 @@
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style lang='less'>
     .center-collect {
+        .collectli{
+            height: 242px;
+        }
         .collect-center {
             width: 1200px;
             margin: auto;
@@ -168,8 +186,8 @@
                     border-bottom: 0px
                 }
             }
-            .not-data{
-                margin:80px 0 60px 280px ;
+            .not-data {
+                margin: 80px 0 60px 280px;
             }
             .collect-notification>.collect-con {
                 width: 938px;
@@ -217,7 +235,7 @@
                         .imgdiv1 {
                             width: 140px;
                             height: 180px;
-/*                            border: 1px solid #eee;*/
+                            /*                            border: 1px solid #eee;*/
                         }
                         p {
                             margin-left: 40px;

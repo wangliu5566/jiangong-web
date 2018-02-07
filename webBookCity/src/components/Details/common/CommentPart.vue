@@ -37,23 +37,26 @@
       查看更多评论
     </p>
     <!-- 评论modal -->
-    <el-dialog custom-class="detail-modal" :visible.sync="commentModal" width="800px" :close-on-click-modal="false">
+    <el-dialog custom-class="detail-modal" :visible.sync="commentModal" width="600px" :close-on-click-modal="false">
       <div class="comment-modal">
         <span>发表评论</span>
-        <el-form :model="addCommentDatas" ref="addCommentForm" label-width="0" :rules="addCommentRules">
+        <el-form :model="addCommentDatas" ref="addCommentForm" label-width="0" :rules="addCommentRules" style="position:relative;">
           <el-form-item prop="contents">
-            <el-input v-model="addCommentDatas.contents" type="textarea" :rows="20" class="comment-textarea" resize='none'>
+            <el-input v-model="addCommentDatas.contents" type="textarea" :rows="7" class="comment-textarea" resize='none' :maxlength='commentMaxLength'>
             </el-input>
           </el-form-item>
+          <span class='comment-limit'>您还可以输入{{commentMaxLength-addCommentDatas.contents.length}}/{{commentMaxLength}}字</span>
         </el-form>
+
         <div style="text-align: right;">
-          <el-button class="handle-btn  no-margin" @click="submitAddComment('addCommentForm')">发表</el-button>
+          <el-button class="handle-btn  no-margin" :loading="submitAddCommentLoading" @click="submitAddComment('addCommentForm')">发表</el-button>
         </div>
       </div>
     </el-dialog>
   </div>
 </template>
 <script>
+import { mapGetters } from 'vuex'
 export default {
   data() {
     return {
@@ -61,7 +64,12 @@ export default {
       tp: 0,
       commentModal: false,
 
+      //评论最大长度
+      commentMaxLength:200,
+
       cpIsChange:false,
+
+      submitAddCommentLoading:false,
 
       commentList: [],
       showCommentList: [],
@@ -77,7 +85,6 @@ export default {
         contents: [{
           required: true,
           message: '快来发表您的评论吧',
-          trigger: 'blur'
         }]
       },
 
@@ -91,6 +98,12 @@ export default {
   created() {
     this.getCommentListData();
   },
+  computed: mapGetters([
+    'loginModal',
+    'callbackAfterLogin',
+    'hasLogin'
+  ]),
+
   methods: {
     currentChange(value) {
       this.cp = value;
@@ -132,9 +145,12 @@ export default {
 
 
     addComment() {
-      let hasLogin = window.sessionStorage.getItem('accessToken') && JSON.parse(window.sessionStorage.getItem('bg_user_info')).Id ? true : false;
-      if (!hasLogin) {
-        this.$emit('loginForm', true)
+      if (!this.hasLogin) {
+        this.$store.dispatch('setLoginByModal', true);
+        this.$store.dispatch('loginByModalAndCallback', {
+          callback: 'openComment',
+          position: 'detail'
+        })
       } else {
         this.commentModal = true;
       }
@@ -149,13 +165,14 @@ export default {
     },
 
     addCommentByAjax() {
+      this.submitAddCommentLoading = true;
       this.$http.post('/Comment/Create', Object.assign({}, this.addCommentDatas, {
           objectId: this.$route.query.id,
           objectType: this.objectType,
         }))
         .then((res) => {
-
           if (res.data.Success) {
+            this.submitAddCommentLoading = false;
             this.$message({
               message: '评论发布成功',
               type: 'success'
@@ -172,6 +189,7 @@ export default {
     commentModal: function(val, oldVal) {
       if (!val && oldVal) {
         this.$refs.addCommentForm.resetFields();
+        this.submitAddCommentLoading = false;
       }
     },
     '$route':function(){
@@ -180,6 +198,13 @@ export default {
       this.showMoreComment=false,
       this.getCommentListData();
 
+    },
+    'loginModal': function(val, oldVal) {
+      if (!val && this.callbackAfterLogin.position == 'detail') {
+        if (this.callbackAfterLogin.callback == 'openComment') {
+          this.commentModal = true;
+        }
+      }
     }
   }
 }

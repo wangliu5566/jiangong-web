@@ -2,13 +2,11 @@
   <div class="sliders">
     <!-- 轮播 -->
     <div class="slider-box" @mouseenter="stopPlay()" @mouseleave="autoPlay()">
-      <img id="img" :src="url" style="width:100%;">
+      <img id="img" :src="url" style="width:100%;" @click="goOtherUrl">
       <!-- <div class="leftImg" @click="preImg()"><img src="../assets/left.png"  style="width:100%;"></div> -->
       <!-- <div class="rightImg" @click="nextImg()"><img src="../assets/right.png" style="width:100%;"></div> -->
       <ul id="sliderUl" class="sliderUl">
-        <li @click='clickImgLi(0)' :class="{'activeImg':setIndex==3||setIndex==0}"></li>
-        <li @click='clickImgLi(1)' :class="{'activeImg':setIndex==1}"></li>
-        <li @click='clickImgLi(2)' :class="{'activeImg':setIndex==2}"></li>
+        <li v-for="(item,index) in imgs" @click='clickImgLi(index)' :class="{'activeImg':setIndex==index}"></li>
       </ul>
     </div>
   </div>
@@ -17,51 +15,80 @@
 export default {
   data() {
     return {
-      setIndex: 1,
-      imgs: ["/static/images/banner1.jpg", "/static/images/banner2.jpg", "/static/images/banner3.jpg"],
-      url: "/static/images/banner1.jpg",
-      timer: ""
+      setIndex: 0,
+      imgs: [],
+      url: "",
+      timer11: "",
+      otherUrl:'',
 
     }
   },
-  mounted: function() {
-    this.autoPlay()
+  mounted() {
+    this.getlist()
   },
   methods: {
+    goOtherUrl(){
+      window.open(this.otherUrl)
+    },
+     getlist() {
+      this.$http.get("/AdPosition/GetAppAdList", {
+        params:{
+            PlatFormType:4
+          }
+        })
+        .then((res) => {
+          if (res.data.Success) {
+            this.imgs = res.data.Data.ItemList[0].Ads?res.data.Data.ItemList[0].Ads:[]
+            if(this.imgs.length>1){
+              this.autoPlay()
+            }else if(this.imgs.length==1){
+              this.url = this.imgs[0].CoverUrl;
+              this.otherUrl = this.imgs[0].Url
+            }else{
+
+            }
+          }
+        })
+    },
     autoPlay() {
-      var _this = this
-      _this.timer = setInterval(function() {
-        if (_this.setIndex == 3) {
-          _this.setIndex = 0;
+     this.timer11 = setInterval(()=> {
+        ++this.setIndex;
+        if (this.setIndex > this.imgs.length-1) {
+          this.setIndex = 0;
         }
-        _this.url = _this.imgs[_this.setIndex];
-        _this.setIndex += 1;
+        this.url = this.imgs[this.setIndex].CoverUrl;
+        this.otherUrl = this.imgs[this.setIndex].Url;
       }, 4000)
     },
     stopPlay() {
-      var _this = this
-      clearInterval(_this.timer)
+      clearInterval(this.timer11)
     },
     nextImg() {
-      if (this.setIndex == 3) {
+      if (this.setIndex == this.imgs.length-1) {
         this.setIndex = 0;
       }
       this.setIndex += 1;
-      this.url = this.imgs[this.setIndex];
+      this.url = this.imgs[this.setIndex].CoverUrl;
+      this.otherUrl = this.imgs[this.setIndex].Url;
     },
     preImg() {
       if (this.setIndex == 0) {
-        this.setIndex = 3;
+        this.setIndex = this.imgs.length;
       }
-      this.url = this.imgs[this.setIndex];
+      this.url = this.imgs[this.setIndex].CoverUrl;
+      this.otherUrl = this.imgs[this.setIndex].Url;
       this.setIndex -= 1;
     },
     clickImgLi(thisIndex) {
       this.setIndex = thisIndex;
-      this.url = this.imgs[this.setIndex];
+      this.url = this.imgs[this.setIndex].CoverUrl;
+      this.otherUrl = this.imgs[this.setIndex].Url;
     }
 
-  }
+  },
+  beforeDestroy(){
+    clearInterval(this.timer11)
+  },
 }
 
 </script>
@@ -75,6 +102,7 @@ export default {
     img {
       width: 100%;
       height: 100%;
+      cursor:pointer;
     }
   }
 
@@ -113,7 +141,7 @@ export default {
     border-radius: 10px;
     cursor:pointer;
   }
-  .sliderUl li:nth-child(3){
+  .sliderUl li:last-child{
     margin-right: 0;
   }
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="standard" :style="{minHeight:clientHeight+'px'}">
+  <div class="standard">
     <searchNoMenu :sendObj="sendObj"></searchNoMenu>
     <div class='power-content'>
       <div class="aside-left">
@@ -60,7 +60,7 @@
                 <span class="price" style="margin-right: 15px;font-size: 18px;">&yen;{{formatPrice(item.CurrentPrice)}}</span>
                 <span class="market-price">&yen;{{formatPrice(item.MarketPrice)}}</span>
               </p>
-              <div :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" style="float: right;margin-top: -28px;background-position:0 7px ;font-size: 14px;" @click="collectFn(item.Id,item.ObjectType,!item.ExtendData.IsFavorited,getlist)">收藏</div>
+              <div :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" style="float: right;margin-top: -28px;background-position:0 7px ;font-size: 14px;" @click="collectFn(item,index,changeIsFavorited)">收藏</div>
             </div>
           </li>
         </ul>
@@ -82,11 +82,11 @@
             </div>
             <div class="right-con">
               <p style="margin-top: 90px;text-align: center;line-height: 40px;">
-                <span class="price" style="margin-right: 20px;font-size: 18px;">&yen;{{formatPrice(item.CurrentPrice,2)}}</span>
-                <span class="market-price">&yen;{{formatPrice(item.MarketPrice,2)}}</span>
+                <span class="price" style="margin-right: 20px;font-size: 18px;">&yen;{{handleCurrentPrice(item.ObjectType, item)}}</span>
+                <span class="market-price">&yen;{{handleMarketPrice(item.ObjectType, item)}}</span>
               </p>
               <div style="width: 53px;margin:0 auto;">
-                <p :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" @click="collectFn(item.Id,item.ObjectType,!item.ExtendData.IsFavorited,getlist)" style="background-position: 0 4px;color:#333">收藏</p>
+                <p :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" @click="collectFn(item,index,changeIsFavorited)" style="background-position: 0 4px;color:#333">收藏</p>
               </div>
             </div>
           </div>
@@ -133,7 +133,6 @@ export default {
       price2: '',
     }
   },
-  props: ['clientHeight'],
   components: {
     searchNoMenu,
     relateRes,
@@ -143,6 +142,10 @@ export default {
     this.getlist()
   },
   methods: {
+    changeIsFavorited(index){
+      this.dataList[index].ExtendData.IsFavorited = true ;
+      this.$set(this.dataList,index,this.dataList[index])
+    },
     handleCurrentChange(val) {
       this.page = val;
       this.getlist()

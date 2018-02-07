@@ -42,7 +42,11 @@
 
 <script>
     import search from "./module/Search.vue"
+   import { mapGetters } from 'vuex'
     export default {
+          computed: mapGetters([
+            'userInfo',
+          ]),
         data() {
             return {
                 dresslist: [],
@@ -96,7 +100,7 @@
                    this.$http.post("/UserAddressBook/List", {
                             ps:20,
                             cp:this.cp,
-                            userId:JSON.parse(window.sessionStorage.getItem('bg_user_info')).Id
+                            userId:this.userInfo.Id
                         
                     })
                     .then((res) => {

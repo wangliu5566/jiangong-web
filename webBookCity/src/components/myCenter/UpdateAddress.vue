@@ -59,7 +59,11 @@
 
 <script>
     import search from "./module/Search.vue"
+    import { mapGetters } from 'vuex'
     export default {
+          computed: mapGetters([
+            'userInfo',
+          ]),
         data() {
             var validatePass = (rule, value, callback) => {
                 if(value){
@@ -74,6 +78,21 @@
                      return callback(new Error('请输入手机号码'));
                 }
             };
+            
+            var validatePostCode = (rule, value, callback) => {
+                if (value) {
+                    var myreg= /^[0-9]{6}$/
+                    if (value) {
+                        if (!myreg.test(value)) {
+                            return callback(new Error('请输入正确邮编'));
+                        } else {
+                            callback();
+                        }
+                    }
+                } else {
+                    return callback(new Error('请输入邮编'));
+                }
+            };
             return {
                 rules:{
                     Reciver: [ { required: true, message: '请输入名称', trigger: 'blur' }],
@@ -84,7 +103,7 @@
             { required: true, message: '请输入具体地址', trigger: 'change' }
           ], 
                     PostCode: [
-            { required: true, message: '请输入邮编', trigger: 'change' }
+            { required: true,validator: validatePostCode, trigger: 'change' }
           ],
                     MobilePhone: [
              { required: true,validator: validatePass, trigger: 'blur' }
@@ -93,7 +112,6 @@
                 },
                 labelPosition: 'right',
                 formLabelAlign: {
-                   userId:JSON.parse(window.sessionStorage.getItem('bg_user_info')).Id
                 },
                 checked: false,
                 cityList: [
@@ -258,10 +276,9 @@
             //修改
             submitForm(formName) {
                 this.$refs[formName].validate((valid) => {
-                    
                     if (valid) {
                          this.$http.post("/UserAddressBook/Edit", 
-                       this.formLabelAlign
+                       {...this.formLabelAlign,userId:this.userInfo.Id}
                     )
                     .then((res) => {
                         if (res.data.Success) {

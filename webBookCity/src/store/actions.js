@@ -24,9 +24,16 @@ export default {
    * @param    {[type]}   options.commit [触发mutation]
    * @return   {[type]}                  [description]
    */
-  getShoppingCount: ({ commit }) => {
+  getShoppingCount: ({ commit, state }) => {
     //如果没有bg_user_info，则表明是退出时清空购物车数量
-    if (!sessionStorage.bg_user_info) {
+    var hasLogin;
+    var user_info = state.mutations.userInfo ? state.mutations.userInfo : '';
+    if (user_info && user_info.Id && (user_info.MobileNumber || user_info.NickName || user_info.RealName) && user_info.Secret) {
+      hasLogin = true;
+    } else {
+      hasLogin = false;
+    }
+    if (!hasLogin) {
       commit(types.GETSHOPPINGCARCOUNT, 0);
     } else {
       Vue.prototype.$http.get("/ShoppingCart/GetCount", {
@@ -35,11 +42,6 @@ export default {
         .then((res) => {
           if (res.data.Success) {
             commit(types.GETSHOPPINGCARCOUNT, res.data.Data);
-          } else {
-            // Vue.$message({
-            //   message: res.data.Description,
-            //   type: 'error'
-            // });
           }
         })
     }
@@ -47,7 +49,11 @@ export default {
 
 
   getDeatilsByAjax: ({ commit, state }, params) => {
-    commit(types.SETDETAILLOADING, true)
+    commit(types.SETDETAILLOADING, true);
+    if (state.mutations.countDownTimer) {
+      window.clearInterval(state.mutations.countDownTimer);
+    }
+
     Vue.prototype.$http.get('/Content/Detail', {
         params: params
       })
@@ -56,76 +62,115 @@ export default {
         if (res.data.Success) {
           commit(types.SETDETAILLOADING, false)
 
-          let resData = res.data.Data;
+          var resData = res.data.Data;
 
-          resData.ExtendData.countDown = 1254523;
+          // resData.IsOnShelf=false
 
           if (resData.ObjectType == 102) {
             resData = Object.assign({}, resData, {
               CoverUrl: '/static/images/section_zw_detail.jpg'
             })
           }
+
           //更新detailsData
           commit(types.UPDATEDETAILDATA, resData);
 
+          Vue.prototype.recordHistory(params.id,resData.ObjectType,1);
 
-          if (resData.ExtendData.countDown && resData.ExtendData.countDown!=0) {
-            let timer;
-            timer = window.setInterval(function(){
 
-              let nowSecond = parseInt(resData.ExtendData.countDown)-1;
+          //活动倒计时
+          // if (resData.ExtendData.SaleStrategyExpireIn && resData.ExtendData.SaleStrategyExpireIn != 0) {
+          //   state.mutations.countDownTimer = window.setInterval(function() {
+          //     var nowSecond = parseInt(resData.ExtendData.SaleStrategyExpireIn) - 1;
 
-              commit(types.TIMECOUNTDOWN,nowSecond);
+          //     commit(types.TIMECOUNTDOWN, nowSecond);
 
-              if (nowSecond<=0) {
-                window.clearInterval(timer);
-              }
-            },1000)
-          }
+          //     if (nowSecond <= 0) {
+          //       window.clearInterval(state.mutations.countDownTimer);
+          //     }
+          //   }, 1000)
+          // }
+
+          var typeAndPriceData = [];
 
 
           if (resData.ObjectType == 104) {
-            if (resData.ExtendData.HasElectronicalBook.toLowerCase() == 'true') {
-              let params = {
+            if (resData.ExtendData.HasElectronicalBook && resData.ExtendData.HasElectronicalBook.toLowerCase() == 'true') {
+              typeAndPriceData.push({
                 bookType: 'Elec',
                 bookCurrentPrice: resData.CurrentPrice,
                 bookMarketPrice: resData.MarketPrice,
-              }
-              commit(types.SETDETAILTYPEANDPRICE, params);
-            } else if (resData.ExtendData.HasPaperBook.toLowerCase() == 'true') {
-              let params = {
+                label: '电子书',
+              })
+            }
+            if (resData.ExtendData.HasPaperBook && resData.ExtendData.HasPaperBook.toLowerCase() == 'true') {
+              typeAndPriceData.push({
                 bookType: 'Entity',
                 bookCurrentPrice: resData.ExtendData.PaperBookPrice,
-                bookMarketPrice: resData.ExtendData.PaperBookPrice,
-              }
-              commit(types.SETDETAILTYPEANDPRICE, params);
-            } else if (resData.ExtendData.HasPod.toLowerCase() == 'true') {
-              let params = {
+                bookMarketPrice: resData.MarketPrice,
+                label: '纸质书'
+              })
+            }
+            if (resData.ExtendData.HasPod && resData.ExtendData.HasPod.toLowerCase() == 'true') {
+              typeAndPriceData.push({
                 bookType: 'POD',
                 bookCurrentPrice: resData.ExtendData.PodPrice,
-                bookMarketPrice: resData.ExtendData.PodPrice,
-              }
-              commit(types.SETDETAILTYPEANDPRICE, params);
+                bookMarketPrice: resData.MarketPrice,
+                label: 'POD'
+              })
+
             }
-          } else {
-            let params = {
+          }
+          if (resData.ObjectType == 108) {
+            if (resData.ExtendData.HasMediumPic && resData.ExtendData.HasMediumPic.toLowerCase() == 'true') {
+              typeAndPriceData.push({
+                bookType: 'MediumPic',
+                bookCurrentPrice: resData.ExtendData.MediumImagePrice,
+                bookMarketPrice: resData.ExtendData.OriginalImagePrice,
+                label: '中图价格'
+              })
+            }
+            if (resData.ExtendData.HasOriginalPic && resData.ExtendData.HasOriginalPic.toLowerCase() == 'true') {
+              typeAndPriceData.push({
+                bookType: 'OriginalPic',
+                bookCurrentPrice: resData.ExtendData.OriginalImagePrice,
+                bookMarketPrice: resData.ExtendData.OriginalImagePrice,
+                label: '原图价格'
+              })
+            }
+          }
+          if (resData.ObjectType != 108 && resData.ObjectType != 104) {
+
+            typeAndPriceData.push({
               bookType: 'Elec',
               bookCurrentPrice: resData.CurrentPrice,
               bookMarketPrice: resData.MarketPrice,
-            }
-            commit(types.SETDETAILTYPEANDPRICE, params);
+              label: '电子书'
+            })
+
           }
+
+          commit(types.SETNOWTYPEANDPRICE, typeAndPriceData[0]);
+          commit(types.SETDETAILTYPEANDPRICE, typeAndPriceData);
         }
       })
   },
+
+  setNowTypeAndPrice: ({ commit, state }, data) => {
+    commit(types.SETNOWTYPEANDPRICE, data);
+  },
   //获取资源详情
   getDeatilsByAjaxAndCallback: ({ commit, state }, params) => {
+
     Vue.prototype.$http.get('/Content/Detail', {
         params: params.params
       })
       .then((res) => {
         if (res.data.Success) {
-          let resData = res.data.Data;
+          if (state.mutations.countDownTimer) {
+            window.clearInterval(state.mutations.countDownTimer);
+          }
+          var resData = res.data.Data;
 
           if (resData.ObjectType == 102) {
             resData = Object.assign({}, resData, {
@@ -133,20 +178,16 @@ export default {
             })
           }
 
-          resData.ExtendData.countDown = 1254523;
+          if (resData.ExtendData.SaleStrategyExpireIn && resData.ExtendData.SaleStrategyExpireIn != 0) {
+            state.mutations.countDownTimer = window.setInterval(function() {
+              var nowSecond = parseInt(resData.ExtendData.SaleStrategyExpireIn) - 1;
 
-          if (resData.ExtendData.countDown && resData.ExtendData.countDown!=0) {
-            let timer;
-            timer = window.setInterval(function(){
+              commit(types.TIMECOUNTDOWN, nowSecond);
 
-              let nowSecond = parseInt(resData.ExtendData.countDown)-1;
-
-              commit(types.TIMECOUNTDOWN,nowSecond);
-
-              if (nowSecond<=0) {
-                window.clearInterval(timer);
+              if (nowSecond <= 0) {
+                window.clearInterval(state.mutations.countDownTimer);
               }
-            },1000)
+            }, 1000)
           }
 
           //更新detailsData
@@ -161,47 +202,48 @@ export default {
 
   collectDetail: ({ commit, state }, data) => {
     if (data.ExtendData.IsFavorited == "true") {
-      commit('SETCOLLECTMODAL', true)
+      commit(types.SETCOLLECTMODAL, true)
     } else {
       store.dispatch('setCollectDetail', data)
     }
   },
 
   buyResourceDetail: ({ commit, state }, data) => {
-    if (data.ExtendData.IsOrdered == 'true' && state.mutations.typeAndPrice.bookType == 'Elec') {
-      Vue.prototype.$confirm('您已购买过该资源，请勿重复购买', '', {
-          showCancelButton: false,
-          showConfirmButton: false,
-          type: 'warning',
-          customClass: 'detail-confirm',
-          center: true
-        })
-        .then(() => {
+    let type = state.mutations.nowTypeAndPrice.bookType;
+    Vue.prototype.$http.post('/ShoppingCart/Create', {
+        mediaType: type,
+        count: 1,
+        objectId: state.mutations.detailsData.Id,
+        objectType: state.mutations.detailsData.ObjectType,
+        isOneOff:true,
+      })
+      .then((res) => {
+        if (res.data.Success) {
+          if (type == 'Elec') {
+            Router.push({ path: '/wrap/elePaid', query: { ObjectIds: res.data.Data } })
+          } else {
+            Router.push({ path: '/wrap/paperPaid', query: { ObjectIds: res.data.Data } })
+          }
+        } else {
+          Vue.prototype.$confirm(res.data.Description, '', {
+              showCancelButton: false,
+              showConfirmButton: false,
+              type: 'warning',
+              customClass: 'detail-confirm',
+              center: true
+            })
+            .then(() => {
 
-        })
-        .catch(() => {
+            })
+            .catch(() => {
 
-        })
-    } else {
-      let type = state.mutations.typeAndPrice.bookType;
-      let sourceData = [Object.assign({}, state.mutations.detailsData, {
-        MediaType: type,
-        ObjectId: data.Id,
-        Count: 1
-      })]
-      localStorage.shoppingObj = JSON.stringify(sourceData);
-
-      let typeNumber = type == 'Elec' ? 1 : 2;
-      if (type == 'Elec') {
-        Router.push({ path: '/wrap/deatilElecPaid', query: { type: typeNumber } })
-      } else {
-        Router.push({ path: '/wrap/detailPaperPaid', query: { type: typeNumber } })
-      }
-    }
+            })
+        }
+      })
   },
 
   pushInShoppingCarDetail: ({ commit, state }, data) => {
-    let type = state.mutations.typeAndPrice.bookType;
+    let type = state.mutations.nowTypeAndPrice.bookType;
     Vue.prototype.$http.post('/ShoppingCart/Create', {
         mediaType: type,
         count: 1,
@@ -245,20 +287,20 @@ export default {
       .then((response) => {
         if (response.data.Success) {
 
-          commit('SETDETAILDATACOLLECT', {
+          commit(types.SETDETAILDATACOLLECT, {
             ExtendData: {
               IsFavorited: 'true'
             }
           });
 
-          commit('SETCOLLECTMODAL', true)
+          commit(types.SETCOLLECTMODAL, true)
 
         }
       })
   },
 
   resetDetailData: ({ commit, state }) => {
-    commit('RESETDETAILDATA', {
+    commit(types.RESETDETAILDATA, {
       ExtendData: {
         IsOrdered: false,
         IsJoinedCart: false,
@@ -271,60 +313,55 @@ export default {
   },
 
   setDeatilDataCollect: ({ commit, state }, status) => {
-    commit('SETDETAILDATACOLLECT', {
+    commit(types.SETDETAILDATACOLLECT, {
       ExtendData: {
         IsFavorited: status
       }
     });
 
-    commit('SETCOLLECTMODAL', status == "true" ? true : false)
+    commit(types.SETCOLLECTMODAL, status == "true" ? true : false)
   },
 
   closeCollectModal: ({ commit, state }) => {
-    commit('SETCOLLECTMODAL', false)
+    commit(types.SETCOLLECTMODAL, false)
   },
 
-  updateTypeAndPrice: ({ commit, state }, data) => {
-    commit('SETDETAILTYPEANDPRICE', data);
-  },
-
-  setUserInfo: ({ commit, state }) => {
-    let userInfo = {
-      isLogin: false,
-      NickName: '',
-    };
-    if (sessionStorage.getItem('accessToken') && sessionStorage.getItem('bg_user_info')) {
-      userInfo = Object.assign({}, userInfo, {
-        isLogin: sessionStorage.getItem('accessToken') && JSON.parse(sessionStorage.getItem('bg_user_info')).Id ? true : false,
-        NickName: JSON.parse(sessionStorage.getItem('bg_user_info')).NickName ? JSON.parse(sessionStorage.getItem('bg_user_info')).NickName : ''
-      })
-    }
-    commit('SETUSERINFO', userInfo)
+  openCollectModal: ({commit, state }) => {
+    commit(types.SETCOLLECTMODAL, true)
   },
 
   //弹出登录框，并且回调
   loginByModalAndCallback: ({ commit, state }, data) => {
-    commit('OPENANDCLOSELOGINMODAL', true);
-    commit('SETCALLBACKAFTERLOGIN', data);
+    commit(types.OPENANDCLOSELOGINMODAL, true);
+    commit(types.SETCALLBACKAFTERLOGIN, data);
   },
 
   //判断登录时跳页面（false），还是弹登录框（true）
   setLoginByModal: ({ commit, state }, status) => {
-    commit('LOGINISBYMODAL', status);
+    commit(types.LOGINISBYMODAL, status);
   },
 
   resetCallback: ({ commit, state }) => {
-    commit('SETCALLBACKAFTERLOGIN', {});
+    commit(types.SETCALLBACKAFTERLOGIN, {});
   },
 
   closeLoginModal: ({ commit, state }) => {
-    commit('OPENANDCLOSELOGINMODAL', false)
+    commit(types.OPENANDCLOSELOGINMODAL, false)
   },
 
 
   //活动倒计时
-  timeCountDown:({commit,val})=>{
-    commit('TIMECOUNTDOWN',val);
+  timeCountDown: ({ commit, state }, val) => {
+    commit(types.TIMECOUNTDOWN, val);
+  },
+
+
+  resetUserInfo: ({ commit, state }, val) => {
+    commit(types.RESETUSERINFO);
+  },
+
+  setUserInfo: ({ commit, state }, data) => {
+    commit(types.SETUSERINFO, data);
   }
 
 }

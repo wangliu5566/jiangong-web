@@ -3,7 +3,7 @@
    <!-- logo搜索部分 -->
     <search :selectType='6'></search>
     <div class="account-right">
-        <a href="#">账户设置 &gt; 绑定机构验证码</a>
+        <span>账户设置 &gt; 绑定机构验证码</span>
         <ul class="account-center">
             <li>
                 <img src="../../assets/imagesMy-Center/13.png">
@@ -24,7 +24,11 @@
 <script>
     import search from "./module/Search.vue"
     import otherBook from "./module/OtherBook.vue"
+   import { mapGetters } from 'vuex'
     export default {
+          computed: mapGetters([
+            'userInfo',
+          ]),
         data() {
             return {
                 form: {
@@ -47,7 +51,7 @@
                                 if (res.data.Code == 200) {
                                      this.$http.get("/User/Detail", {
                                         params: {
-                                            id: JSON.parse(window.sessionStorage.getItem('bg_user_info')).Id
+                                            id: this.userInfo.Id
                                         }
                                     })
                                     .then((res) => {
@@ -76,7 +80,7 @@
             margin: auto;
             padding-bottom: 395px;
         }
-        .account-right > a {
+        .account-right > span{
             display: block;
             margin: 20px 0;
             text-decoration: none;

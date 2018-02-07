@@ -16,13 +16,13 @@
 import heads from "./common/Header.vue"
 import footers from "./common/Footer.vue"
 import LoginForm from '@/components/login/Reg'
-import {mapGetters} from "vuex"
+import { mapGetters } from "vuex"
 export default {
   data() {
     return {
       clientHeight: document.documentElement.clientHeight,
 
-      loginModalNative:false,
+      loginModalNative: false,
     }
   },
   components: {
@@ -39,28 +39,28 @@ export default {
       })()
     }
   },
-  computed:mapGetters([
-      'loginModal'
-    ]),
-  watch:{
-    'loginModal':function(val,oldVal){
+  computed: mapGetters([
+    'loginModal'
+  ]),
+  watch: {
+    'loginModal': function(val, oldVal) {
       this.loginModalNative = val;
 
       if (!val) {
         //重置是否是modal登录和登录后的回调
         let _this = this;
-        setTimeout(function(){
-          _this.$store.dispatch('setLoginByModal',false);
+        setTimeout(function() {
+          _this.$store.dispatch('setLoginByModal', false);
           _this.$store.dispatch('resetCallback');
-        },1000)
-        
+        }, 1000)
+
       }
     }
   },
   methods: {
-    closeLoginModal(){
-      this.$store.dispatch('closeLoginModal',false);
-      this.$store.dispatch('setLoginByModal',false);
+    closeLoginModal() {
+      this.$store.dispatch('closeLoginModal', false);
+      this.$store.dispatch('setLoginByModal', false);
       this.$store.dispatch('resetCallback');
       this.loginModalNative = false;
     },
@@ -70,7 +70,7 @@ export default {
     getList() {
       this.$http.post('/Content/Search', {
           query: JSON.stringify({
-            "objectTypes": [107],
+            "objectTypes": [102],
             "SearchOrderBy": {
               "ColumnName": "onShelfDate",
               "Descending": true
@@ -83,7 +83,7 @@ export default {
     }
   },
   created() {
-    this.getList();
+    // this.getList();
   }
 }
 
@@ -99,6 +99,11 @@ export default {
   }
   .el-input__inner {
     border-radius: 0!important;
+  }
+
+  .el-icon-sort-up {
+    width: 21px;
+    margin-left: -7px;
   }
 
   .el-table {
@@ -190,7 +195,7 @@ export default {
   .aside-left {
     float: left;
     width: 242px;
-    &>ul {
+    /*ul {
       font-size: 14px;
       width: 100%;
       border: 1px solid #ccc;
@@ -218,7 +223,7 @@ export default {
         padding-left: 19px;
         border-left: 2px solid @red-color;
       }
-    }
+    }*/
   }
 
   .aside-right {
@@ -239,7 +244,7 @@ export default {
     padding-left: 20px;
     background: url('../../static/images/shouchang.png') no-repeat 0 8px;
     cursor: pointer;
-    color:#666;
+    color: #666;
     font-size: 14px;
   }
 
@@ -248,7 +253,7 @@ export default {
     padding-left: 20px;
     background: url('../../static/images/shouchang2.png') no-repeat 0 8px;
     cursor: pointer;
-    color:#666;
+    color: #666;
     font-size: 14px;
   }
 
@@ -260,7 +265,7 @@ export default {
     -webkit-background-size: 16px;
     background-size: 16px;
     cursor: pointer;
-    color:#666;
+    color: #666;
   }
 
   /*筛选条件按钮一排*/
@@ -268,37 +273,12 @@ export default {
     margin-top: 10px;
     border: 1px solid #ccc;
     width: 926px;
-    height: 44px;
+    height: 42px;
     background: #ebebeb;
     padding-left: 10px;
-    padding-top: 7px;
+    padding-top: 8px;
     position: relative;
 
-    .line-1 {
-      display: inline-block;
-      width: 1px;
-      height: 26px;
-      border-right: 1px dashed #666;
-      position: absolute;
-      left: 468px;
-      top: 11px;
-    }
-    .price-1 {
-      position: absolute;
-      left: 482px;
-      top: 14px;
-      z-index: 998;
-      font-size: 14px;
-      color: #333;
-    }
-    .price-2 {
-      position: absolute;
-      left: 553px;
-      top: 14px;
-      z-index: 998;
-      font-size: 14px;
-      color: #333;
-    }
     .float-span {
       float: right;
       margin-right: 10px;
@@ -311,6 +291,43 @@ export default {
       }
     }
   }
+
+  .myBtn {
+    padding: 8px 0 8px 10px;
+    border-radius: 0!important;
+    margin-left: 5px!important;
+  }
+  .myBtn1 {
+    padding: 8px 15px;
+    border-radius: 0!important;
+  }
+
+  .line-1 {
+    display: inline-block;
+    width: 1px;
+    height: 26px;
+    border-right: 1px dashed #666;
+    position: absolute;
+    left: 477px;
+    top: 11px;
+  }
+  .price-1 {
+    position: absolute;
+    left: 490px;
+    top: 14px;
+    z-index: 998;
+    font-size: 14px;
+    color: #333;
+  }
+  .price-2 {
+    position: absolute;
+    left: 556px;
+    top: 14px;
+    z-index: 998;
+    font-size: 14px;
+    color: #333;
+  } /*按钮样式完*/
+
   .names {
     width: 140px;
     height: 30px;

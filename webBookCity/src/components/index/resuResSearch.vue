@@ -1,12 +1,9 @@
 <template>
-  <div class="resu-res-list" :style="{minHeight:clientHeight+'px'}">
+  <div class="resu-res-list">
     <searchNoMenu></searchNoMenu>
-    <div class='power-content global-box' v-loading="loading"
-    element-loading-text="拼命加载中"
-    element-loading-spinner="el-icon-loading"
-    element-loading-background="rgba(256, 256, 256, 0.8)">
+    <div class='power-content global-box' v-loading="loading" element-loading-text="拼命加载中" element-loading-spinner="el-icon-loading" element-loading-background="rgba(256, 256, 256, 0.8)">
       <div class="navtext">
-        <div class="path" style="cursor: pointer;"><span @click="goPath('index')">首页</span> &gt; <span>高级搜索</span></div>
+        <div class="path"><span @click="goPath('index')">首页</span> &gt; <span>高级搜索</span></div>
         <p style="margin-bottom: 15px;">搜索结果：
           <span class="commodity">{{keyWordObj.Keyword}} </span>
           <span class="commodity">共{{totalCount}}件商品</span>
@@ -72,22 +69,28 @@
               <span class="line-1"></span>
               <span class="price-1">&yen;</span>
               <span class="price-2">&yen;</span>
-              <el-button class="myBtn1" :class="btnsIndex==0?'red-active':''" @click="changeBtnsIndex(0,'')">综合</el-button>
-              <el-button class="myBtn1" :class="btnsIndex==1?'red-active':''" @click="changeBtnsIndex(1,'sellConnt')">销售</el-button>
-              <el-button class="myBtn" :class="btnsIndex==2?'red-active':''" @click="changeBtnsIndex(2,'onShelfDate')">上架时间
-                <i class="el-icon-sort-down"></i>
+              <!-- <el-button class="myBtn1" :class="btnsIndex==0?'red-active':''" @click="changeBtnsIndex(0,'')">综合</el-button> -->
+              <el-button class="myBtn1" :class="btnsIndex==1?'red-active':''" @click="changeBtnsIndex(1,'soldCount')">销量</el-button>
+              <el-button class="myBtn" :class="btnsIndex==2?'red-active':''" @click="changeBtnsIndex(2,'onShelfDate',isOnShelfDescend)">上架时间
+                <i class="el-icon-sort-down" v-if="isOnShelfDescend"></i>
+                <i class="el-icon-sort-up" v-if="!isOnShelfDescend"></i>
               </el-button>
-              <el-button class="myBtn" :class="btnsIndex==3?'red-active':''" @click="changeBtnsIndex(3,'publishDate')">出版时间
-                <i class="el-icon-sort-down"></i>
+              <el-button class="myBtn" :class="btnsIndex==3?'red-active':''" @click="changeBtnsIndex(3,'publishDate',publishDateDescend)">出版时间
+                <i class="el-icon-sort-down" v-if="publishDateDescend"></i>
+                <i class="el-icon-sort-up" v-if="!publishDateDescend"></i>
               </el-button>
-              <el-button class="myBtn" :class="btnsIndex==4?'red-active':''" @click="changeBtnsIndex(4,'readCount')">阅读量
-                <i class="el-icon-sort-down"></i>
+              <el-button class="myBtn" :class="btnsIndex==4?'red-active':''" @click="changeBtnsIndex(4,'readCount',readCountDescend)">阅读量
+                <i class="el-icon-sort-down" v-if="readCountDescend"></i>
+                <i class="el-icon-sort-up" v-if="!readCountDescend"></i>
               </el-button>
-              <el-button class="myBtn1" :class="btnsIndex==5?'red-active':''" @click="changeBtnsIndex(5,'price')">价格</el-button>
-              <el-input v-model="keyWordObj.lowerPrice" @focus="btnsIndex=5" style="width:50px;height: 30px;margin-left: 10px;"></el-input>
+              <el-button class="myBtn" :class="btnsIndex==5?'red-active':''" @click="changeBtnsIndex(5,'currentPrice',currentPriceDescend)">价格
+                <i class="el-icon-sort-down" v-if="currentPriceDescend"></i>
+                <i class="el-icon-sort-up" v-if="!currentPriceDescend"></i>
+              </el-button>
+              <el-input v-model="keyWordObj.lowerPrice" style="width:50px;height: 30px;margin-left: 10px;"></el-input>
               -
               <el-input v-model="keyWordObj.heighterPrice" @focus="btnsIndex=5" style="width:50px;height: 30px;"></el-input>
-              <el-button class="myBtn1" @click="changeBtnsIndex(5,'price')" v-if="btnsIndex==5">确定</el-button>
+              <el-button class="myBtn1" @click="changeBtnsIndex(6,'price')">确定</el-button>
             </div>
             <div class="nav-text" style="font-size: 14px;margin-right: 10px;">
               每页显示：
@@ -116,11 +119,21 @@
               </div>
               <div class="right-con">
                 <p style="margin-top: 90px;text-align: center;line-height: 40px;">
-                  <span class="price" style="margin-right: 20px;">&yen;{{formatPrice(item.CurrentPrice,2)}}</span>
-                  <span class="market-price">&yen;{{formatPrice(item.MarketPrice,2)}}</span>
+                  <span class="price" style="margin-right: 20px;">&yen;{{handleCurrentPrice(item.ObjectType, item)}}</span>
+                  <span class="market-price">&yen;{{handleMarketPrice(item.ObjectType, item)}}</span>
                 </p>
-                <div style="width: 56px;margin:0 auto;">
-                   <p :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" @click="collectFn(item.Id,item.ObjectType,!item.ExtendData.IsFavorited,getlist)" style="background-position: 0;">收藏 </p>
+                <!-- <div style="width: 56px;margin:0 auto;">
+                   <p :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" @click="collectFn(item,index,changeIsFavorited)" style="background-position: 0;">收藏 </p>
+                </div> -->
+                <div style="width: 130px;margin:0 auto;">
+                  <el-row>
+                    <el-col :span="12">
+                      <p :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" @click="collectFn(item,index,changeIsFavorited)" style="width:45px;background-position: 0 4px;padding-left: 14px;">收藏</p>
+                    </el-col>
+                    <el-col :span="12">
+                      <div class="shopping-car" v-if="showShoppingIcon(item)" @click="addShopping(item)" style="background-position: 0 2px">购物车</div>
+                    </el-col>
+                  </el-row>
                 </div>
               </div>
             </div>
@@ -134,14 +147,24 @@
                 </div>
                 <p class="names" @click="goDetail(getDetailPath(item.ObjectType),item.Id)">{{item.Title}}</p>
                 <p>
-                  <span>&yen;{{formatPrice(item.CurrentPrice,2)}}</span>
-                  <span>&yen;{{formatPrice(item.MarketPrice,2)}}</span>
+                  <span>&yen;{{handleCurrentPrice(item.ObjectType, item)}}</span>
+                  <span>&yen;{{handleMarketPrice(item.ObjectType, item)}}</span>
                 </p>
-                <p :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" @click="collectFn(item.Id,item.ObjectType,!item.ExtendData.IsFavorited,getlist)" style="font-size: 14px;color:#666;line-height: 27px;">收藏</p>
+                <!--  <p :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" @click="collectFn(item,index,changeIsFavorited)" style="font-size: 14px;color:#666;line-height: 27px;">收藏</p> -->
+                <div style="width: 140px;margin-top:2px;">
+                  <el-row>
+                    <el-col :span="12">
+                      <p :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" @click="collectFn(item,index,changeIsFavorited)" style="background-position: 0 7px;height:25px;line-height: 25px;">收藏</p>
+                    </el-col>
+                    <el-col :span="12">
+                      <div class="shopping-car" v-if="showShoppingIcon(item)" @click="addShopping(item)" style="background-position: 0 6px;height:25px;line-height: 25px;">购物车</div>
+                    </el-col>
+                  </el-row>
+                </div>
               </li>
             </ul>
           </div>
-          <div v-if="noContent" style="overflow: hidden;padding:140px 440px;" >
+          <div v-if="noContent" style="overflow: hidden;padding:140px 440px;">
             <img src="../../../static/images/no_detail.png" height="60" width="311">
           </div>
         </el-col>
@@ -165,8 +188,8 @@ import { mapGetters } from 'vuex'
 export default {
   data() {
     return {
-      loading:false,
-      noContent:false,
+      loading: false,
+      noContent: false,
       page: 1,
       pageSize: 20,
       pageIndex: 0,
@@ -186,6 +209,11 @@ export default {
       SearchWord: '',
 
       showMoreBox: false,
+
+      isOnShelfDescend:true,
+      publishDateDescend:true,
+      readCountDescend:true,
+      currentPriceDescend:true,
 
       keyWordObj: {
         CategoryIds: '',
@@ -210,7 +238,6 @@ export default {
     searchNoMenu,
     relateRes,
   },
-  props: ['clientHeight'],
   created() {
     this.fetchDate();
   },
@@ -225,8 +252,8 @@ export default {
     this.keyWordObj.ObjectTypes = getObj.ObjectTypes ? getObj.ObjectTypes : ''
     var keyArr = []
 
-    for(var i in getObj){
-      if(!!getObj[i]&&getObj[i]!=''&&i!='ObjectTypes'){
+    for (var i in getObj) {
+      if (!!getObj[i] && getObj[i] != '' && i != 'ObjectTypes') {
         keyArr.push(getObj[i])
       }
     }
@@ -253,6 +280,17 @@ export default {
         this.getlist()
       }
     },
+    /**
+     * [changeIsFavorited 修改收藏状态]
+     * @Author   赵雯欣
+     * @DateTime 2018-02-01
+     * @param    {[type]}   index [description]
+     * @return   {[type]}         [description]
+     */
+    changeIsFavorited(index){
+      this.dataList[index].ExtendData.IsFavorited = true ;
+      this.$set(this.dataList,index,this.dataList[index])
+    },
     handleCurrentChange(val) {
       this.page = val;
       this.getlist()
@@ -262,7 +300,7 @@ export default {
       this.pageSize = pageSize;
       this.getlist()
     },
-    getlist() {
+    getlist(Descending) {
       this.loading = true;
 
       if (this.mediaType == 0) {
@@ -282,26 +320,49 @@ export default {
         };
       }
 
+      var SearchOrderBy = {};
+      if (this.SearchWord != 'price'&&this.SearchWord !='') {
+        SearchOrderBy = {
+          SearchOrderBy: {
+            ColumnName: this.SearchWord,
+            Descending: Descending!=undefined?Descending:true,
+          }
+        }
+      }
+
+      var currentPrice={};
+      if (this.keyWordObj.lowerPrice != '' && this.keyWordObj.heighterPrice != '') {
+        currentPrice = {
+          currentPrice:this.keyWordObj.lowerPrice + '@' + this.keyWordObj.heighterPrice
+        }
+      }
+
+      var publishDate={};
+      if (this.keyWordObj.EndTime != '' && this.keyWordObj.StartTime != '') {
+        publishDate = {
+          publishDate:this.keyWordObj.StartTime + '@' + this.keyWordObj.EndTime 
+        }
+      }
+
+      var CategoryIds = {}
+       if (this.keyWordObj.CategoryIds) {
+        CategoryIds = {
+          CategoryIds:[this.keyWordObj.CategoryIds]
+        }
+      }
+
       this.$http.post("/Content/Search", {
           cp: this.page,
           ps: this.pageSize,
-          query: JSON.stringify({
+          query: JSON.stringify(Object.assign({}, {
             // AggregationAll: true,
             ObjectTypes: this.keyWordObj.ObjectTypes == '' ? [104, 108, 109] : [this.keyWordObj.ObjectTypes], //类型
-            CategoryIds: this.keyWordObj.CategoryIds ? [this.keyWordObj.CategoryIds] : '',
             Keyword: this.keyWordObj.Keyword,
 
-            // SearchOrderBy: {
-            //   ColumnName: this.SearchWord == 'price' ? '' : this.SearchWord,
-            //   Descending: true,
-            // },
-
             ExtendProperties: Object.assign({}, searchParam, {
-              IsOnShelf:true,
-              marketPrice: this.keyWordObj.lowerPrice != '' && this.keyWordObj.heighterPrice != '' ? this.keyWordObj.lowerPrice + '@' + this.keyWordObj.heighterPrice : '',
-              publishDate: this.keyWordObj.EndTime != '' && this.keyWordObj.StartTime != '' ? this.keyWordObj.StartTime + '@' + this.keyWordObj.EndTime : '',
-            })
-          })
+              IsOnShelf: true,
+            },currentPrice,publishDate)
+          },CategoryIds,SearchOrderBy))
         })
         .then((res) => {
           if (res.data.Success) {
@@ -309,9 +370,9 @@ export default {
             this.dataList = res.data.Data.ItemList;
             this.totalCount = res.data.Data.RecordCount;
             this.loading = false;
-            if(this.dataList.length==0){
+            if (this.dataList.length == 0) {
               this.noContent = true;
-            }else{
+            } else {
               this.noContent = false;
             }
           }
@@ -379,17 +440,36 @@ export default {
       this.showMoreBox = bool;
 
     },
-    changeBtnsIndex(index, SearchWord) {
-      this.btnsIndex = index
+
+    changeBtnsIndex(index, SearchWord,Descending) {
+      if(index==2){
+        this.isOnShelfDescend = !Descending;
+      }else if(index==3){
+        this.publishDateDescend = !Descending;
+      }else if(index==4){
+        this.readCountDescend = !Descending;
+      }else if(index==5){
+        this.currentPriceDescend = !Descending;
+      }
+      // if(index<6){
+      this.btnsIndex = index;
       this.SearchWord = SearchWord;
-      this.getlist()
+      this.getlist(!Descending)
+      // }else if(index==6){  //搜索价格区间
+
+      // }
+      // 
     }
   },
   watch: {
     "$route": "fetchDate",
     'loginModal': function(val, oldVal) {
-      if (!val && this.callbackAfterLogin.position == 'index'&&this.callbackAfterLogin.callback == 'indexCollect') {
-       this.collectFn(this.callbackAfterLogin.id,this.callbackAfterLogin.ObjectType,true,this.getlist)
+      if (!val && this.callbackAfterLogin.position == 'index') {
+        if (this.callbackAfterLogin.callback == 'indexCollect') {
+          this.collectFn(this.callbackAfterLogin.id, this.callbackAfterLogin.ObjectType, true, this.getlist)
+        } else if (this.callbackAfterLogin.callback == 'indexAddShopping') {
+          this.addShopping(this.callbackAfterLogin.item)
+        }
       }
     }
   },
@@ -470,18 +550,18 @@ export default {
         height: 26px;
         border-right: 1px dashed #666;
         position: absolute;
-        left: 482px;
+        left: 411px;
         top: 10px;
       }
       .price-1 {
         position: absolute;
-        left: 496px;
+        left: 425px;
         top: 14px;
         z-index: 9;
       }
       .price-2 {
         position: absolute;
-        left: 562px;
+        left: 490px;
         top: 14px;
         z-index: 9;
       }
@@ -493,7 +573,7 @@ export default {
       }
       .el-input__inner {
         height: 32px;
-        border-radius:0;
+        border-radius: 0;
       }
     }
     .el-button {

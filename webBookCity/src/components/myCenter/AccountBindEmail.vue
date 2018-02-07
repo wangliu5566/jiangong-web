@@ -18,11 +18,13 @@
                         <el-form-item label="绑 定 邮 箱：" prop="email">
                             <el-input v-model="form.email" style="width: 300px;"></el-input>
                         </el-form-item>
+<!--
                         <el-form-item label="获取验证码：" prop="code">
                             <el-input class="fl" v-model="form.code" style="width: 100px;"></el-input>
                             <el-button class="fl ml20" type="primary" @click="getcode" plain>获取验证码</el-button>
                         </el-form-item>
-                        <p>*邮箱验证码已发出，请注意查收，如未收到，可在120秒后要求系统重新发送</p>
+-->
+<!--                        <p>*邮箱验证码已发出，请注意查收，如未收到，可在120秒后要求系统重新发送</p>-->
                         <el-button class="mt20" type="primary" @click="next('formIn')"  style="margin-left: 165px;">绑定</el-button>
                     </el-form>
                 </div>

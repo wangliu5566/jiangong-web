@@ -55,7 +55,7 @@ body {
 
    .container {
     width: 1204px;
-    height: 930px;
+    height: 900px;
     background: white;
     margin: 0 auto;
     margin-top: 24px;
@@ -63,11 +63,18 @@ body {
    }
 
    .content {
-    margin: 50px auto;
+    margin: 0px auto 50px;
     margin-bottom: 0;
     width: 1070px;
     height: 838px;
     // background: red;
+   }
+
+   .content  h1 {
+    height: 50px;
+    width: 100%;
+    font-size: 28px;
+    font-weight: 400
    }
 
    .video-content {
@@ -130,13 +137,14 @@ body {
     }
 
    .media-title {
+    margin-bottom: 10px;
      width: 100%;
-     height: 75px;
+     height: 45px;
    }
 
    .media-title li {
-     height: 75px;
-     line-height: 75px;
+     height: 45px;
+     line-height: 45px;
      float: left;
      margin-right: 34px;
    }
@@ -150,8 +158,12 @@ body {
 
    }
 
+   .media-title-collect {
+     margin-right: 0 !important;
+   }
+
    .media-button button {
-      width: 106px;
+     width: 106px;
      height: 40px;
      border: none;
      outline: none;
@@ -160,6 +172,21 @@ body {
      border-radius: 5px;
      font-size: 16px;
      cursor: pointer;
+   }
+
+   .media-button img {
+     margin-top: 10px;
+     width: 20px;
+     height: 20px;
+   }
+
+   .media-button span {
+     display: inline-block;
+     margin-top: -10px;
+     position: relative;
+     top:-4px;
+     font-size: 15px;
+     color:black !important;
    }
 
    .media-related-label {
@@ -191,6 +218,7 @@ body {
    .no-relate-css {
       margin-right: 0 ;
       border: none!important;
+      cursor: default !important;
    }
 
    .active {

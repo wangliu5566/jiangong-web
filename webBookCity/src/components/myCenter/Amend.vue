@@ -32,7 +32,11 @@
 <script>
     import search from "./module/Search.vue"
     import otherBook from "./module/OtherBook.vue"
+    import { mapGetters } from 'vuex'
     export default {
+          computed: mapGetters([
+            'userInfo',
+          ]),
         data() {
             const validatecode = (rule, value, callback) => {
                 if (!value || value.trim().length == 0) {
@@ -63,7 +67,7 @@
         },
         methods: {
             getphone() {
-                this.MobileNumber = JSON.parse(window.sessionStorage.getItem('bg_user_info')).Email
+                this.MobileNumber = this.userInfo.Email
             },
             next(formName) {
                 this.$refs[formName].validate((valid) => {

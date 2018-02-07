@@ -28,14 +28,16 @@
                 </li> 
 <!--                全部-->
                 <li v-if="classtype=='0'" class="classify-list-book">
-                   <div @click="readMydata(item)" v-for="item in alldata">
+                   <div  v-for="item in alldata">
+                  <router-link :to="{path:'/accredit',query:{baseURL:item.AuthorizeUrl,Id:item.Id 
+
+,authorizeToken:item.ExtendData.AuthorizeToken,appId:7,DefaultFileExtension:item.DefaultFileExtension,ObjectType:item.ObjectType,}}" target="_blank">
                        <div class="book-list hover" style="background-image:url('/static/images/no_cover_m.jpg');background-size: 100% 100%;">
                                               <div class="book-list hover" :style="{background:'url('+item.CoverUrl+')',backgroundSize:'cover',backgroundRepeat:'no-repeat',backgroundPosition:'center center'}"></div>
                             </div>
-                         
+                         </router-link>
 
                        <p class="hover">{{item.Title}}</p>
-<!--                       <span class="schedule"><img src="../../assets/yanjin1.png" alt="">已阅读：{{item.ExtendData.Percentage}}%</span>-->
                    </div> 
                     <span v-if='alldata.length==0&&!loading' class='notdata'>
                        <img src="../../assets/wuziyuan.png" alt="">
@@ -43,11 +45,14 @@
                 </li>
 <!--                图书-->
                 <li v-if="classtype=='104'" class="classify-list-book">
-                   <div @click="readMydata(item)" v-for="item in bookdata">
+                   <div v-for="item in bookdata">
+                  <router-link :to="{path:'/accredit',query:{baseURL:item.AuthorizeUrl,Id:item.Id 
+
+,authorizeToken:item.ExtendData.AuthorizeToken,appId:7,DefaultFileExtension:item.DefaultFileExtension,ObjectType:item.ObjectType,}}" target="_blank">
                        <div class="book-list hover" style="background-image:url('/static/images/no_cover_m.jpg');background-size: 100% 100%;">
                                               <div class="book-list hover" :style="{background:'url('+item.CoverUrl+')',backgroundSize:'cover',backgroundRepeat:'no-repeat',backgroundPosition:'center center'}"></div>
                             </div>
-                         
+                          </router-link>
 
                        <p class="hover">{{item.Title}}</p>
                    </div> 
@@ -57,12 +62,15 @@
                 </li>
 <!--                视频窄版-->                
                 <li v-if="classtype=='109'" class="classify-list-book">
-                   <div @click="readMydata(item)"  v-for="item in videodata" >
+                   <div  v-for="item in videodata" >
+                  <router-link :to="{path:'/accredit',query:{baseURL:item.AuthorizeUrl,Id:item.Id 
+
+,authorizeToken:item.ExtendData.AuthorizeToken,appId:7,DefaultFileExtension:item.DefaultFileExtension,ObjectType:item.ObjectType,}}" target="_blank">
                        <div class="book-list hover" style="background-image:url('/static/images/no_cover_m.jpg');background-size: 100% 100%;">
                                               <div class="book-list hover" :style="{background:'url('+item.CoverUrl+')',backgroundSize:'cover',backgroundRepeat:'no-repeat',backgroundPosition:'center center'}"></div>
                             </div>
                          
-
+ </router-link>
                        <p class="hover">{{item.Title}}</p>
                    </div> 
                     <span v-if='videodata.length==0&&!loading' class='notdata'>
@@ -89,12 +97,15 @@
                 
 <!--                图片-->
                 <li v-if="classtype=='108'" class="classify-list-book">
-                   <div @click="readMydata(item)" v-for="item in photodata">
+                   <div  v-for="item in photodata">
+                  <router-link :to="{path:'/accredit',query:{baseURL:item.AuthorizeUrl,Id:item.Id 
+
+,authorizeToken:item.ExtendData.AuthorizeToken,appId:7,DefaultFileExtension:item.DefaultFileExtension,ObjectType:item.ObjectType,}}" target="_blank">
                       
                         <div class="book-list hover" style="background-image:url('/static/images/no_cover_m.jpg');background-size: 100% 100%;">
                                               <div class="book-list hover" :style="{background:'url('+item.CoverUrl+')',backgroundSize:'cover',backgroundRepeat:'no-repeat',backgroundPosition:'center center'}"></div>
                             </div>
-                       
+                        </router-link>
                        <p class="hover">{{item.Title}}</p>
 <!--                       <span class="schedule"><img src="../../assets/yanjin1.png" alt="">已阅读：{{item.ExtendData.Percentage}}%</span>-->
                    </div> 
@@ -109,6 +120,7 @@
                         <div class="book-list hover" style="background-image:url('/static/images/no_cover_m.jpg');background-size: 100% 100%;">
                                               <div class="book-list hover" :style="{background:'url('+item.CoverUrl+')',backgroundSize:'cover',backgroundRepeat:'no-repeat',backgroundPosition:'center center'}"></div>
                             </div>
+                            
                        <p>{{item.Title}}</p>
 <!--                       <span class="schedule"><img src="../../assets/yanjin1.png" alt="">已阅读：{{item.ExtendData.Percentage}}%</span>-->
                    </div> 
@@ -154,7 +166,11 @@
 <script>
     import search from "./module/Search.vue"
     import otherBook from "./module/OtherBook.vue"
+     import { mapGetters } from 'vuex'
     export default {
+          computed: mapGetters([
+            'userInfo',
+          ]),
         data() {
             return {
                 type: false,
@@ -180,30 +196,34 @@
             //跳转悦读
             readMydata(data) {
                 //                console.log(data.AuthorizeUrl.split('/')[data.AuthorizeUrl.split('/').length - 2], data.AuthorizeUrl.split('/')[data.AuthorizeUrl.split('/').length - 1])
-                if(data.AuthorizeUrl){
-                this.$http({
-                    url: '',
-                    baseURL: data.AuthorizeUrl,
-                    method: 'post',
-                    data: {
-                        extId: data.ExternalId,
-                        authorizeToken: data.ExtendData.AuthorizeToken,
-                        appId: 7
-                    }
-                }).then((res) => {
-                    if (res.data.Success) {
-                        this.readMyResource(data.DefaultFileExtension, data.Id, data.ObjectType, res.data.Data)
-                    } else {
-                        this.$message({
-                            message: res.data.Description,
-                            type: 'warning'
-                        })
-                    }
-                })}else{
-                     this.$message({
-                            message: '资源错误',
-                            type: 'warning'
-                        })
+                if (data.AuthorizeUrl) {
+                    this.$http({
+                        url: '',
+                        baseURL: data.AuthorizeUrl,
+                        method: 'post',
+//                        async: true,
+                        data: {
+                            id: data.Id,
+                            authorizeToken: data.ExtendData.AuthorizeToken,
+                            appId: 7
+                        }
+                    }).then((res) => {
+                        if (res.data.Success) {
+                            this.readMyResource(data.DefaultFileExtension, data.Id, data.ObjectType,{
+                                authorizeToken: data.ExtendData.AuthorizeToken,authorizeUrl: data.AuthorizeUrl,
+                            })
+                        } else {
+                            this.$message({
+                                message: res.data.Description,
+                                type: 'warning'
+                            })
+                        }
+                    })
+                } else {
+                    this.$message({
+                        message: '资源错误',
+                        type: 'warning'
+                    })
                 }
 
             },
@@ -215,7 +235,7 @@
             getDetail() {
                 this.$http.get("/User/Detail", {
                         params: {
-                            id: JSON.parse(window.sessionStorage.getItem('bg_user_info')).Id
+                            id: this.userInfo.Id
                         }
                     })
                     .then((res) => {
@@ -233,7 +253,7 @@
                             params: {
                                 cp: this.cp,
                                 ps: 20,
-                                objectTypeId: this.classtype!=0?this.classtype:'',
+                                objectTypeId: this.classtype != 0 ? this.classtype : '',
                                 IsOrganization: this.type
                             }
                         })
@@ -250,7 +270,7 @@
                                     this.photodata = res.data.Data.ItemList
                                 } else if (this.classtype == 107) {
                                     this.coursedata = res.data.Data.ItemList
-                                }else if (this.classtype == 0) {
+                                } else if (this.classtype == 0) {
                                     this.alldata = res.data.Data.ItemList
                                 }
                                 this.allcount = res.data.Data.RecordCount
@@ -272,7 +292,7 @@
                             if (res.data.Success) {
                                 //                                console.log(res.data.Data.ItemList)
                                 window.scrollTo(0, 0);
-                                   if (this.classtype == 104) {
+                                if (this.classtype == 104) {
                                     this.bookdata = res.data.Data.ItemList
                                 } else if (this.classtype == 109) {
                                     this.videodata = res.data.Data.ItemList
@@ -282,7 +302,7 @@
                                     this.photodata = res.data.Data.ItemList
                                 } else if (this.classtype == 107) {
                                     this.coursedata = res.data.Data.ItemList
-                                }else if (this.classtype == 0) {
+                                } else if (this.classtype == 0) {
                                     this.alldata = res.data.Data.ItemList
                                 }
                                 this.allcount = res.data.Data.RecordCount
@@ -435,7 +455,7 @@
                     overflow: hidden;
                     text-overflow: ellipsis;
                     white-space: nowrap;
-                     margin-top: 11px;
+                    margin-top: 11px;
                 }
                 .classify-list-video>div:nth-child(4n) {
                     float: left;

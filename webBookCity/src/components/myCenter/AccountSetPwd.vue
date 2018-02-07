@@ -3,7 +3,7 @@
    <!-- logo搜索部分 -->
     <search :selectType='6'></search>
     <div class="account-right">
-        <a href="#">账户设置 &gt; 设置新密码</a>
+        <span>账户设置 &gt; 设置新密码</span>
         <ul class="account-center">
             <li>
                 <img src="../../assets/imagesMy-Center/05.png">
@@ -30,7 +30,11 @@
 <script>
     import search from "./module/Search.vue"
     import otherBook from "./module/OtherBook.vue"
+   import { mapGetters } from 'vuex'
     export default {
+          computed: mapGetters([
+            'userInfo',
+          ]),
         data() {
             //验证密码
             const validatePassword = (rule, value, callback) => {
@@ -105,7 +109,7 @@
                 this.$refs[formName].validate((valid) => {
                     if (valid) {
                         this.$http.post('/Passport/UpdatePassword', {
-                                account:JSON.parse(window.sessionStorage.getItem('bg_user_info')).MobileNumber?JSON.parse(window.sessionStorage.getItem('bg_user_info')).MobileNumber:JSON.parse(window.sessionStorage.getItem('bg_user_info')).Email,
+                                account:this.userInfo.MobileNumber?this.userInfo.MobileNumber:this.userInfo.Email,
                                 password: this.form.newPwd,
                                 oldPassword: this.form.oldPwd,
                                 type: 3
@@ -136,7 +140,7 @@
             margin: auto;
             padding-bottom: 395px;
         }
-        .account-right>a {
+        .account-right>span{
             display: block;
             margin: 20px 0;
             text-decoration: none;

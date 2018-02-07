@@ -3,7 +3,7 @@
    <!-- logo搜索部分 -->
     <search :selectType='6'></search>
     <div class="account-right">
-        <a href="#">账户设置 &gt; 绑定机构验证码</a>
+        <span>账户设置 &gt; 绑定机构验证码</span>
         <ul class="account-center">
             <li>
                 <img src="../../assets/imagesMy-Center/14.png">
@@ -67,7 +67,7 @@
             margin: auto;
             padding-bottom: 395px;
         }
-        .account-right > a {
+        .account-right > span {
             display: block;
             margin: 20px 0;
             text-decoration: none;

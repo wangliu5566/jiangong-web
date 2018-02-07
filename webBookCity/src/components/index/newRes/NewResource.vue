@@ -1,5 +1,5 @@
 <template>
-  <div class="new-res" :style="{minHeight:clientHeight+'px'}">
+  <div class="new-res">
     <searchNoMenu></searchNoMenu>
     <div class='content' >
       <div class="path" style="cursor: pointer;"><span @click="goPath('index')">首页</span> &gt; <span>最新资源</span></div>
@@ -22,7 +22,6 @@ export default {
       type: 1,
     }
   },
-  props: ['clientHeight'],
   components: {
     searchNoMenu,
   },

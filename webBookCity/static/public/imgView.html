@@ -2,20 +2,24 @@
 <html lang="en">
 
 <head>
+  <meta name="renderer" content="webkit"/>
   <meta charset="UTF-8">
   <title id="readerTitle">图片阅读</title>
+  <link rel="shortcut icon" href="../images/logo_28.jpg" />
   <link rel="stylesheet" href="../css/imgView.css">
   <link rel="stylesheet" href="../css/message.css">
+
   <script src="../js/vue.js"></script>
   <script src="../js/ajax.js"></script>
   <script src="../js/jquery-1.11.0.min.js"></script>
+
 </head>
 
 <body>
   <div class="img-view" id="imgView" @DOMMouseScroll="imgScale($event)" @mousewheel="imgScale($event)" @mousemove.prevent="overmove" @mouseup="endmove">
     <!-- <p><img src="../images/选转.png" alt="" @click="imgRotate" ></p> -->
-    <div class="img-content" :style="{transform:'rotate('+rotate+'deg) scale('+scale+')',left:left + 'px',top:top+'px',width:winWidth +'px',background:'white'}" @mousedown.stop="startmove">
-      <img :src="imgSrc" alt="" :width="winWidth +'px'" ref="showImg" @dragstart.prevent="">
+    <div class="img-content" :style="{transform:'rotate('+rotate+'deg) scale('+scale+')',left:left + 'px',top:top+'px'}" @mousedown.stop="startmove">
+      <img style="max-width: 1200px" :src="imgSrc" @load="imgLoaded" alt=""  ref="showImg" @dragstart.prevent="">
     </div>
     <div class="right-place">
     </div>
@@ -42,7 +46,6 @@
   </div>
   <script src="../js/message.js"></script>
   <script>
-  'use strict';
 
   var $vm = new Vue({
     el: '#imgView',
@@ -52,23 +55,32 @@
       input: '',
       textarea: '',
       rotate: 0,
-      scale: 0.5,
+      scale: 1,
       imgSrc: 'http://pic29.photophoto.cn/20131204/0034034499213463_b.jpg',
       hasCollect: false,
       left: 0,
-      top: window.innerWidth < 1200 ? -100:(window.innerWidth > 1400 && window.innerWidth < 1600 ? -200:-300),
+      top: 0,
       moveFlag: false,
       prevLeft: 0,
       prevTop: 0,
       relatedExpList: [],
       objectId: null,
       objectType: null,
-      message: null
+      message: null,
+      loaded:false
     },
     methods: {
+      imgLoaded:function imgLoaded() {
+        var imgStyle = getComputedStyle(this.$refs.showImg);
+
+        this.left = (this.winWidth - parseInt(imgStyle.width) * this.scale) / 2 - 50;
+        this.top = (this.winHeight - parseInt(imgStyle.height) * this.scale) / 2 - 50;
+      },
       setWindow: function setWindow() {
         this.winWidth = window.innerWidth;
         this.winHeight = window.innerHeight;
+
+        // this.imgLoaded();
       },
 
 
@@ -86,8 +98,8 @@
             id: _this.objectId,
             userId: localStorage.userId,
             objectType: _this.objectType,
-            deviceToken: sessionStorage.deviceToken,
-            accessToken: sessionStorage.accessToken,
+            deviceToken: getCookie('deviceToken'),
+            accessToken: getCookie('accessToken'),
             apiname: '/History/Record',
             actionType: 3 //操作动作，3-阅读（点击阅读按钮），4-分享，5-打印，6-点赞
           }, systemParams),
@@ -115,8 +127,8 @@
             objectId: _this.objectId,
             type: 111,
             level: 0,
-            deviceToken: sessionStorage.deviceToken,
-            // accessToken:sessionStorage.accessToken,
+            deviceToken: getCookie('deviceToken'),
+            // accessToken:getCookie('accessToken'),
             apiname: '/ExplicitWordLabel/List'
           }, systemParams),
           success: function success(res) {
@@ -130,6 +142,46 @@
           }
         });
       },
+
+      /**
+       * [validSafe description]
+       * @Author   罗文
+       * @DateTime 2018-02-01
+       * @param    {Function} callback [验证通过后的回调]
+       * @return   {[type]}            [description]
+       */
+      validSafe(callback) {
+          var fileData = decodeURIComponent(location.href.slice(location.href.indexOf('data=') + 5));
+              fileData = JSON.parse(fileData);
+
+           var _this = this;    
+         //验证登录是否异常
+          $.ajax({
+              type: "GET",
+              url: baseUrl + "/Content/Detail",
+              data: Object.assign({}, {
+                  id:  _this.objectId,
+                  deviceToken: getCookie('deviceToken'),
+                  apiname: '/Content/Detail'
+              }, systemParams),
+              success: function success(res) {
+                  if (res.Success) {
+                      if(res.Data.ExtendData.AuthorizeToken  &&  res.Data.ExtendData.AuthorizeToken == fileData.authorizeToken) {
+                          // 验证通过
+                          if(callback)  callback();
+                      }else {
+                          alert('登录超时，请重新登录！');
+                          close();
+                      }
+                  } else {
+                      alert(res.Description);
+                      window.close();
+                  }
+              }
+          });
+      },
+
+
       imgRotate: function imgRotate() {
         this.rotate += 90;
       },
@@ -187,29 +239,38 @@
        */
       collect: function collect() {
         var _this = this;
-        $.ajax({
-          type: "POST",
-          url: baseUrl + "/Favorite/CreateOrUpdate",
-          data: Object.assign({}, {
-            objectId: _this.objectId,
-            objectType: 111,
-            deviceToken: sessionStorage.deviceToken,
-            // accessToken:sessionStorage.accessToken,
-            apiname: '/Favorite/CreateOrUpdate'
-          }, systemParams),
-          success: function success(res) {
-            // res = eval('('+res+')');
-            if (res.Success) {
-              if (res.Description.indexOf('取消') !== -1) {
-                _this.hasCollect = false;
+        this.validSafe(function() {
+           $.ajax({
+            type: "POST",
+            url: baseUrl + "/Favorite/CreateOrUpdate",
+            data: Object.assign({}, {
+              objectIds: _this.objectId,
+              objectTypes: 111,
+              state:_this.hasCollect ? false:true,
+              deviceToken: getCookie('deviceToken'),
+              // accessToken:getCookie('accessToken'),
+              apiname: '/Favorite/CreateOrUpdate'
+            }, systemParams),
+            success: function success(res) {
+              // res = eval('('+res+')');
+              if (res.Success) {
+                if (res.Description.indexOf('取消') !== -1) {
+                  _this.hasCollect = false;
+                } else {
+                  _this.hasCollect = true;
+                }
+                _this.message.showMessage('success', res.Description);
               } else {
-                _this.hasCollect = true;
+                if(res.Description.indexOf('AccessToken') != -1) {
+                    alert('您的登录已过期，请重新登录再试！');
+                    location.href = '/index.html#/login';
+                }else {
+                    alert(res.Description);
+                    location.href = '/index.html#/login';
+                }
               }
-              _this.message.showMessage('success', res.Description);
-            } else {
-              _this.message.showMessage('error', res.Description);
             }
-          }
+          });
         });
       },
 
@@ -222,8 +283,8 @@
           url: baseUrl + "/Content/Detail",
           data: Object.assign({}, {
             id: _this.objectId,
-            deviceToken: sessionStorage.deviceToken,
-            // accessToken:sessionStorage.accessToken,
+            deviceToken: getCookie('deviceToken'),
+            // accessToken:getCookie('accessToken'),
             apiname: '/Content/Detail'
           }, systemParams),
           success: function success(res) {
@@ -242,11 +303,55 @@
         });
       }
     },
+    beforeCreate:function beforeCreate() {
+        //第一步本地拦截
+        if(!getCookie('bg_user_info') || !getCookie('accessToken') || !JSON.parse(getCookie('bg_user_info')).Id) {
+           alert('您无权观看此资源，请先登录授权！');
+           location.href = '/index.html#/login';
+        }
+        
+        //第二步参数拦截
+        if (location.href.indexOf('data=') !== -1) {
+            var fileData = decodeURIComponent(location.href.slice(location.href.indexOf('data=') + 5));
+
+            fileData = JSON.parse(fileData);
+            
+            
+            if(!fileData.objectId || !fileData.objectType || !fileData.authorizeToken || !fileData.authorizeUrl) {
+                alert('阅读资源所需参数错误，请确认参数！');
+                window.close();
+            }
+
+        }else {
+            alert('阅读资源所需参数错误，请确认参数！');
+            window.close();
+        }
+    },
     created: function created() {
-      // var url = encodeURIComponent('http://localhost:8080/static/public/imgView.html?imgSrc=http://file.kingchannels.cn/files/upload/8d2/8d29b499de1b839f314eeca4e1feb248-71566_0_371880.png&id=568873&objectType=111');
 
       var url = decodeURIComponent(location.href.slice(location.href.indexOf('data=') + 5));
       url = JSON.parse(url);
+
+      $.ajax({
+          type: "POST",
+          url: url.authorizeUrl,
+          async:false,
+          data: Object.assign({}, {
+              id: url.objectId,
+              authorizeToken:url.authorizeToken,
+              deviceToken: getCookie('deviceToken'),
+          }, systemParams),
+          success: function success(res) {
+              if(res.Success) {
+                url = Object.assign({},url,res.Data);
+              }else {
+                 // alert(res.Description);
+                 // window.close();
+              }
+          }
+      });
+
+
       this.imgSrc = url.Url;
       this.objectId = url.objectId;
       this.objectType = url.objectType;
@@ -275,6 +380,16 @@
        },2000)
 
 
+  
+      // $.ajax({
+      //     type: "get",
+      //     url: './pdf.html',
+      //     success: function success(res) {
+      //       console.log(1)
+      //        console.log(res)
+      //     }
+      // });
+
 
       
       var _this2 = this;
@@ -282,6 +397,7 @@
       // ShowDevTools();
       this.message = new Message();
       this.setWindow();
+
 
       //获取关联知识元
       this.getRelatedExpList();
@@ -291,11 +407,23 @@
       //获取收藏
       this.gethasCollect();
 
+      //禁止选中
+      document.addEventListener('selectstart', function (e) {
+          e.preventDefault();
+      }, false);
+
       window.onresize = function() {
         _this2.setWindow();
       };
     },
-    update: function update() {},
+    updated: function updated() {
+      if(!this.loaded) {
+        this.$nextTick(function() {
+          this.imgLoaded();
+          this.loaded = true;
+        })
+      }
+    },
 
     watch: {
       'imgSrc': function imgSrc(nv) {
@@ -309,6 +437,9 @@
   });
 
   </script>
+
+  <!-- <script src="../js/promise.js"></script> -->
+
   <script>
   //旋转
   function rotate() {

@@ -1,5 +1,5 @@
 <template>
-  <div class="standard" :style="{minHeight:clientHeight+'px'}">
+  <div class="standard">
     <searchNoMenu :sendObj="sendObj"></searchNoMenu>
     <div class='power-content'>
       <div class="aside-left">
@@ -9,36 +9,37 @@
         <relateRes :ObjectTypes="104"></relateRes>
       </div>
       <!-- 子导航 -->
-      <div class="aside-right" v-loading="loading"
-    element-loading-text="拼命加载中"
-    element-loading-spinner="el-icon-loading"
-    element-loading-background="rgba(256, 256, 256, 0.8)" style="min-height: 300px;">
+      <div class="aside-right" v-loading="loading" element-loading-text="拼命加载中" element-loading-spinner="el-icon-loading" element-loading-background="rgba(256, 256, 256, 0.8)" style="min-height: 300px;">
         <div class="subnav" id="controlSize">
-          <el-button class="myBtn1" @click="choiceList(0,'sellConnt')" :class="btnIndex==0?'active':''">销量
-            <!-- <i class="el-icon-sort-down"></i> -->
+          <el-button class="myBtn1" :class="btnsIndex==1?'red-active':''" @click="changeBtnsIndex(1,'soldCount')">销量</el-button>
+          <el-button class="myBtn" :class="btnsIndex==2?'red-active':''" @click="changeBtnsIndex(2,'onShelfDate',isOnShelfDescend)">上架时间
+            <i class="el-icon-sort-down" v-if="isOnShelfDescend"></i>
+            <i class="el-icon-sort-up" v-if="!isOnShelfDescend"></i>
           </el-button>
-          <el-button class="myBtn" @click="choiceList(1,'onShelfDate')" :class="btnIndex==1?'active':''">上架时间
-            <i class="el-icon-sort-down"></i>
+          <el-button class="myBtn" :class="btnsIndex==3?'red-active':''" @click="changeBtnsIndex(3,'publishDate',publishDateDescend)">出版时间
+            <i class="el-icon-sort-down" v-if="publishDateDescend"></i>
+            <i class="el-icon-sort-up" v-if="!publishDateDescend"></i>
           </el-button>
-          <el-button class="myBtn" @click="choiceList(2,'publishDate')" :class="btnIndex==2?'active':''">出版时间
-            <i class="el-icon-sort-down"></i>
+          <el-button class="myBtn" :class="btnsIndex==4?'red-active':''" @click="changeBtnsIndex(4,'readCount',readCountDescend)">阅读量
+            <i class="el-icon-sort-down" v-if="readCountDescend"></i>
+            <i class="el-icon-sort-up" v-if="!readCountDescend"></i>
           </el-button>
-          <el-button class="myBtn" @click="choiceList(3,'readCount')" :class="btnIndex==3?'active':''">阅读量
-            <i class="el-icon-sort-down"></i>
+          <el-button class="myBtn" :class="btnsIndex==5?'red-active':''" @click="changeBtnsIndex(5,'currentPrice',currentPriceDescend)">价格
+            <i class="el-icon-sort-down" v-if="currentPriceDescend"></i>
+            <i class="el-icon-sort-up" v-if="!currentPriceDescend"></i>
           </el-button>
-          <el-button class="myBtn1" @click="choiceList(5,'price')" :class="btnIndex==4?'active':''">价格</el-button>
-          <span class="line-1"></span>
-          <span class="price-1">&yen;</span>
-          <el-input v-model="price1" @focus="btnIndex=5" style="width:55px;height: 30px;margin-left: 10px;"></el-input>
+          <el-input v-model="lowerPrice" style="width:50px;height: 30px;margin-left: 10px;"></el-input>
           -
-          <span class="price-2">&yen;</span>
-          <el-input v-model="price2"  @focus="btnIndex=5" style="width:55px;height: 30px;"></el-input>
-          <el-button class="myBtn1" @click="choiceList(4,'price')" v-if="btnIndex==5">确定</el-button>
+          <el-input v-model="heighterPrice"  style="width:50px;height: 30px;"></el-input>
+          <el-button class="myBtn1" @click="changeBtnsIndex(6,'price')">确定</el-button>
+          <span class="line-1" style="left: 417px;"></span>
+          <span class="price-1" style="left:430px;">&yen;</span>
+          <span class="price-2" style="left: 498px;">&yen;</span>
           <span class="float-span">
              每页显示：
           <span @click="changePageSize(0,20)" :class="pageIndex==0?'red14':''">20</span>
           <span @click="changePageSize(1,50)" :class="pageIndex==1?'red14':''">50</span>
-          <span @click="changePageSize(2,80)" :class="pageIndex==2?'red14':''">80</span>
+          <!-- <span @click="changePageSize(2,80)" :class="pageIndex==2?'red14':''">80</span> -->
           <span @click="showImg(2)" :class="showListOrImg==2?'active':''">
             <i class="el-icon-menu" style="font-size: 17px;"></i> 大图
           </span>
@@ -54,16 +55,26 @@
               <div style="width:100%;height:100%;" @click="goDetail(getDetailPath(item.ObjectType),item.Id)" :style="{backgroundImage:'url('+item.CoverUrl+')',backgroundSize:'cover',backgroundRepeat:'no-repeat',backgroundPosition:'center center'}"></div>
             </div>
             <div class="right-word ml20">
-              <p class="names hover" style="width:100%;margin-bottom: 8px;font-size: 18px;color:#333;line-height: 20px;" @click="goDetail(getDetailPath(item.ObjectType),item.Id)">{{item.Title}}</p>
+              <p class="names hover" style="width:100%;margin-bottom: 3px;font-size: 18px;color:#333;line-height: 20px;" @click="goDetail(getDetailPath(item.ObjectType),item.Id)">{{item.Title}}</p>
               <p>作者：{{item.Author?item.Author.length>10?item.Author.slice(0,10)+'...':item.Author:'-'}}</p>
               <p>出版日期：{{item.PublishDate?item.PublishDate.slice(0,10):'-'}}</p>
               <p>征订号：{{item.ExtendData&&item.ExtendData.SubscriptionNumber?item.ExtendData.SubscriptionNumber:'-'}}</p>
               <p>ISBN：{{item.ExtendData&&item.ExtendData.Isbn?item.ExtendData.Isbn:'-'}}</p>
-              <p style="margin-top: 13px;">
+              <p style="margin-top:5px">
                 <span class="price" style="margin-right: 15px;font-size: 18px;">&yen;{{formatPrice(item.CurrentPrice)}}</span>
                 <span class="market-price">&yen;{{formatPrice(item.MarketPrice)}}</span>
               </p>
-              <div :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" style="float: right;margin-top: -30px;background-position:0 8px;height:30px;" @click="collectFn(item.Id,item.ObjectType,!item.ExtendData.IsFavorited,getlist)">收藏</div>
+              <!--   <div :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" style="background-position:0 9px;height:30px;line-height: 30px;" @click="collectFn(item,index,changeIsFavorited)">收藏</div> -->
+              <div style="width: 160px;margin-top:2px;">
+                <el-row>
+                  <el-col :span="12">
+                    <p :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" @click="collectFn(item,index,changeIsFavorited)" style="background-position: 0 7px;height:25px;line-height: 25px;">收藏</p>
+                  </el-col>
+                  <el-col :span="12">
+                    <div class="shopping-car" v-if="showShoppingIcon(item)" @click="addShopping(item)" style="background-position: 0 6px;height:25px;line-height: 25px;">购物车</div>
+                  </el-col>
+                </el-row>
+              </div>
             </div>
           </li>
         </ul>
@@ -76,8 +87,8 @@
               </div>
               <div class="left-word-list">
                 <p class="hover" style="height: 70px;font-size: 18px;color:#333" @click="goDetail(getDetailPath(item.ObjectType),item.Id)">{{item.Title}}</p>
-                <p >作者：{{item.Author?item.Author.length>100?item.Author.slice(0,100)+'...':item.Author:'暂无'}}</p>
-                <p>出版社：{{item.Publisher?item.Publisher:'-'}}</p>
+                <p>作者：{{item.Author?item.Author.length>100?item.Author.slice(0,100)+'...':item.Author:'暂无'}}</p>
+                <!-- <p>出版社：{{item.Publisher?item.Publisher:'-'}}</p> -->
                 <p>出版日期：{{item.PublishDate?item.PublishDate.slice(0,10):'-'}}</p>
                 <p>征订号：{{item.ExtendData&&item.ExtendData.SubscriptionNumber?item.ExtendData.SubscriptionNumber:'-'}}</p>
                 <p>ISBN：{{item.ExtendData&&item.ExtendData.Isbn?item.ExtendData.Isbn:'-'}}</p>
@@ -85,26 +96,26 @@
             </div>
             <div class="right-con">
               <p style="margin-top: 90px;text-align: center;line-height: 40px;">
-                <span class="price" style="margin-right: 20px;">&yen;{{formatPrice(item.CurrentPrice,2)}}</span>
-                <span class="market-price">&yen;{{formatPrice(item.MarketPrice,2)}}</span>
+                <span class="price" style="margin-right: 20px;">&yen;{{handleCurrentPrice(item.ObjectType, item)}}</span>
+                <span class="market-price">&yen;{{handleMarketPrice(item.ObjectType, item)}}</span>
               </p>
               <!-- <div style="width: 65px;margin:0 auto;">
-                <p :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" @click="collectFn(item.Id,item.ObjectType,!item.ExtendData.IsFavorited,getlist)" style="background-position: 0">收藏</p>
+                <p :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" @click="collectFn(item,index,changeIsFavorited)" style="background-position: 0">收藏</p>
               </div> -->
               <div style="width: 130px;margin:0 auto;">
                 <el-row>
                   <el-col :span="12">
-                    <p :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" @click="collectFn(item.Id,item.ObjectType,!item.ExtendData.IsFavorited,getlist)" style="width:45px;background-position: 0 4px;padding-left: 14px;">收藏</p>
+                    <p :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" @click="collectFn(item,index,changeIsFavorited)" style="width:45px;background-position: 0 4px;padding-left: 14px;">收藏</p>
                   </el-col>
                   <el-col :span="12">
-                    <div class="shopping-car" @click="addShopping(item)" style="background-position: 0 2px">购物车</div>
+                    <div class="shopping-car" v-if="showShoppingIcon(item)" @click="addShopping(item)" style="background-position: 0 2px">购物车</div>
                   </el-col>
                 </el-row>
               </div>
             </div>
           </div>
         </div>
-        <div v-if="noContent" style="overflow: hidden;padding:140px 310px;" >
+        <div v-if="noContent" style="overflow: hidden;padding:140px 310px;">
           <img src="../../../static/images/no_detail.png" height="60" width="311">
         </div>
         <div class="page mt20">
@@ -124,8 +135,8 @@ import { mapGetters } from 'vuex'
 export default {
   data() {
     return {
-      loading:false,
-      noContent:false,
+      loading: false,
+      noContent: false,
       sendObj: {
         word: '工具书',
         index: 6
@@ -143,13 +154,17 @@ export default {
 
       showListOrImg: 2,
 
-      btnIndex: 989,
+      btnsIndex: 989,
       SearchWord: '',
-      price1: '',
-      price2: '',
+      lowerPrice: '',
+      heighterPrice: '',
+
+      isOnShelfDescend: true,
+      publishDateDescend: true,
+      readCountDescend: true,
+      currentPriceDescend: true,
     }
   },
-  props: ['clientHeight'],
   components: {
     searchNoMenu,
     relateRes,
@@ -163,6 +178,10 @@ export default {
     this.getlist()
   },
   methods: {
+     changeIsFavorited(index){
+      this.dataList[index].ExtendData.IsFavorited = true ;
+      this.$set(this.dataList,index,this.dataList[index])
+    },
     handleCurrentChange(val) {
       this.page = val;
       this.getlist()
@@ -189,51 +208,81 @@ export default {
       this.menuId = id;
       this.getlist()
     },
-    getlist() {
+    getlist(Descending) {
       this.loading = true;
+
+      var SearchOrderBy = {};
+      if (this.SearchWord != 'price'&&this.SearchWord!='') {
+        SearchOrderBy = {
+          SearchOrderBy: {
+            ColumnName: this.SearchWord,
+            Descending: Descending!=undefined?Descending:true,
+          }
+        }
+      }
+
+      var currentPrice={};
+      if (this.lowerPrice != '' && this.heighterPrice != '') {
+        currentPrice = {
+          currentPrice:this.lowerPrice + '@' + this.heighterPrice
+        }
+      }
+
+      var CategoryIds={};
+      if (this.menuId != '') {
+        CategoryIds = {
+          CategoryIds:[this.menuId]
+        }
+      }
+
       this.$http.post("/Content/Search", {
           cp: this.page,
           ps: this.pageSize,
-          query: JSON.stringify({
+          query: JSON.stringify(Object.assign({},CategoryIds,{
             objectTypes: [104], //图书
-            CategoryIds: this.menuId == '' ? '' : [this.menuId],
-
-            SearchOrderBy: {
-              ColumnName: this.SearchWord == 'price' ? '' : this.SearchWord,
-              Descending: true,
-            },
-            ExtendProperties: {
-              marketPrice: this.price1 != '' && this.price2 != '' ? this.price1 + '@' + this.price2 : '',
-            }
-          })
+            
+            ExtendProperties: Object.assign({},{
+              IsOnShelf: true,
+            },currentPrice)
+          },SearchOrderBy))
         })
         .then((res) => {
           if (res.data.Success) {
             this.dataList = res.data.Data.ItemList;
             this.totalCount = res.data.Data.RecordCount;
             this.loading = false;
-            if(this.dataList.length==0){
+            if (this.dataList.length == 0) {
               this.noContent = true;
-            }else{
+            } else {
               this.noContent = false;
             }
           }
         })
     },
     /**
-     * [choiceList 点击btn]
+     * [changeBtnsIndex 点击btn]
      * @Author   赵雯欣
      * @DateTime 2017-12-19
      * @return   {[type]}   [description]
      */
-    choiceList(index, SearchWord) {
-      this.btnIndex = index;
-      this.SearchWord = SearchWord;
-      if (index == 5) {
-
-      } else {
-        this.getlist()
+    changeBtnsIndex(index, SearchWord,Descending) {
+      if(index==2){
+        this.isOnShelfDescend = !Descending;
+      }else if(index==3){
+        this.publishDateDescend = !Descending;
+      }else if(index==4){
+        this.readCountDescend = !Descending;
+      }else if(index==5){
+        this.currentPriceDescend = !Descending;
       }
+      // if(index<6){
+      this.btnsIndex = index;
+      this.SearchWord = SearchWord;
+      this.getlist(!Descending)
+      // }else if(index==6){  //搜索价格区间
+
+      // }
+      // 
     },
     /**
      * [showImg  切换大图或者列表]
@@ -251,13 +300,13 @@ export default {
       this.getlist()
     },
   },
-  watch:{
+  watch: {
     'loginModal': function(val, oldVal) {
       if (!val && this.callbackAfterLogin.position == 'index') {
-        if(this.callbackAfterLogin.callback == 'indexCollect'){
-           this.collectFn(this.callbackAfterLogin.id,this.callbackAfterLogin.ObjectType,true,this.getlist)
-        }else if (this.callbackAfterLogin.callback == 'indexAddShopping') {
-           this.addShopping(this.callbackAfterLogin.item)
+        if (this.callbackAfterLogin.callback == 'indexCollect') {
+          this.collectFn(this.callbackAfterLogin.id, this.callbackAfterLogin.ObjectType, true, this.getlist)
+        } else if (this.callbackAfterLogin.callback == 'indexAddShopping') {
+          this.addShopping(this.callbackAfterLogin.item)
         }
       }
     }
@@ -277,13 +326,10 @@ export default {
   }
 
   #controlSize {
-    i {
-      font-size: 16px;
-      margin-left: 3px;
-    }
     .myBtn {
-      padding: 8px 0 8px 15px;
+      padding: 8px 0 8px 10px;
       border-radius: 0!important;
+      margin-left: 5px!important;
     }
     .myBtn1 {
       padding: 8px 15px;
@@ -311,7 +357,7 @@ export default {
       overflow: hidden;
       margin: 22px auto 8px;
       font-size: 14px;
-      color:#666;
+      color: #666;
     }
 
     .left-div {
@@ -380,8 +426,8 @@ export default {
         float: left;
         height: 184px;
         color: #666;
-        font-size: 16px;
-        line-height: 28px;
+        font-size: 14px;
+        line-height: 24px;
 
         span:nth-child(2) {
           text-decoration: line-through;

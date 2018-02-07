@@ -60,6 +60,9 @@
                     <div class='noworderTime'>
                         <span>{{orderdata.CreateTime}}</span>
                         <span style="margin-left: 95px;">{{orderdata.PayTime}}</span>
+                        <span style="margin-left: 95px;">{{orderdata.ExtendData.DeliveryTime}}</span>
+                        <span style="margin-left: 95px;">{{orderdata.ExtendData&&orderdata.ExtendData.OrderFinishTime?orderdata.ExtendData.OrderFinishTime:''}}</span>
+                        <span style="margin-left: 95px;">{{orderdata.ExtendData&&orderdata.ExtendData.OrderFinishTime?orderdata.ExtendData.OrderFinishTime:''}}</span>
 <!--
                         <span>商品出库</span>
                         <span>等待收货</span>
@@ -83,7 +86,7 @@
                        <h6>收货人信息</h6>
                        <p>收货人：<span>{{JSON.parse(orderdata.ExtendData.OrderAddressInfo).Reciver}}</span></p>
                        <p>地&nbsp;&nbsp;&nbsp;址：<span>{{JSON.parse(orderdata.ExtendData.OrderAddressInfo).Country}}，{{JSON.parse(orderdata.ExtendData.OrderAddressInfo).Province}}，{{JSON.parse(orderdata.ExtendData.OrderAddressInfo).DetailedAddress}}</span></p>
-                       <p>电&nbsp;&nbsp;&nbsp;话：<span>{{orderdata.ExtendData.MobilePhone}}</span></p>
+                       <p>电&nbsp;&nbsp;&nbsp;话：<span>{{JSON.parse(orderdata.ExtendData.OrderAddressInfo).MobilePhone}}</span></p>
                     </li>
                     <li>
                         <h6>配送信息</h6>
@@ -138,7 +141,7 @@
                     </el-table-column>
                     <el-table-column class-name="border-left" align="center" prop="onSale" label="优惠" width="120">
                     <template slot-scope='props'>
-                           &yen;{{formatPrice(props.row.TotalMoney-props.row.Price, 2)}}
+                           &yen; {{props.row.ExtendData&&props.row.ExtendData.Benefit?formatPrice(props.row.ExtendData.Benefit, 2):'0.00'}}
                         </template>
                     </el-table-column>
                     <el-table-column class-name="border-left" align="center" label="小计" width="120">
@@ -154,14 +157,14 @@
             
 <div class="box-con mt20 global-box">
     <div class="go-pay">
-        <p>商品金额：<span>&yen;{{formatPrice(orderdata.TotalMoney, 2)}}</span></p>
-<!--        <p>运费：<span>&yen;10.00</span></p>-->
-        <p>促销优惠：<span>&yen;{{formatPrice(orderdata.TotalMoney, 2)}}</span></p>
+        <p>商品金额：<span>&yen;{{formatPrice(orderdata.UndiscountTotalMoney?orderdata.UndiscountTotalMoney:0, 2)}}</span></p>
+        <p>运费：<span>&yen;{{formatPrice(orderdata.ExtendData.Freight?orderdata.ExtendData.Freight:0, 2)}}</span></p>
+        <p>促销优惠：<span>-&yen;{{formatPrice(orderdata.ExtendData.Benefit?orderdata.ExtendData.Benefit:0, 2)}}</span></p>
         <div class="line"></div>
         <p>合计：<span class="red-word">&yen;{{formatPrice(orderdata.TotalMoney, 2)}}</span></p>
         <p class="mt20">实付总额：
             <b class="red-word total">&yen;{{formatPrice(orderdata.TotalMoney, 2)}}</b>
-            <el-button v-if="orderdata.Status==3&&!orderdata.IsPaid" @click="$router.push({ path: '/wrap/paid', query: { orderId: $route.query.orderId }})" type="primary">去支付</el-button>
+            <el-button v-if="orderdata.Status==3&&!orderdata.IsPaid" @click="$router.push({ path:'/wrap/paid', query: { orderId: $route.query.orderId }})" type="primary">去支付</el-button>
             <el-button v-if="orderdata.Status==4" @click="logisticsDialogVisible=true" type="primary">确认收货</el-button>
         </p>
     </div>
@@ -364,6 +367,9 @@
                             width: 93px;
                             font-size: 14px;
                             text-align: center
+                        }
+                        .noworderTime{
+                            width: 868px;
                         }
                     }
                 }

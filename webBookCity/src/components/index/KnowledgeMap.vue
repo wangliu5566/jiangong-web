@@ -1,5 +1,5 @@
 <template>
-  <div class="knowledge-map" :style="{minHeight:clientHeight+'px'}">
+  <div class="knowledge-map">
     <!-- 引用头部 -->
     <searchNoMenu></searchNoMenu>
     <!-- 内容区 -->
@@ -97,6 +97,7 @@ export default {
   .knowCon {
     overflow: hidden;
     padding: 0 30px;
+    min-height: 300px;
   }
 
   .wrap-line {

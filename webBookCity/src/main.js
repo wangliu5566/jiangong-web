@@ -11,12 +11,16 @@ import util from './util'
 Vue.use(util);
 
 
+// import Share from 'vue-social-share'
+// import 'vue-social-share/dist/client.css'
+// Vue.use(Share)
+
 //引入axios
 import axios from './http.js'
 Vue.prototype.$http = axios;
 
-import VueCookie from 'vue-cookie'
-Vue.use(VueCookie);
+import VueCookies from 'vue-cookies'
+Vue.use(VueCookies);
 
 
 //引入vuex
@@ -30,8 +34,8 @@ import ElementUI from 'element-ui'
 import '../theme/index.css';
 Vue.use(ElementUI)
 
-import VueEllipsis from 'vue-ellipsis'
-Vue.use(VueEllipsis)
+import Ellipsis from '@/components/common/VueEllipsis'
+Vue.use(Ellipsis)
 
 
 /* eslint-disable no-new */

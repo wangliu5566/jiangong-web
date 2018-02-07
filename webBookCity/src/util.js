@@ -13,29 +13,94 @@ export default {
         return '纸质书'
       } else if (type == 'POD' || type == 'Pod') {
         return 'POD'
+      } else if (type == 'OriginalPic') {
+        return "原图"
+      } else if (type == 'MediumPic') {
+        return "中图"
+      } else {
+        return '-';
       }
     };
-    // 类型判断
-    Vue.prototype.returnObjectType = function(type) {
-      let name = ''
-      this.allType.map((item) => {
-        if (item.value == type) {
-          name = item.label
-        }
-      })
-      return name
-    };
 
-    // 判断类型价格
+    // 返回类型   -- 用于电子商务
+    Vue.prototype.confirmType = function(ObjectType, MediaType) {
+        if (ObjectType == 104) {
+          if (MediaType == 'Elec') {
+            return '电子书'
+          } else if (MediaType == 'Entity') {
+            return '纸质书'
+          } else if (MediaType == 'POD' || MediaType == 'Pod') {
+            return 'POD'
+          }
+        } else if (ObjectType == 108) {
+          if (MediaType == 'OriginalPic') {
+            return "原图"
+          } else if (MediaType == 'MediumPic') {
+            return "中图"
+          } else {
+            return '-';
+          }
+        } else if (ObjectType == 109) {
+          return '视频';
+        }
+      },
+      // 类型判断
+      Vue.prototype.returnObjectType = function(type) {
+        let name = ''
+        this.allType.map((item) => {
+          if (item.value == type) {
+            name = item.label
+          }
+        })
+        return name
+      };
+
+    // 判断资源类型价格
     Vue.prototype.returnTypePrice = function(MediaType, obj) {
       if (MediaType == 'Elec') {
-        return obj.MarketPrice
+        return obj.CurrentPrice ? this.formatPrice(obj.CurrentPrice, 2) : '0.00'
       } else if (MediaType == 'Entity') {
         return obj.ExtendData && obj.ExtendData.PaperBookPrice ? this.formatPrice(obj.ExtendData.PaperBookPrice, 2) : '0.00'
       } else if (MediaType == 'POD' || obj.MediaType == 'Pod') {
         return obj.ExtendData && obj.ExtendData.PodPrice ? this.formatPrice(obj.ExtendData.PodPrice, 2) : '0.00'
+      } else if (MediaType == 'OriginalPic') {
+        return obj.ExtendData && obj.ExtendData.OriginalImagePrice ? this.formatPrice(obj.ExtendData.OriginalImagePrice, 2) : '0.00'
+      } else if (MediaType == 'MediumPic') {
+        return obj.ExtendData && obj.ExtendData.MediumImagePrice ? this.formatPrice(obj.ExtendData.MediumImagePrice, 2) : '0.00'
+      } else {
+        return obj.CurrentPrice ? this.formatPrice(obj.CurrentPrice, 2) : '0.00'
       }
     };
+
+    // 处理列表市场价  --红色价格
+    Vue.prototype.handleCurrentPrice = function(objectType, item) {
+      if (objectType == 108) { //图片    处理列表的默认显示价格  
+        // if (!!item.ExtendData.HasMediumPic && item.ExtendData.HasMediumPic != '' && item.ExtendData.HasMediumPic != 'False') {
+        return this.formatPrice(item.ExtendData.MediumImagePrice ? item.ExtendData.MediumImagePrice : 0)
+        // } else if (!!item.ExtendData.HasOriginalPic && item.ExtendData.HasOriginalPic != '' && item.ExtendData.HasOriginalPic != 'False') {
+        //   return this.formatPrice(item.ExtendData.OriginalImagePrice ? item.ExtendData.OriginalImagePrice : 0)
+        // } else {
+        //   return "0.00"
+        // }
+      } else {
+        return this.formatPrice(item.CurrentPrice ? item.CurrentPrice : 0)
+      }
+    }
+
+    // 处理列表原价  --灰色价格
+    Vue.prototype.handleMarketPrice = function(objectType, item) {
+      if (objectType == 108) { //图片    处理列表的默认显示价格  
+        // if (!!item.ExtendData.HasMediumPic && ExtendData.HasMediumPic != '' && ExtendData.HasMediumPic != 'False') {
+        //   return this.formatPrice(item.ExtendData.MediumImagePrice ? item.ExtendData.MediumImagePrice : 0)
+        // } else if (!!ExtendData.HasOriginalPic && ExtendData.HasOriginalPic != '' && ExtendData.HasOriginalPic != 'False') {
+        return this.formatPrice(item.ExtendData.OriginalImagePrice ? item.ExtendData.OriginalImagePrice : 0)
+        // } else {
+        //   return "0.00"
+        // }
+      } else {
+        return this.formatPrice(item.MarketPrice ? item.MarketPrice : 0)
+      }
+    }
     //挑转到详情页
     Vue.prototype.goDetail = function(type, id) {
       var path = location.href.split('/wrap')[0]
@@ -61,7 +126,7 @@ export default {
         window.open(path + '/wrap/product?id=' + id)
         // this.$router.push({ path: '/wrap/product', query: { id: id } })
       } else if (type == 'standard') {
-        // window.open("http://www.cabplink.com/theme/theme.action")
+        window.open("http://www.cabplink.com/theme/theme.action")
       } else {
         // alert(`不支持${type}`)
       }
@@ -75,11 +140,14 @@ export default {
      * @param    {[type]}   categoryId    [点击该级的id]
      * @param    {[type]}   ParentTitle   [点击该级的父级Title]
      * @param    {[type]}   categoryTitle [点击该级的Title]
-     * @param    {[type]}   isAll         [是否是全部分类,1是，2不是]
      * @return   {[type]}                 [description]
      */
-    Vue.prototype.goSearchList = function(ParentId, categoryId, ParentTitle, categoryTitle, isAll) {
-      this.$router.push({ path: '/wrap/resCategoryList', query: { ParentId: ParentId, categoryId: categoryId, ParentTitle: ParentTitle, categoryTitle: categoryTitle, isAll: isAll } })
+    Vue.prototype.goSearchList = function(ParentId, categoryId, ParentTitle, categoryTitle) {
+      if (ParentId != null) {
+        this.$router.push({ path: '/wrap/resCategoryList', query: { ParentId: ParentId, categoryId: categoryId, ParentTitle: ParentTitle, categoryTitle: categoryTitle } })
+      } else {
+        this.$router.push('/wrap/resCategoryList')
+      }
     };
 
     //跳转到资源搜索结果页
@@ -89,8 +157,8 @@ export default {
     };
 
     //跳转到购物车
-    Vue.prototype.goShoppingCar = function(path) {
-      if (window.sessionStorage.getItem('accessToken') && JSON.parse(window.sessionStorage.getItem('bg_user_info')).Id) {
+    Vue.prototype.goShoppingCar = function(path, hasLogin) {
+      if (hasLogin) {
         this.$router.push('/wrap/' + path)
       } else {
         this.$message.warning('您还没登录，请先登录')
@@ -109,69 +177,48 @@ export default {
       }
     }
 
-    // //跳转到支付页面
-    Vue.prototype.goPaidPage = function(type, orderId) { //1-电子版，2-纸质版，3-电子版和纸质版均有
-      if (type == "Elec") {
-        this.$router.push({
-          path: '/wrap/elePaid',
-          query: {
-            orderId: orderId
-          }
-        })
-      } else {
-        this.$router.push({
-          path: '/wrap/paperPaid',
-          query: {
-            orderId: orderId
-          }
-        })
-      }
-    }
-
-
     //type-资源类型
     //objectId-资源id
     //objectType-资源类型
     //resData-授权接口返回的数据
     Vue.prototype.readMyResource = function(type, objectId, objectType, resData) {
+
         let classlist = this.getReaderSupportExtension();
 
         for (let i = 0; i < classlist.length; i++) {
           if (classlist[i].ext == type) {
             if (classlist[i].reader == "图片") {
-              let aPoint = document.createElement("a");
 
               let href = '/static/public/imgView.html?data=' + encodeURIComponent(JSON.stringify(Object.assign(resData, {
                 objectId: objectId,
                 objectType: objectType
               })));
-              aPoint.setAttribute('href', href);
-              aPoint.setAttribute('target', '_blank');
-              aPoint.click();
+              window.location.href = href;
+              // newTab.location = window.location.host + href;
+              // aPoint.setAttribute('href', href);
+              // aPoint.setAttribute('target', '_blank');
+              // aPoint.click();
             } else if (classlist[i].reader == "视频") {
-              let aPoint = document.createElement("a");
+
               let href = '/static/public/multimediaView.html?data=' + encodeURIComponent(JSON.stringify(Object.assign(resData, {
                 objectId: objectId,
                 objectType: objectType
               })));
-              aPoint.setAttribute('href', href);
-              aPoint.setAttribute('target', '_blank');
-              aPoint.click();
+              window.location.href = href;
             } else if (classlist[i].reader == "PDF") {
-              let aPoint = document.createElement("a");
-              let href = encodeURIComponent('/static/public/pdf.html?id=xxx&objectType=102');
-              aPoint.setAttribute('href', href);
-              aPoint.setAttribute('target', '_blank');
-              aPoint.click();
+
+              let href = '/static/public/pdf.html?data=' + encodeURIComponent(JSON.stringify(Object.assign(resData, {
+                objectId: objectId,
+                objectType: objectType
+              })))
+              window.location.href = href;
             } else if (classlist[i].reader == "图书") {
-              let aPoint = document.createElement("a");
+
               let href = '/static/public/reader.html?data=' + encodeURIComponent(JSON.stringify(Object.assign(resData, {
                 objectId: objectId,
                 objectType: objectType
               })))
-              aPoint.setAttribute('href', href);
-              aPoint.setAttribute('target', '_blank');
-              aPoint.click();
+              window.location.href = href;
             }
           }
         }
@@ -179,7 +226,20 @@ export default {
 
       //获取页面菜单 分类推荐：RecommendWeb,图书榜单：TopBook,考试课程：ExamCourse,建筑图库：BuildingImg,标准规范：StandardWeb，工具书：ToolBook
       Vue.prototype.getMenulist = function(type, callback) {
-        this.$http.get("/Category/ListByGroupName", {
+        if(type=='PictureCabpCourse'||type=='CabpCourse'){
+          this.$http.get("/Hierarchy/GetCategoryList", {
+            params: {
+              id: '',
+              name: type
+            }
+          })
+          .then((res) => {
+            if (res.data.Success) {
+              callback(res.data.Data)
+            }
+          })
+        }else{
+          this.$http.get("/Category/ListByGroupName", {
             params: {
               groupName: type,
             }
@@ -189,14 +249,23 @@ export default {
               callback(res.data.Data)
             }
           })
+        }
       };
 
+      //是否是免费书籍
+     Vue.prototype.showShoppingIcon = function(item) { 
+      if(item.CurrentPrice&&item.CurrentPrice>0){
+        return true;
+      }else{
+        return false;
+      }
+     }
 
     //新增购物车
-    Vue.prototype.addShopping = function(item) { //列表页默认加入电子书
-      if (window.sessionStorage.getItem('accessToken') && JSON.parse(window.sessionStorage.getItem('bg_user_info')) && JSON.parse(window.sessionStorage.getItem('bg_user_info')).Id) {
+    Vue.prototype.addShopping = function(item, hasLogin) { //列表页默认加入电子书, 中图
+      if (this.$store.getters.hasLogin) {
         this.$http.post("/ShoppingCart/Create", {
-            mediaType: item.ExtendData && item.ExtendData.HasElectronicalBook ? 'Elec' : item.ExtendData && item.ExtendData.HasPaperBook ? 'Entity' : 'Pod',
+            mediaType: item.ObjectType == 104 ? 'Elec' : item.ObjectType == 108 ? 'MediumPic' : '',
             count: 1,
             objectId: item.Id,
             objectType: item.ObjectType,
@@ -342,21 +411,25 @@ export default {
         }
       },
       // 收藏
-      Vue.prototype.collectFn = function(id, ObjectType, state, callback) {
-        if (window.sessionStorage.getItem('accessToken') && JSON.parse(window.sessionStorage.getItem('bg_user_info')) && JSON.parse(window.sessionStorage.getItem('bg_user_info')).Id) {
-          this.$http.post('/Favorite/CreateOrUpdate', {
-              state: state,
-              objectIds: id,
-              objectTypes: ObjectType
-            })
-            .then((res) => {
-              if (res.data.Success) {
-                callback()
-                this.$message.success(res.data.Description)
-              } else {
-                this.$message.error(res.data.Description)
-              }
-            })
+      Vue.prototype.collectFn = function(item, index, callback) {
+        if (this.$store.getters.hasLogin) {
+          if (item.ExtendData.IsFavorited) {
+            this.$message.warning('您已收藏该资源')
+          } else {
+            this.$http.post('/Favorite/CreateOrUpdate', {
+                state: true,
+                objectIds: item.Id,
+                objectTypes: item.ObjectType
+              })
+              .then((res) => {
+                if (res.data.Success) {
+                  callback(index)
+                  this.$message.success(res.data.Description)
+                } else {
+                  this.$message.error(res.data.Description)
+                }
+              })
+          }
         } else {
           this.$store.dispatch('setLoginByModal', true); //判断登录时跳页面（false），还是弹登录框（true）
           this.$store.dispatch('loginByModalAndCallback', { //弹出登录模态框
@@ -393,17 +466,7 @@ export default {
           return date.split(' ')[0];
         }
       },
-      // 返回类型 
-      Vue.prototype.confirmType = function(ObjectType) {
-        var str = ''
-        this.allType.forEach((item) => {
-          if (item.value == ObjectType) {
 
-            str = item.label
-          }
-        })
-        return str;
-      },
       // 资源跳转详情页时处理类型
       Vue.prototype.getDetailPath = function(type) {
         var path = ''
@@ -603,6 +666,21 @@ export default {
 
     Vue.prototype.addEge = function(a) {
       return a < 10 ? a = "0" + a : a = a
+    }
+
+    //记录知识元阅读次数
+    Vue.prototype.recordHistory = function(id, type1, type2) {
+      //type:1-浏览，2-搜索，3-阅读，4-分享，5-打印，6-点赞，7-下载，8-订阅，9-登录
+      this.$http.post('/History/Record', {
+          id: id,
+          actionType: type2,
+          objectType: type1,
+        })
+        .then((res) => {
+          if (res.data.Success) {
+
+          }
+        })
     }
 
 

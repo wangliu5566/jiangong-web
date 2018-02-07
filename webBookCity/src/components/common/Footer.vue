@@ -1,6 +1,6 @@
 <template>
   <div class="footer">
-    <p style="height:20px;width:100%;background:#fff;"></p>
+    <p style="height:20px;width:100%;background:#fff;border-bottom: 1px solid #e71515;"></p>
     <p class="tabs">
       友情链接：
       <span class="span-hover" @click="goOtherPage('http://www.mohurd.gov.cn/')">住房与城乡建设部</span>
@@ -63,17 +63,19 @@ export default {
   height: 248px;
   min-width: 1200px;
   overflow: hidden;
-  background-color: #666666;
   -webkit-background-size: 100%;
   background-size: 100%;
+  color:#666;
 
   .tabs {
+    width: 1200px;
+    margin:0 auto;
     height: 70px;
     line-height: 70px;
-    color: white;
     font-size: 14px;
-    border-bottom: 1px solid #858585;
+    border-bottom: 1px solid #7c7c7c;
     text-align: center;
+    color:#666;
   }
 
   .span-hover {
@@ -87,7 +89,7 @@ export default {
 
   .line-content {
     margin: 0 12px;
-    color: #949494;
+    color:#7c7c7c;
   }
 
   .icon-s{
@@ -100,7 +102,6 @@ export default {
     height: 100px;
     line-height: 24px;
     font-size: 14px;
-    color: #fff;
     text-align: center;
 
     span {
@@ -108,7 +109,7 @@ export default {
     }
     .line-content {
       margin: 0;
-      color: #949494;
+      /*color: #949494;*/
     }
   }
 }

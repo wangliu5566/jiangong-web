@@ -118,12 +118,12 @@
             };
             //           var validatePass = (rule, value, callback) => { // if (value === '') { // callback(new Error('请输入密码')); // } else { // if (this.findphone.checkPass !== '') { // this.$refs.rulephone.validateField('checkPass'); // } // callback(); // } // };
             const validatePass = (rule, value, callback) => {
-                var reg = /^[^\u4e00-\u9fa5]{0,20}$/
+                var reg = /^[^\u4e00-\u9fa5]{6,16}$/
                 if (value == '') {
                     callback(new Error('请输入密码'));
                 } else {
-                    if (value.length < 6 || value.length > 20) {
-                        callback(new Error('密码长度为6-20'));
+                    if (value.length < 6 || value.length > 16) {
+                        callback(new Error('密码长度为6-16'));
                     } else if (!reg.test(value)) {
                         callback(new Error('密码不能含有中文'));
                     } else {

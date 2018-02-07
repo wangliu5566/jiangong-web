@@ -18,8 +18,8 @@
               <p style="overflow:hidden;height:45px;">
                 <span class="hover" @click="goDetail(getDetailPath(item.ObjectType),item.Id)">{{item.Title?item.Title.length>12?item.Title.slice(0,12)+'...':item.Title:''}}</span>
               </p>
-              <p class="hostPrice">&yen;{{formatPrice(item.MarketPrice,2)}}</p>
-              <p class="nowPrice">&yen;{{formatPrice(item.CurrentPrice,2)}}</p>
+              <p class="hostPrice">&yen;{{handleMarketPrice(item.ObjectType, item)}}</p>
+              <p class="nowPrice">&yen;{{handleCurrentPrice(item.ObjectType, item)}}</p>
             </div>
           </el-col>
         </div>
@@ -70,23 +70,14 @@ export default {
           }
         })
       }else{
-        this.$http.post("/Content/Search", {
-          cp: 1,
-          ps: 10,
-          query: JSON.stringify({
-            ObjectTypes:!!ObjectTypes&&ObjectTypes!=''?[ObjectTypes]:'' ,
-            // SearchOrderBy: {
-            //   ColumnName: this.bookType == 1 ? 'hot' : 'onShelfDate',
-            //   Descending: true,
-            // },
-            // ExtendProperties: {
-            //   readCount: 'startDate=' + this.calculateOneDate(0) + '@endTime=' + this.calculateOneDate(this.dateLength)
-            // }
-          })
+        this.$http.get("/Content/Recommend", {
+          params:{
+            count:10,
+          }
         })
         .then((res) => {
           if (res.data.Success) {
-            this.dataList = res.data.Data.ItemList;
+            this.dataList = res.data.Data;
           }
         })
       }

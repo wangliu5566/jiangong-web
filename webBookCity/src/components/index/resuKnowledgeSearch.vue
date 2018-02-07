@@ -1,10 +1,7 @@
 <template>
-  <div class="notice-list" :style="{minHeight:clientHeight+'px'}">
-   <SearchNoMenu></SearchNoMenu>
-    <div class='power-content global-box' v-loading="loading"
-    element-loading-text="拼命加载中"
-    element-loading-spinner="el-icon-loading"
-    element-loading-background="rgba(256, 256, 256, 0.8)">
+  <div class="res-know-list">
+    <SearchNoMenu></SearchNoMenu>
+    <div class='power-content global-box' v-loading="loading" element-loading-text="拼命加载中" element-loading-spinner="el-icon-loading" element-loading-background="rgba(256, 256, 256, 0.8)">
       <div class="path" style="cursor: pointer;"><span @click="goPath('index')">首页</span> &gt; <span>高级搜索</span></div>
       <p class="navtext">搜索结果：
         <span class="commodity">{{Keyword}}</span>
@@ -40,23 +37,25 @@
           </el-col>
         </el-row>
       </div>
-      <el-row>
-        <!-- 左侧导航头 -->
-        <el-col :span="19" class="LeftList">
+      <!-- 左边知识元部分 -->
+      <div style="overflow: hidden;width: 1200px;">
+        <div class="LeftList">
           <div class="container">
             <div class="navbtns">
-              <el-button size="small" :calss="searchKey==1?'red-active':''" @click="changeSearchKey(1)">阅读量
-                <i class="el-icon-sort-down"></i>
+              <el-button class="myBtn" :calss="searchKey==1?'red-active':''" @click="changeSearchKey(1)">阅读量
+                <i class="el-icon-sort-down" v-if="readCountDescend"></i>
+                <i class="el-icon-sort-up" v-if="!readCountDescend"></i>
               </el-button>
-              <el-button size="small" :calss="searchKey==2?'red-active':''" @click="changeSearchKey(2)">上架时间
-                <i class="el-icon-sort-down"></i>
-              </el-button>
+              <!-- <el-button class="myBtn" :calss="searchKey==2?'red-active':''" @click="changeSearchKey(2)">上架时间
+                <i class="el-icon-sort-down" v-if="isOnShelfDescend"></i>
+                <i class="el-icon-sort-up" v-if="!isOnShelfDescend"></i>
+              </el-button> -->
             </div>
             <div class="nav-text">
               每页显示：
               <span @click="changePageSize(0,20)" :class="pageIndex==0?'red':''">20</span>
               <span @click="changePageSize(1,50)" :class="pageIndex==1?'red':''">50</span>
-              <span @click="changePageSize(2,80)" :class="pageIndex==2?'red':''">80</span>
+              <!-- <span @click="changePageSize(2,80)" :class="pageIndex==2?'red':''">80</span> -->
             </div>
           </div>
           <!-- 内容区 -->
@@ -72,12 +71,12 @@
           <div v-if="dataList.length==0">
             <p style="line-height: 300px;text-align: center;font-size: 20px;">没有找到相关知识标签</p>
           </div>
-        </el-col>
+        </div>
         <!-- 右侧相关推荐 -->
-        <el-col :span="4" class="RightList">
+        <div class="RightList">
           <relateRes :ObjectTypes="104"></relateRes>
-        </el-col>
-      </el-row>
+        </div>
+      </div>
       <!-- 分页 -->
       <div class="page mt20">
         <el-pagination background @current-change="handleCurrentChange" :current-page.sync="page" :page-size="pageSize" layout="total,prev, pager, next, jumper" :total="totalCount">
@@ -93,7 +92,7 @@ import relateRes from "./relateRes.vue"
 export default {
   data() {
     return {
-      loading:false,
+      loading: false,
       page: 1,
       pageSize: 20,
       totalCount: 0,
@@ -109,9 +108,11 @@ export default {
       searchKey: 98, //搜索排行：1是阅读量，2是上架时间
 
       showMoreBox: false,
+
+      isOnShelfDescend: true, //上架时间
+      readCountDescend: true,
     }
   },
-  props: ['clientHeight'],
   components: {
     relateRes,
     SearchNoMenu
@@ -125,10 +126,10 @@ export default {
     this.getMenuList() //获取分类
   },
   methods: {
-     fetchDate() {
+    fetchDate() {
       var path = this.$route.fullPath;
       if (location.href.indexOf('Keyword') > 0) {
-        this.Keyword= decodeURI(location.href.split('=')[1])
+        this.Keyword = decodeURI(location.href.split('=')[1])
         this.getlist()
       }
     },
@@ -162,25 +163,33 @@ export default {
      * @DateTime 2017-12-21
      * @return   {[type]}   [description]
      */
-    getlist() {
-      this.loading=true;
+    getlist(Descending) {
+      this.loading = true;
+
+      var SearchOrderBy = {};
+      if (this.searchKey == 1 || this.searchKey == 2) {
+        this.searchKey = this.searchKey == 1 ? 'ViewCount' : this.searchKey == 2 ? 'onShelfDate' : ''
+        SearchOrderBy = {
+          SearchOrderBy: {
+            ColumnName: this.searchKey,
+            Descending: Descending != undefined ? Descending : true,
+          }
+        }
+      }
+
       this.$http.post("/ExplicitWord/Search", {
           cp: this.page,
           ps: this.pageSize,
-          query: JSON.stringify({
+          query: JSON.stringify(Object.assign({}, {
             Keyword: this.Keyword,
             CategoryIds: this.menuId == '' || this.menuId == '0' ? '' : [this.menuId],
-            SearchOrderBy: {
-              ColumnName: this.searchKey == 1 ? 'readCount' : this.searchKey == 2 ? 'onShelfDate' : '',
-              Descending: true,
-            }
-          })
+          }, SearchOrderBy))
         })
         .then((res) => {
           if (res.data.Success) {
             this.dataList = res.data.Data.ItemList;
             this.totalCount = res.data.Data.RecordCount;
-            this.loading=false;
+            this.loading = false;
           }
         })
     },
@@ -211,7 +220,13 @@ export default {
      */
     changeSearchKey(index) {
       this.searchKey = index;
-      this.getlist()
+      if (index == 1) {
+        this.readCountDescend = !this.readCountDescend
+        this.getlist(this.readCountDescend)
+      } else if (index == 2) {
+        this.isOnShelfDescend = !this.isOnShelfDescend
+        this.getlist(this.isOnShelfDescend)
+      }
     },
     showMoreBoxFn(bool) {
       this.showMoreBox = bool;
@@ -230,7 +245,7 @@ export default {
       this.getlist()
     },
   },
-   watch: {
+  watch: {
     "$route": "fetchDate",
   },
 }
@@ -238,13 +253,13 @@ export default {
 </script>
 <style lang='less'>
 @red-color: #e71515;
-.notice-list {
+.res-know-list {
   width: 100%;
 
   .power-content {
-    &>.navtext {
+    .navtext {
       color: #8c8c8c;
-      & .commodity {
+      .commodity {
         color: #333;
         margin-right: 10px;
       }
@@ -294,20 +309,24 @@ export default {
       width: 65px;
       text-align: right;
     }
+
+    /*筛选部分*/
     .container {
-      margin-top: 10px;
+      margin: 10px 0 8px;
       border: 1px solid #ccc;
-      width: 940px;
+      width: 938px;
       height: 50px;
       background: #ebebeb;
+      overflow: hidden;
     }
     .navbtns {
       float: left;
+      padding-top: 10px;
     }
-    .el-button {
-      margin-left: 8px;
-      border-radius: 0px;
-      margin-top: 8px;
+    .myBtn {
+      padding: 8px 0 8px 10px;
+      border-radius: 0!important;
+      margin-left: 5px!important;
     }
     .nav-text {
       float: right;
@@ -320,27 +339,35 @@ export default {
       margin-left: 5px;
       cursor: pointer;
     }
+    /*左边部分*/
     .LeftList {
-      margin-right: 10px;
+      width: 940px;
+      overflow: hidden;
+      float: left;
     }
     .RightList {
+      width: 242px;
       margin-top: 10px;
+      overflow: hidden;
+      float: right;
     }
     .ResuCon {
       border: 1px solid #ccc;
-      margin-top: 30px;
       width: 920px;
       height: 230px;
-      & .ResuConLeft {
+      margin: 20px auto 0;
+      overflow: hidden;
+
+     .ResuConLeft {
         float: left;
         margin: 20px;
         width: 240px;
         height: 190px;
         border: 1px solid #ddd;
         background: url('../../../static/images/zishiyuan_242.jpg');
-        cursor:pointer;
+        cursor: pointer;
       }
-      & .ResuConRight {
+       .ResuConRight {
         float: left;
         margin: 20px;
         width: 580px;

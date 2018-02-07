@@ -1,11 +1,22 @@
 <template>
-  <div class="building-page" :style="{minHeight:clientHeight+'px'}">
+  <div class="building-page">
     <!-- 顶级菜单 -->
     <search :sendObj="sendObj"></search>
     <div class='power-content'>
       <div class="aside-left">
-        <ul>
-          <li v-for="(item,index) in menuList" :class="index==menuIndex?'active':''" @click="clickMenu(index,item.Id)">{{item.Title}}</li>
+        <!-- <ul> -->
+          <!-- <li :class="0==menuIndex?'active':''" @click="clickMenu(0,'')">全部</li> -->
+          <!-- <li v-for="(item,index) in menuList" :class="index+1==menuIndex?'active':''" @click="clickMenu(index+1,item.Id)">{{item.Category.Title}}</li>
+        </ul> -->
+        <ul class="type-menus1">
+          <li v-for="(item,index) in menuList" :class="index+1==menuIndex?'active':'lis'">
+            <div style="width:220px;overflow:hidden" @mouseenter="showTwoMenu(item.Id)" @click="clickMenu(index+1,item.Id)">
+              {{item.Category.Title}}
+            </div>
+            <ul class="type-child-menu" v-if="twoMenuList.length>0">
+              <li v-for="inItem in twoMenuList" @click="clickMenu(index+1,inItem.Id)">{{inItem.Title}}</li>
+            </ul>
+          </li>
         </ul>
         <relateRes :ObjectTypes="108"></relateRes>
       </div>
@@ -20,12 +31,12 @@
         <div id="divWrap" v-if="dataList.length!=0">
           <div class="box" v-for="item in dataList">
             <div class="box-img" style="background:url('/static/images/no_cover_m.jpg');background-size: 100% 100%;">
-              <div style="width:100%;height:100%;" @click="goDetail(getDetailPath(item.ObjectType),item.Id)" :style="{backgroundImage:'url('+item.CoverUrl+')',backgroundSize:'cover',backgroundRepeat:'no-repeat',backgroundPosition:'center center'}"></div>
+              <div style="width:100%;height:100%;" @click="goDetail('picture',item.Id)" :style="{backgroundImage:'url('+item.CoverUrl+')',backgroundSize:'cover',backgroundRepeat:'no-repeat',backgroundPosition:'center center'}"></div>
             </div>
-            <p class="title" @click="goDetail(getDetailPath(item.ObjectType),item.Id)">{{item.Title}}</p>
+            <p class="title" @click="goDetail('picture',item.Id)">{{item.Title}}</p>
             <p class="price-line">
-              <span class="price">&yen;{{formatPrice(item.CurrentPrice,2)}}</span>
-              <p :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" @click="collectFn(item.Id,item.ObjectType,!item.ExtendData.IsFavorited,getlist)" style="float:right;margin-top: -40px;background-position:0 14px;height:40px;line-height: 40px;">收藏</p>
+              <span class="price">&yen;{{handleCurrentPrice(item.ObjectType,item)}}</span>
+              <p :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" @click="collectFn(item,index,changeIsFavorited)" style="float:right;margin-top: -35px;background-position:0 14px;height:40px;line-height: 40px;">收藏</p>
             </p>
           </div>
         </div>
@@ -63,8 +74,10 @@ export default {
       dataList: [],
 
       menuList: [],
-      menuIndex: 98,
+      menuIndex: 0,
       menuId: '',
+
+      twoMenuList: [],
     }
   },
   components: {
@@ -77,7 +90,7 @@ export default {
   ]),
   props: ['clientHeight'],
   mounted() {
-    this.getMenulist('BuildingImg', this.getMenu)
+    this.getMenulist('PictureCabpCourse', this.getMenu)
     this.getlist()
   },
   methods: {
@@ -88,7 +101,49 @@ export default {
      * @return   {[type]}   [description]
      */
     getMenu(menuList) {
-      this.menuList = menuList
+      this.menuList = menuList;
+    },
+    /**
+     * [showTwoMenu 显示二级菜单]
+     * @Author   赵雯欣
+     * @DateTime 2017-12-18
+     * @param    {[type]}   id [description]
+     * @return   {[type]}      [description]
+     */
+    showTwoMenu(id) {
+      this.twoMenuList = []
+      if (localStorage.getItem("PictureTwoMenuList" + id)) {
+        if (JSON.parse(localStorage.getItem("PictureTwoMenuList" + id)).length > 0) {
+          this.twoMenuList = JSON.parse(localStorage.getItem("PictureTwoMenuList" + id));
+        } else {
+          this.twoMenuList = []
+        }
+        return false;
+      }
+      this.$http.get("/Category/ChildList", {
+          params: {
+            parentId: id,
+            cp: 1,
+            ps: 999999,
+          }
+        })
+        .then((res) => {
+          if (res.data.Success) {
+            this.twoMenuList = res.data.Data.ItemList;
+            localStorage.setItem("PictureTwoMenuList" + id, JSON.stringify(res.data.Data.ItemList))
+          }
+        })
+    },
+    /**
+     * [changeIsFavorited 修改收藏状态]
+     * @Author   赵雯欣
+     * @DateTime 2018-02-01
+     * @param    {[type]}   index [description]
+     * @return   {[type]}         [description]
+     */
+    changeIsFavorited(index){
+      this.dataList[index].ExtendData.IsFavorited = true ;
+      this.$set(this.dataList,index,this.dataList[index])
     },
     /**
      * [clickMenu 点击左边菜单栏]
@@ -235,6 +290,83 @@ export default {
       margin-left: -10px;
       padding: 6px 0;
       z-index: 2;
+    }
+  }
+
+  /*下拉菜单部分*/
+  .type-menus1 {
+    width: 241px;
+    z-index: 99;
+
+    border-bottom: 1px solid #e5e5e5;
+    margin-bottom: 20px;
+    .lis{
+      width: 221px;
+      padding-left: 20px;
+      font-size: 14px;
+      color: #464646;
+      line-height: 45px;
+      background-color: #fff;
+      border-left: 1px solid #e5e5e5;
+      border-right: 1px solid #e5e5e5;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .active {
+      width: 221px;
+      font-size: 14px;
+      line-height: 45px;
+      border-right: 1px solid #e5e5e5;
+      cursor: pointer;
+      position: relative;
+      color: @red-color;
+      background-color: #e5e5e5;
+      padding-left: 19px;
+      border-left: 2px solid @red-color;
+    }
+
+    .lis:hover {
+      color: @red-color;
+      background-color: #e5e5e5;
+      padding-left: 19px;
+      border-left: 2px solid @red-color;
+
+      .type-child-menu {
+        display: block;
+      }
+    }
+    /*二级目录*/
+    .type-child-menu {
+      position: absolute;
+      top: 0px;
+      left: 240px;
+      width: 240px;
+      border-top: 1px solid #e5e5e5;
+      border-right: 1px solid #e5e5e5;
+      border-bottom: 1px solid #e5e5e5;
+      z-index: 99;
+      display: none;
+      background-color: #e5e5e5;
+      overflow: hidden;
+
+      li {
+        width: 200px;
+        margin: 0 20px;
+        font-size: 14px;
+        color: #464646;
+        line-height: 45px;
+        border-bottom: 1px solid #999;
+        background-color: #e5e5e5;
+        cursor: pointer;
+        overflow: hidden;
+      }
+      li:last-child {
+        border-bottom: none;
+      }
+      li:hover {
+        color: @red-color;
+      }
     }
   }
 

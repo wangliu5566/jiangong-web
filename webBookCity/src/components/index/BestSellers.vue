@@ -14,8 +14,8 @@
               </div>
               <div class="right-price">
                 <p class="book-title">{{item.Title?item.Title.length>12?item.Title.slice(0,12)+"...":item.Title:''}}</p>
-                <p class="market-price" style="font-size: 14px;line-height: 16px;">&yen;{{formatPrice(item.MarketPrice,2)}}</p>
-                <p class="price" style="line-height: 20px;">&yen;{{formatPrice(item.CurrentPrice,2)}}</p>
+                <p class="market-price" style="font-size: 14px;line-height: 16px;">&yen;{{handleMarketPrice(item.ObjectType, item)}}</p>
+                <p class="price" style="line-height: 20px;">&yen;{{handleCurrentPrice(item.ObjectType, item)}}</p>
               </div>
             </div>
             <div class="not-show-img">

@@ -18,8 +18,10 @@
 						<div class="cover" :style="{backgroundImage:'url('+item.CoverUrl+')'}">
 						</div>
 					</div>
-					<p class="title">{{item.Title}}</p>
-					<span class="price">&yen;{{formatPrice(item.CurrentPrice,2)}}</span>
+					<p class="title">
+            <ellipsis :data="item.Title" :line-height="'28px'"></ellipsis>     
+          </p>
+					<span class="price">&yen;{{handleCurrentPrice(item.ObjectType,item)}}</span>
 				</li>
       </ul>
     </div>
@@ -45,8 +47,7 @@ export default {
       this.$http.get('/Content/Recommend', {
           params: {
             objectId: this.$route.query.id,
-            ps: 15,
-            cp: 1,
+            count:12
           }
         })
         .then((res) => {
@@ -61,9 +62,8 @@ export default {
                 }
               })
             }
-            if (this.recommendListDatas.length >= 10) {
-              this.showRecommendListDatas = this.recommendListDatas.slice(0, 9);
-              this.showMore = true;
+            if (this.recommendListDatas.length >= 12) {
+              this.showRecommendListDatas = this.recommendListDatas.slice(0, 11);
             } else {
               this.showRecommendListDatas = this.recommendListDatas
             }

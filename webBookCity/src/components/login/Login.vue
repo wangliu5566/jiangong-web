@@ -21,7 +21,7 @@
             </el-input><span style="color: #999">*用户名注册后不能修改</span>
           </el-form-item>
           <el-form-item label="密　　码：" prop="password">
-            <el-input type="password" v-model='enrollphone.password' auto-complete="off">
+            <el-input type="password" v-model='enrollphone.password'  auto-complete="off">
               <template slot="prepend"><i class="login_psd"></i></template>
             </el-input>
           </el-form-item>
@@ -112,12 +112,12 @@ export default {
   data() {
     //验证密码
     const validatePassword = (rule, value, callback) => {
-      var reg = /^[^\u4e00-\u9fa5]{0,20}$/
+      var reg = /^[^\u4e00-\u9fa5]{0,16}$/
       if (value == '') {
         callback(new Error('请输入密码'));
       } else {
-        if (value.length < 6 || value.length > 20) {
-          callback(new Error('密码长度为6-20'));
+        if (value.length < 6 || value.length > 16) {
+          callback(new Error('密码长度为6-16'));
         } else if (!reg.test(value)) {
           callback(new Error('密码不能含有中文'));
         } else {
@@ -157,10 +157,15 @@ export default {
       }
     };
     const validateName = (rule, value, callback) => {
+         var reg = /^[a-zA-Z0-9_]{4,24}$/;
       if (!value || value.trim().length == 0) {
         return callback(new Error('用户名不能为空'));
-      } else if (value.trim().length > 20) {
-        callback(new Error('用户名不能超过20字'));
+      } else if (value.trim().length > 24||value.trim().length<4) {
+        callback(new Error('用户名不能超过24个字,少于4个字'));
+      } else if (!reg.test(value)) {
+        callback(new Error('用户名只能由字母、数字、下划线组成'));
+      } else if (value.charAt(0)=='_'||value.charAt(value.length-1)=='_') {
+        callback(new Error('用户名开头和结尾不能用下划线'));
       } else {
         callback();
       }
@@ -401,7 +406,8 @@ export default {
             })
             .then((res) => {
               if (res.data.Code == 200) {
-                this.centerDialogVisible = true
+//                this.centerDialogVisible = true
+                   this.$router.push("login")
               } else {
                 this.$message.error(res.data.Description)
               }
@@ -425,7 +431,11 @@ export default {
               //                                sessionStorage.deviceToken = res.data.Data.DeviceToken
               this.minusemailtime()
             } else {
-              this.$message.error(res.data.Description)
+                 if (res.data.Code == 22) {
+                  this.$message.error(res.data.Description)
+                }else{
+                  this.$message.error('请输入正确邮箱')
+                }
               this.EmailCodezt = true
             }
           })
@@ -462,7 +472,11 @@ export default {
               //                                sessionStorage.deviceToken = res.data.Data.DeviceToken
               this.minusphonetime()
             } else {
-              this.$message.error(res.data.Description)
+                if (res.data.Code == 22) {
+                  this.$message.error(res.data.Description)
+                }else{
+                  this.$message.error('请输入正确电话')
+                }
               this.PhoneCode = true
             }
           })

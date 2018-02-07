@@ -112,7 +112,11 @@
 
 <script>
     import search from "./module/Search.vue"
+    import { mapGetters } from 'vuex'
     export default {
+          computed: mapGetters([
+            'userInfo',
+          ]),
         data() {
             return {
                 baseUrl: baseUrl,
@@ -326,7 +330,7 @@
             getDetail() {
                 this.$http.get("/User/Detail", {
                         params: {
-                            id: JSON.parse(window.sessionStorage.getItem('bg_user_info')).Id
+                            id: this.userInfo.Id
                         }
                     })
                     .then((res) => {

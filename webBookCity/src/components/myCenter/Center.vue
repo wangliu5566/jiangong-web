@@ -64,7 +64,11 @@
     import search from "./module/Search.vue"
     import otherBook from "./module/OtherBook.vue"
     import alreadyShop from "./AlreadyShop.vue"
+    import { mapGetters } from 'vuex'
     export default {
+          computed: mapGetters([
+            'userInfo',
+          ]),
         data() {
             return {
                 correlationList: [],
@@ -85,28 +89,25 @@
         methods: {
             //相关推荐
             correlation() {
-                this.$http.get("/Content/Search", {
+                this.$http.get("/Content/Recommend", {
                         params: {
-                            cp: 1,
-                            ps: 8,
-                            objectTypes: 104,
+                            count: 8
                         }
                     })
                     .then((res) => {
                         if (res.data.Success) {
-                            this.correlationList = res.data.Data.ItemList
+                            this.correlationList = res.data.Data
                         }
                     })
             },
             getDetail() {
                 this.$http.get("/User/Detail", {
                         params: {
-                            id: JSON.parse(window.sessionStorage.getItem('bg_user_info')).Id
+                            id: this.userInfo.Id
                         }
                     })
                     .then((res) => {
                         if (res.data.Success) {
-                            //                            console.log(JSON.parse(window.sessionStorage.getItem('bg_user_info')))
                             this.user = res.data.Data
                         }
                     })
@@ -164,11 +165,11 @@
                 this.$router.push(url)
             },
             getUseMessage() {
-                this.username = JSON.parse(window.sessionStorage.getItem('bg_user_info')).NickName
-                this.MobileNumber = JSON.parse(window.sessionStorage.getItem('bg_user_info')).MobileNumber
-                this.Email = JSON.parse(window.sessionStorage.getItem('bg_user_info')).Email
-                this.UserType = JSON.parse(window.sessionStorage.getItem('bg_user_info')).UserType
-                this.UserFace = JSON.parse(window.sessionStorage.getItem('bg_user_info')).UserFace ? JSON.parse(window.sessionStorage.getItem('bg_user_info')).UserFace : ""
+                this.username = this.userInfo.NickName
+                this.MobileNumber = this.userInfo.MobileNumber
+                this.Email = this.userInfo.Email
+                this.UserType =this.userInfo.UserType
+                this.UserFace = this.userInfo.UserFace ? this.userInfo.UserFace : ""
             },
         },
         components: {

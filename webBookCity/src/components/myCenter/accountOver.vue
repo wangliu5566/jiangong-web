@@ -3,7 +3,7 @@
     <!-- logo搜索部分 -->
     <search :selectType='6'></search>
     <div class="account-right">
-      <a href="#">账户设置 &gt; 修改密码</a>
+      <span>账户设置 &gt; 修改密码</span>
       <ul class="account-center">
         <li>
           <img src="../../assets/39.png">
@@ -41,7 +41,7 @@ export default {
     margin: auto;
     padding-bottom: 395px;
   }
-  .account-right>a {
+  .account-right>span {
     display: block;
     margin: 20px 0;
     text-decoration: none;

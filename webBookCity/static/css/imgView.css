@@ -48,7 +48,7 @@ body {
  .img-view .img-content img {
   cursor: pointer;
 
-  border: 100px solid white;
+  border: 50px solid white;
  }
 
  .img-content {
@@ -105,17 +105,34 @@ body {
      margin-bottom: 20px;
      cursor: pointer;
  }
+
+
+ .no-relate-css {
+      margin-right: 0 ;
+      border: none!important;
+      cursor: default !important;
+   }
  
  .scale {
+    margin-left: -5px;
     height: 88px;
-    border: 1px solid #ccc;
+    border: 1px solid #eeefe7;
     background: white;
     border-radius: 5px;
+    width: 42px;
+    color:#c1bca1;
+    font-size: 18px;
  }
 
  .scale img {
    width: 26px;
    height: 26px;
-   margin-top: 5px;
+   margin-top: 6px;
+   margin-left: 3px;
+   margin-bottom: -8px;
    // margin-bottom: 5px;
+ }
+
+ .scale img:nth-of-type(2) {
+    margin-top: 2px;
  }

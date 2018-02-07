@@ -4,11 +4,11 @@
       <Search :sendObj="sendObj"></Search>
       <ul class="type-menu">
         <li v-for="item in menuList" class="lis">
-          <div style="width:220px;overflow:hidden" @mouseenter="showTwoMenu(item.Id)" @click="goSearchList(0,item.Category.Id,'',item.Category.Title,2)">
+          <div style="width:220px;overflow:hidden" @mouseenter="showTwoMenu(item.Id)" @click="goSearchList(0,item.Id,'',item.Category.Title)">
             {{item.Category.Title}}
           </div>
           <ul class="type-child-menu" v-if="twoMenuList.length>0">
-            <li v-for="inItem in twoMenuList" @click="goSearchList(item.Id,inItem.Id,item.Category.Title,inItem.Title,2)">{{inItem.Title}}</li>
+            <li v-for="inItem in twoMenuList" @click="goSearchList(item.Id,inItem.Id,item.Category.Title,inItem.Title)">{{inItem.Title}}</li>
           </ul>
         </li>
       </ul>
@@ -47,10 +47,19 @@ export default {
     Search
   },
   mounted() {
-    this.getTypeList()
+    this.getMenulist('CabpCourse', this.getMenu)
     this.getLabelList() //获取知识标签
   },
   methods: {
+    /**
+     * [getTypeList 获取主菜单]
+     * @Author   赵雯欣
+     * @DateTime 2017-12-18
+     * @return   {[type]}   [description]
+     */
+    getMenu(menuList) {
+      this.menuList = menuList;
+    },
     /**
      * [goOtherUrl 跳转到建工网站]
      * @Author   赵雯欣
@@ -78,25 +87,6 @@ export default {
         return fontOpcity[random]
       }
     },
-    /**
-     * [getTypeList 获取主菜单]
-     * @Author   赵雯欣
-     * @DateTime 2017-12-18
-     * @return   {[type]}   [description]
-     */
-    getTypeList() {
-      this.$http.get("/Hierarchy/GetCategoryList", {
-          params: {
-            id: '',
-            name: 'CabpCourse'
-          }
-        })
-        .then((res) => {
-          if (res.data.Success) {
-            this.menuList = res.data.Data
-          }
-        })
-    },
     changeLabelPageSize() {
       this.labelPage++;
       this.getLabelList()
@@ -114,14 +104,13 @@ export default {
           cp: this.labelPage,
           query: JSON.stringify({
             SearchOrderBy: {
-              SearchOrderBy: 'hot',
+              ColumnName: 'hot',
               Descending: true
             }
           })
         })
         .then((res) => {
           if (res.data.Success) {
-
             res.data.Data.ItemList.forEach((item) => {
               if (item.Title && item.Title.length < 7) {
                 this.labelList.push(item)

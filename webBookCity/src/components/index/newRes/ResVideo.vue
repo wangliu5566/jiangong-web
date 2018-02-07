@@ -7,16 +7,16 @@
         </div>
         <p class="names" @click="goDetail(getDetailPath(item.ObjectType),item.Id)">{{item.Title}}</p>
         <p style="line-height: 22px;height: 22px;">
-          <span class="price">&yen;{{formatPrice(item.CurrentPrice,2)}}</span>
-          <span class="market-price" style="float: right">&yen;{{formatPrice(item.MarketPrice,2)}}</span>
+          <span class="price">&yen;{{handleCurrentPrice(item.ObjectType, item)}}</span>
+          <span class="market-price" style="float: right">&yen;{{handleMarketPrice(item.ObjectType, item)}}</span>
         </p>
         <div style="font-size: 14px;">
           <el-row>
             <el-col :span="12">
-              <p :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" @click="collectFn(item.Id,item.ObjectType,!item.ExtendData.IsFavorited,getlist)">收藏</p>
+              <p :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" @click="collectFn(item,index,changeIsFavorited)">收藏</p>
             </el-col>
             <el-col :span="12">
-              <div class="shopping-car" @click="addShopping(item)">购物车</div>
+              <div class="shopping-car" v-if="showShoppingIcon(item)" @click="addShopping(item)">购物车</div>
             </el-col>
           </el-row>
         </div>
@@ -51,6 +51,17 @@ export default {
     handleCurrentChange(val) {
       this.page = val;
       this.getlist()
+    },
+    /**
+     * [changeIsFavorited 修改收藏状态]
+     * @Author   赵雯欣
+     * @DateTime 2018-02-01
+     * @param    {[type]}   index [description]
+     * @return   {[type]}         [description]
+     */
+    changeIsFavorited(index){
+      this.dataList[index].ExtendData.IsFavorited = true ;
+      this.$set(this.dataList,index,this.dataList[index])
     },
     /**
      * [getlist 最新资源]

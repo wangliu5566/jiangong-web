@@ -1,11 +1,8 @@
 <template>
-  <div class="detail-wrap" v-loading="detailLoading"
-    element-loading-text="拼命加载中"
-    element-loading-spinner="el-icon-loading"
-    customClass="detail-loading">
+  <div class="detail-wrap" v-loading="detailLoading" element-loading-text="拼命加载中" element-loading-spinner="el-icon-loading" customClass="detail-loading">
     <div class="book-container" v-if="detailsData.Id&&detailsData.IsOnShelf==true">
       <!-- 导航路径 -->
-      <HeaderNav></HeaderNav>
+      <HeaderNav :detailsData = "detailsData"></HeaderNav>
       <!-- 图书详情介绍 -->
       <div class="detail-intro">
         <div class="book-cover">
@@ -29,52 +26,31 @@
                 <span>出版社：{{detailsData.Publisher?detailsData.Publisher:'-'}}</span>
               </p>
             </div>
-            <!--  <div class="book-intro-pack">
-              <p>
-                <span>出版时间：2017-05-21</span>
-                <span>上架时间：199001</span>
-                <span>征订：29807</span>
-              </p>
-              <p>
-                <span>版次：第一版页数</span>
-                <span>页数：346</span>
-                <span>装帧：平膜</span>
-                <span>开本：小16开</span>
-                <span>印张：22.250</span>
-              </p>
-              <p>
-                <span>ISBN：978-7-112-20453-3</span>
-              </p>
-            </div> -->
           </div>
           <RecommendedExp :objectType="102"></RecommendedExp>
           <div class="price-handle">
-            <p class="ovh">
+            <p style="display:table-cell;">
               <span class="name">
             促销价格：
             </span>
               <span class="price-main">
-              <span>&yen;{{formatPrice(typeAndPrice.bookCurrentPrice,2)}}</span>
-              <b class="original-price">&yen;{{formatPrice(typeAndPrice.bookMarketPrice,2)}}</b>
+              <span>&yen;{{formatPrice(nowTypeAndPrice.bookCurrentPrice,2)}}</span>
+              <b class="original-price">&yen;{{formatPrice(nowTypeAndPrice.bookMarketPrice,2)}}</b>
               </span>
               <ul class="special">
-                <li class="special-list red" v-show="detailsData.ExtendData.SaleStrategy">{{detailsData.ExtendData.SaleStrategy}}</li>
+                <el-popover placement="top" v-for="(item,index) in SaleStrategy" title="" trigger="hover" :key="index" :open-delay="500" :content="item.Description">
+                  <li slot="reference" class="special-list red">
+                    {{item.Title}}
+                  </li>
+                </el-popover>
               </ul>
-               <span class="name" v-show="detailsData.ExtendData.countDown&&detailsData.ExtendData.countDown>0">
+               <!-- <span class="name" v-show="detailsData.ExtendData.SaleStrategyExpireIn&&detailsData.ExtendData.SaleStrategyExpireIn>0">
               剩余时间：
               </span>
-              <span class="expiration-time" v-show="detailsData.ExtendData.countDown&&detailsData.ExtendData.countDown>0">
-                {{secondToHMS(detailsData.ExtendData.countDown?detailsData.ExtendData.countDown:0)}}
-              </span>
+              <span class="expiration-time" v-show="detailsData.ExtendData.SaleStrategyExpireIn&&detailsData.ExtendData.SaleStrategyExpireIn>0">
+                {{secondToHMS(detailsData.ExtendData.SaleStrategyExpireIn?detailsData.ExtendData.SaleStrategyExpireIn:0)}}
+              </span> -->
             </p>
-            <!-- <div class="ovh type-btns">
-              <span class="name">选择类型：</span>
-              <ul class="type-btns-list">
-                <li class="selected">电子书</li>
-                <li>纸质书</li>
-                <li>POD</li>
-              </ul>
-            </div> -->
           </div>
           <div class="handle-container">
             <el-button @click="buyResource" type="button" class="handle-btn red-red">立即购买</el-button>
@@ -101,7 +77,7 @@
       </div>
     </div>
     <div class="detail-unshelve" v-if="detailsData.Id&&detailsData.IsOnShelf==false">
-      <HeaderNav></HeaderNav>
+      <HeaderNav :detailsData = "detailsData"></HeaderNav>
       <DetailsUnShelve></DetailsUnShelve>
     </div>
   </div>
@@ -129,27 +105,38 @@ export default {
   },
   data() {
     return {
-      detailType:{
-        name:'章节',
-        type:'102'
-      }
+      detailType: {
+        name: '章节',
+        type: '102'
+      },
     }
 
   },
 
-  computed: mapGetters([
-    'detailsData',
-    'typeAndPrice',
-    'loginModal',
-    'callbackAfterLogin',
-    'detailLoading'
-  ]),
+  computed:{ 
+    ...mapGetters([
+      'detailsData',
+      'typeAndPrice',
+      'loginModal',
+      'callbackAfterLogin',
+      'detailLoading',
+      'hasLogin',
+      'nowTypeAndPrice'
+  
+    ]),
+    'SaleStrategy': function() {
+      return !!this.detailsData.ExtendData.SaleStrategy ? JSON.parse(this.detailsData.ExtendData.SaleStrategy) : []
+    }
+  },
 
   created() {
     this.getDetails();
+
   },
   watch: {
-    '$route': 'getDetails',
+    '$route': function(){
+      this.getDetails();
+    },
     'loginModal': function(val, oldVal) {
       if (!val && this.callbackAfterLogin.position == 'detail') {
         this.$store.dispatch('getDeatilsByAjaxAndCallback', {
@@ -162,19 +149,29 @@ export default {
     }
   },
   methods: {
+    showSpecial(value){
+      if(value && this.detailsData.ExtendData.SaleStrategyDescription && this.detailsData.ExtendData.SaleStrategyDescription!=''){
+        this.isShowSpecial = true;
+      }else{
+        this.isShowSpecial = false;
+      }
+    },
     readResource() {
       this.$http({
         url: '',
         baseURL: this.detailsData.AuthorizeUrl,
         method: 'post',
         data: {
-          extId: this.detailsData.ExternalId,
+          Id: this.detailsData.Id,
           authorizeToken: this.detailsData.ExtendData.AuthorizeToken,
           appId: 7
         }
       }).then((res) => {
         if (res.data.Success) {
-          this.readMyResource(this.detailsData.DefaultFileExtension, this.detailsData.Id, this.detailsData.ObjectType, res.data.Data)
+          this.readMyResource(this.detailsData.DefaultFileExtension, this.detailsData.Id, this.detailsData.ObjectType, {
+            authorizeToken: this.detailsData.ExtendData.AuthorizeToken,
+            authorizeUrl: this.detailsData.AuthorizeUrl,
+          })
         } else {
           this.$message({
             message: res.data.Description,
@@ -182,68 +179,68 @@ export default {
           })
         }
       })
+
+
     },
     buyResource() {
-      let hasLogin = window.sessionStorage.getItem('accessToken') && JSON.parse(window.sessionStorage.getItem('bg_user_info')).Id ? true : false;
-      if (!hasLogin) {
+      if (!this.hasLogin) {
         this.$store.dispatch('setLoginByModal', true);
         this.$store.dispatch('loginByModalAndCallback', {
           callback: 'buyResourceDetail',
           position: 'detail'
         })
       } else {
-        if (this.detailsData.ExtendData.IsOrdered == 'true' && this.bookType == 'Elec') {
-          this.$confirm('您已购买过该资源，请勿重复购买', '', {
-              showCancelButton: false,
-              showConfirmButton: false,
-              type: 'warning',
-              customClass: 'detail-confirm',
-              center: true
-            })
-            .then(() => {
-
-            })
-            .catch(() => {
-
-            })
-        } else {
-          this.buyResourceByAjax();
-        }
-
+        this.buyResourceByAjax();
       }
     },
     buyResourceByAjax() {
-      let type = this.typeAndPrice.bookType;
-      let sourceData = [Object.assign({}, this.detailsData, {
-        MediaType: type,
-        ObjectId: this.detailsData.Id,
-        Count: 1
-      })]
-      localStorage.shoppingObj = JSON.stringify(sourceData);
+      let type = this.nowTypeAndPrice.bookType;
+      this.$http.post('/ShoppingCart/Create', {
+          mediaType: type,
+          count: 1,
+          objectId: this.$route.query.id,
+          objectType: this.detailsData.ObjectType,
+          isOneOff:true,
+        })
+        .then((res) => {
+          if (res.data.Success) {
+            if (type == 'Elec') {
+              this.$router.push({ path: '/wrap/elePaid', query: { ObjectIds: res.data.Data } })
+            } else {
+              this.$router.push({ path: '/wrap/paperPaid', query: { ObjectIds: res.data.Data } })
+            }
+          } else {
+            this.$confirm(res.data.Description, '', {
+                showCancelButton: false,
+                showConfirmButton: false,
+                type: 'warning',
+                customClass: 'detail-confirm',
+                center: true
+              })
+              .then(() => {
 
-      let typeNumber = type == 'Elec' ? 1 : 2;
-      if (type == 'Elec') {
-        this.$router.push({ path: '/wrap/deatilElecPaid', query: { type: typeNumber } })
-      } else {
-        this.$router.push({ path: '/wrap/detailPaperPaid', query: { type: typeNumber } })
-      }
+              })
+              .catch(() => {
+
+              })
+          }
+        })
 
     },
     pushInShoppingCar() {
-      let hasLogin = window.sessionStorage.getItem('accessToken') && JSON.parse(window.sessionStorage.getItem('bg_user_info')).Id ? true : false;
-      if (!hasLogin) {
+      if (!this.hasLogin) {
         this.$store.dispatch('setLoginByModal', true);
         this.$store.dispatch('loginByModalAndCallback', {
           callback: 'pushInShoppingCarDetail',
           position: 'detail'
         })
       } else {
-        let type = this.typeAndPrice.bookType;
+        let type = this.nowTypeAndPrice.bookType;
         this.$http.post('/ShoppingCart/Create', {
             mediaType: type,
             count: 1,
             objectId: this.$route.query.id,
-            objectType: '102'
+            objectType: this.detailsData.ObjectType
           })
           .then((res) => {
             if (res.data.Success) {

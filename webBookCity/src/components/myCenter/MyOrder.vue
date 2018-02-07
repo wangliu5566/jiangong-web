@@ -48,9 +48,9 @@
             </div>
           </div>
           <div class="num">
-            <span v-if='notPaynum' class='notPaynum'>{{notPaynum}}</span>
-            <span v-if='shipmentsnum' class='shipmentsnum'>{{shipmentsnum}}</span>
-            <span v-if='deliverynum' class='deliverynum'>{{deliverynum}}</span>
+            <span v-if='notPaynum' class='notPaynum'>{{notPaynum>99?'99+':notPaynum}}</span>
+            <span v-if='shipmentsnum' class='shipmentsnum'>{{shipmentsnum>99?'99+':shipmentsnum}}</span>
+            <span v-if='deliverynum' class='deliverynum'>{{deliverynum>99?'99+':deliverynum}}</span>
           </div>
           <div class="tabs">
             <template>
@@ -86,7 +86,7 @@
                                     <span style="display:inline-block;float:left;width:70px;margin-left: 16px;
                                                 overflow: hidden;
                                                 text-overflow: ellipsis;
-                                                white-space: nowrap;">{{book.ObjectType==104?returnType(book.MediaType):returnObjectType(book.ObjectType)}}</span>
+                                                white-space: nowrap;">{{book.ObjectType==104||book.ObjectType==108?returnType(book.MediaType):returnObjectType(book.ObjectType)}}</span>
                                     <span style="display:inline-block;float:left;width:56px;margin-left: 16px;
                                                 overflow: hidden;
                                                 text-overflow: ellipsis;
@@ -97,6 +97,7 @@
                                                 text-overflow: ellipsis;
                                                 white-space: nowrap;">&yen;{{formatPrice(book.Price,2)}}</span>
                                     </span>
+                                    <span v-if='book.ObjectType==108&&book.MediaType=="OriginalPic"' style="width: 500px;text-align:left;margin-top: 25px;color: #999">由于图片文件较大，需联系人工客服获取原图文件，服务热线4008-188-688!</span>
                                   </div>
                                 </div>
                               </td>
@@ -106,7 +107,7 @@
                                                 font-size: 12px;color: #999;
                                                 overflow: hidden;
                                                 text-overflow: ellipsis;
-                                                white-space: nowrap;">&yen;{{formatPrice(item.TotalMoney,2)}}</span>
+                                                white-space: nowrap;">&yen;{{formatPrice(item.UndiscountTotalMoney?item.UndiscountTotalMoney:0,2)}}</span>
                                   <span style="display:inline-block;width:90px;height: 24px;float:left;margin-left: 10px;color: #e01222;font-size: 14px;font-weight: bold;
                                                 overflow: hidden;
                                                 text-overflow: ellipsis;
@@ -195,7 +196,7 @@
                                     <span style="display:inline-block;float:left;width:70px;margin-left: 16px;
                                                 overflow: hidden;
                                                 text-overflow: ellipsis;
-                                                white-space: nowrap;">{{book.ObjectType==104?returnType(book.MediaType):returnObjectType(book.ObjectType)}}</span>
+                                                white-space: nowrap;">{{book.ObjectType==104||book.ObjectType==108?returnType(book.MediaType):returnObjectType(book.ObjectType)}}</span>
                                     <span style="display:inline-block;float:left;width:56px;margin-left: 16px;
                                                 overflow: hidden;
                                                 text-overflow: ellipsis;
@@ -206,6 +207,7 @@
                                                 text-overflow: ellipsis;
                                                 white-space: nowrap;">&yen;{{formatPrice(book.Price,2)}}</span>
                                     </span>
+                                    <span v-if='book.ObjectType==108&&book.MediaType=="OriginalPic"' style="width: 500px;text-align:left;margin-top: 25px;color: #999">由于图片文件较大，需联系人工客服获取原图文件，服务热线4008-188-688!</span>
                                   </div>
                                 </div>
                               </td>
@@ -215,7 +217,7 @@
                                                 font-size: 12px;color: #999;
                                                 overflow: hidden;
                                                 text-overflow: ellipsis;
-                                                white-space: nowrap;">&yen;{{formatPrice(item.TotalMoney,2)}}</span>
+                                                white-space: nowrap;">&yen;{{formatPrice(item.UndiscountTotalMoney?item.UndiscountTotalMoney:0,2)}}</span>
                                   <span style="display:inline-block;width:90px;height: 24px;float:left;margin-left: 10px;color: #e01222;font-size: 14px;font-weight: bold;
                                                 overflow: hidden;
                                                 text-overflow: ellipsis;
@@ -274,7 +276,7 @@
                                     <span style="display:inline-block;float:left;width:70px;margin-left: 16px;
                                                 overflow: hidden;
                                                 text-overflow: ellipsis;
-                                                white-space: nowrap;">{{book.ObjectType==104?returnType(book.MediaType):returnObjectType(book.ObjectType)}}</span>
+                                                white-space: nowrap;">{{book.ObjectType==104||book.ObjectType==108?returnType(book.MediaType):returnObjectType(book.ObjectType)}}</span>
                                     <span style="display:inline-block;float:left;width:56px;margin-left: 16px;
                                                 overflow: hidden;
                                                 text-overflow: ellipsis;
@@ -285,6 +287,7 @@
                                                 text-overflow: ellipsis;
                                                 white-space: nowrap;">&yen;{{formatPrice(book.Price,2)}}</span>
                                     </span>
+                                    <span v-if='book.ObjectType==108&&book.MediaType=="OriginalPic"' style="width: 500px;text-align:left;margin-top: 25px;color: #999">由于图片文件较大，需联系人工客服获取原图文件，服务热线4008-188-688!</span>
                                   </div>
                                 </div>
                               </td>
@@ -294,7 +297,7 @@
                                                 font-size: 12px;color: #999;
                                                 overflow: hidden;
                                                 text-overflow: ellipsis;
-                                                white-space: nowrap;">&yen;{{formatPrice(item.TotalMoney,2)}}</span>
+                                                white-space: nowrap;">&yen;{{formatPrice(item.UndiscountTotalMoney?item.UndiscountTotalMoney:0,2)}}</span>
                                   <span style="display:inline-block;width:90px;height: 24px;float:left;margin-left: 10px;color: #e01222;font-size: 14px;font-weight: bold;
                                                 overflow: hidden;
                                                 text-overflow: ellipsis;
@@ -349,7 +352,7 @@
                                     <span style="display:inline-block;float:left;width:70px;margin-left: 16px;
                                                 overflow: hidden;
                                                 text-overflow: ellipsis;
-                                                white-space: nowrap;">{{book.ObjectType==104?returnType(book.MediaType):returnObjectType(book.ObjectType)}}</span>
+                                                white-space: nowrap;">{{book.ObjectType==104||book.ObjectType==108?returnType(book.MediaType):returnObjectType(book.ObjectType)}}</span>
                                     <span style="display:inline-block;float:left;width:56px;margin-left: 16px;
                                                 overflow: hidden;
                                                 text-overflow: ellipsis;
@@ -360,6 +363,7 @@
                                                 text-overflow: ellipsis;
                                                 white-space: nowrap;">&yen;{{formatPrice(book.Price,2)}}</span>
                                     </span>
+                                    <span v-if='book.ObjectType==108&&book.MediaType=="OriginalPic"' style="width: 500px;text-align:left;margin-top: 25px;color: #999">由于图片文件较大，需联系人工客服获取原图文件，服务热线4008-188-688!</span>
                                   </div>
                                 </div>
                               </td>
@@ -369,7 +373,7 @@
                                                 font-size: 12px;color: #999;
                                                 overflow: hidden;
                                                 text-overflow: ellipsis;
-                                                white-space: nowrap;">&yen;{{formatPrice(item.TotalMoney,2)}}</span>
+                                                white-space: nowrap;">&yen;{{formatPrice(item.UndiscountTotalMoney?item.UndiscountTotalMoney:0,2)}}</span>
                                   <span style="display:inline-block;width:90px;height: 24px;float:left;margin-left: 10px;color: #e01222;font-size: 14px;font-weight: bold;
                                                 overflow: hidden;
                                                 text-overflow: ellipsis;
@@ -718,6 +722,7 @@
                         params: {
                             ps: 20,
                             cp: this.cp,
+                            keyword: this.formInline.goodsName,
                             startTime: this.formInline.time ? this.formInline.time[0] : '',
                             endTime: this.formInline.time ? this.formInline.time[1] : '',
                             mediaType: this.formInline.mediaType,
@@ -729,7 +734,7 @@
                     .then((res) => {
                         if (res.data.Success) {
                             this.loading = false
-                            this.orderList = res.data.Data.ItemList
+                            this.orderList = res.data.Data.ItemList?res.data.Data.ItemList:[]
                             this.allcount = res.data.Data.RecordCount ? res.data.Data.RecordCount : 1
                         }
                     })

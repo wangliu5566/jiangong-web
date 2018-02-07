@@ -24,15 +24,7 @@
     <p class="declare" v-show="detailsData.ObjectType==108" :class="detailCover" style='height:auto;'>
       【声明】:中国建筑出版在线网是正版商业图库，未经权利人许可，任何人不得随意使用本网站的原创作品（含预览图），否则将按照我国著作权法的相关规定被要求承担最高达50万元人民币的赔偿责任。
     </p>
-    <!-- 收藏modal -->
-    <el-dialog custom-class="collect-modal" :visible.sync="collectModalNative" @close="closeModal">
-      <div class="collect-modal-container">
-        <i class="collect-icon-success"></i>
-        <!--  <i class="el-icon-success" style="font-size: 42px;color:#22b92c;"></i> -->
-        <span>已成功加入收藏夹！</span>
-      </div>
-      <a href="#" class="check-collect" @click="$router.push('/wrap/collect')">查看我的收藏夹 ></a>
-    </el-dialog>
+
   </div>
 </template>
 <script>
@@ -50,9 +42,9 @@ export default {
   computed: {
     ...mapGetters([
       'detailsData',
-      'collectModal',
       'callbackAfterLogin',
-      'loginModal'
+      'loginModal',
+      'hasLogin'
     ]),
     detailCover() {
       switch (parseInt(this.detailsData.ObjectType)) {
@@ -86,48 +78,36 @@ export default {
       _this.showShare = false;
     };
   },
-  watch: {
-    'collectModal': function(val, oldVal) {
-      this.collectModalNative = val;
-    },
 
-  },
   methods: {
-    closeModal() {
-      this.$store.dispatch('closeCollectModal');
-    },
+    
     socialShare() {
       this.showShare = !this.showShare;
     },
     collectDetail() {
-      let hasLogin = window.sessionStorage.getItem('accessToken') && JSON.parse(window.sessionStorage.getItem('bg_user_info')).Id ? true : false;
-
-      if (!hasLogin) {
+      if (!this.hasLogin) {
         this.$store.dispatch('setLoginByModal', true);
         this.$store.dispatch('loginByModalAndCallback', {
           callback: 'collectDetail',
           position: 'detail'
         })
       } else {
-
-        let state = this.detailsData.ExtendData.IsFavorited == "true" ? 'false' : 'true';
-        this.$http.post('/Favorite/CreateOrUpdate', {
-            state: state,
-            objectIds: this.detailsData.Id,
-            objectTypes: this.detailsData.ObjectType
-          })
-          .then((res) => {
-            if (res.data.Success) {
-              if (state == "false") {
-                this.$message({
-                  message: res.data.Description,
-                  type: 'success'
-                });
+        if (this.detailsData.ExtendData.IsFavorited == "true") {
+          this.$store.dispatch('openCollectModal');
+        } else {
+          let state = 'true';
+          this.$http.post('/Favorite/CreateOrUpdate', {
+              state: state,
+              objectIds: this.detailsData.Id,
+              objectTypes: this.detailsData.ObjectType
+            })
+            .then((res) => {
+              if (res.data.Success) {
+                this.$store.dispatch('setDeatilDataCollect', state)
               }
-              this.$store.dispatch('setDeatilDataCollect', state)
-            }
+            })
+        }
 
-          })
 
 
       }

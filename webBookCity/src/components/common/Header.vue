@@ -1,13 +1,13 @@
 <template>
   <div class="header-wrap">
     <div class="head-content">
-      <span @click="goLogin" v-if="!userInfo.isLogin">你好，请登录</span>
-      <span v-if="userInfo.isLogin">{{userInfo.NickName+',您好'}}</span>
+      <span @click="goLogin" v-if="!hasLogin">你好，请登录</span>
+      <span v-if="hasLogin" style="cursor:default;">{{userInfo.NickName+'，您好'}}</span>
       <span class="lines">|</span>
-      <span @click="exitSystem()" v-if="userInfo.isLogin">退出登录</span>
-      <span v-if="userInfo.isLogin" class="lines">|</span>
-      <span class="red" style="font-size: 14px;line-height: 32px;" v-if="!userInfo.isLogin" @click="$router.push('/register')">免费注册</span>
-      <span @click="goPath('center')" v-if="userInfo.isLogin">个人中心</span>
+      <span @click="exitSystem()" v-if="hasLogin">退出登录</span>
+      <span v-if="hasLogin" class="lines">|</span>
+      <span class="red" style="font-size: 14px;line-height: 32px;" v-if="!hasLogin" @click="$router.push('/register')">免费注册</span>
+      <span @click="goPath('center')" v-if="hasLogin">个人中心</span>
     </div>
   </div>
 </template>
@@ -21,33 +21,39 @@ export default {
   },
   computed: mapGetters([
     'userInfo',
+    'hasLogin'
   ]),
-  created() {
-    this.$store.dispatch('setUserInfo');
-  },
   methods: {
     //退出系统
     exitSystem() {
       this.$http.post("/Passport/Logout", {})
         .then((res) => {
           if (res.data.Success) {
-            sessionStorage.removeItem('accessToken');
-            sessionStorage.removeItem('bg_user_info');
-
+            this.$store.dispatch('resetUserInfo');
             this.$store.dispatch('getShoppingCount');
-            this.$store.dispatch('setUserInfo');
-            this.$router.push('/wrap/index');
+            this.$cookies.remove('bg_user_info');
+            this.$router.push('/login');
+
           }
         })
     },
-    goLogin(){
+    goLogin() {
       this.$router.push({
-        path:'/login',
-        query:{
-          redirect:this.$route.fullPath
+        path: '/login',
+        query: {
+          redirect: this.$route.fullPath
         }
       })
     },
+
+  },
+  watch: {
+    'userInfo.Id': {
+      handler(val, oldVal) {
+        console.log(111111111111)
+        this.$router.go(0)
+      },
+    }
   }
 }
 

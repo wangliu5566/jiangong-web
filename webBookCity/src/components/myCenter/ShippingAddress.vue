@@ -59,7 +59,11 @@
 
 <script>
     import search from "./module/Search.vue"
+    import { mapGetters } from 'vuex'
     export default {
+          computed: mapGetters([
+            'userInfo',
+          ]),
         data() {
             var validatePass = (rule, value, callback) => {
                 if (value) {
@@ -73,6 +77,20 @@
                     }
                 } else {
                     return callback(new Error('请输入手机号码'));
+                }
+            };
+            var validatePostCode = (rule, value, callback) => {
+                if (value) {
+                    var myreg= /^[0-9]{6}$/
+                    if (value) {
+                        if (!myreg.test(value)) {
+                            return callback(new Error('请输入正确邮编'));
+                        } else {
+                            callback();
+                        }
+                    }
+                } else {
+                    return callback(new Error('请输入邮编'));
                 }
             };
             return {
@@ -89,13 +107,13 @@
                     }],
                     DetailedAddress: [{
                         required: true,
-                        message: '请输入具体地址',
-                        trigger: 'change'
+                         message: '请输入详细地址',
+                        trigger: 'blur'
                     }],
                     PostCode: [{
                         required: true,
-                        message: '请输入邮编',
-                        trigger: 'change'
+                        validator: validatePostCode,
+                        trigger: 'blur'
                     }],
                     MobilePhone: [{
                         required: true,
@@ -106,10 +124,17 @@
                 },
                 labelPosition: 'right',
                 formLabelAlign: {
-                    userId: JSON.parse(window.sessionStorage.getItem('bg_user_info')).Id
+                    
+                    Reciver:'',
+                    Province:'',
+                    DetailedAddress:'',
+                    PostCode:'',
+                    MobilePhone:'',
+                    Telephone:'',
                 },
                 checked: false,
-                cityList: [{
+                cityList: [
+                    {
                         value: '北京',
                         label: '北京'
                     },
@@ -257,7 +282,7 @@
                 this.$refs[formName].validate((valid) => {
                     if (valid) {
                         this.$http.post("/UserAddressBook/Create",
-                                this.formLabelAlign
+                                {...this.formLabelAlign,userId: this.userInfo.Id}
                             )
                             .then((res) => {
                                 if (res.data.Success) {

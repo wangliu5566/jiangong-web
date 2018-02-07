@@ -7,15 +7,16 @@
     </div>
     <ul class="related-list">
       <li :class="objectType==true?'other':'book'" v-for="(item,index) in relatedResource" :key="index" @click="pushDeatilsPath(item.ObjectType,item.Id)">
-        <div class="cover" :style="{backgroundImage:'url('+setCover(index)+')'}">
+        <div class="cover" :style="{backgroundImage:'url('+setCover()+')'}">
           <div class="cover" :style="{backgroundImage:'url('+item.CoverUrl+')'}">
           </div>
         </div>
         <p class="title">
-          {{item.Title}}
+          <ellipsis :data="item.Title" :line-height="'28px'"></ellipsis>
         </p>
+        
         <span class="price">
-          &yen;{{formatPrice(item.CurrentPrice,2)}}
+          &yen;{{handleCurrentPrice(item.ObjectType,item)}}
         </span>
       </li>
     </ul>
@@ -41,35 +42,23 @@ export default {
     }
   },
   methods: {
-    setCover(i){
-      if (i<=1) {
-        return 'static/images/no_cover_s.jpg'
-      }else{
+    setCover(){
+      if (this.ObjectType) {
         return 'static/images/no_cover_m.jpg'
+      }else{
+        return 'static/images/no_cover_s.jpg'
       }
     },
     getRelatedResource() {
-      this.$http.post('/Content/Search', {
-          query:JSON.stringify({
-            "objectTypes": [104,107,108],
-            "SearchOrderBy": {
-              "ColumnName": "onShelfDate",
-              "Descending": true
-            },
-          }),
-          ps:5,
-          cp:1
+      this.$http.get('/Content/Recommend', {
+          params:{
+            objectId:this.$route.query.id,
+            count:10
+          }
         })
         .then((res) => {
           if (res.data.Success) {
-            this.relatedResource = res.data.Data.ItemList
-            // if (res.data.Data.ItemList.length > 4) {
-
-            //   this.relatedResource = res.data.Data.ItemList.slice(0, 4);
-            // } else {
-            //   this.relatedResource = res.data.Data.ItemList
-            // }
-
+            this.relatedResource = [...res.data.Data,]
           }
         })
     }

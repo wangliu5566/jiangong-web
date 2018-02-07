@@ -20,7 +20,7 @@
   right: 0;
   bottom: 0;
   overflow: hidden;
-  opacity: 0.2;
+  opacity: 0;
 }
 
 .textLayer > div {
@@ -62,6 +62,12 @@
 .textLayer ::selection { background: rgb(0,0,255); }
 .textLayer ::-moz-selection { background: rgb(0,0,255); }
 
+.pdfViewer {
+  display: flex;
+  justify-content: center;
+  
+}
+
 .pdfViewer .canvasWrapper {
   overflow: hidden;
 }
@@ -75,8 +81,10 @@
   overflow: visible;
   border: 9px solid transparent;
   background-clip: content-box;
-  border-image: url(images/shadow.png) 9 9 repeat;
+  /*border-image: url(images/shadow.png) 9 9 repeat;*/
+  /*border: 1px solid #999;*/
   background-color: white;
+  margin-bottom: 20px;
 
   /*transition: all 0.5s;*/
 }
@@ -185,8 +193,8 @@ html {
 
 body {
   height: 100%;
-  background-color: #404040;
-  background-image: url(images/texture.png);
+  background-color: #fff;
+  /*background-image: url(images/texture.png);*/
 }
 
 body,
@@ -398,7 +406,7 @@ html[dir='rtl'] #sidebarContent {
 }
 
 #viewerContainer {
-  overflow: auto;
+  /*overflow: auto;*/
   -webkit-overflow-scrolling: touch;
   position: absolute;
   top: 32px;
@@ -1825,7 +1833,7 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
 @media print {
   /* General rules for printing. */
   body {
-    background: transparent none;
+    display: none
   }
 
   /* Rules for browsers that don't support mozPrintCallback. */
@@ -2002,5 +2010,5 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
 
 
 ::-webkit-scrollbar{width:0px;}
-::-webkit-scrollbar-track{background-color:#bee1eb;}
-::-webkit-scrollbar-thumb{background-color:#00aff0;}
+/*::-webkit-scrollbar-track{background-color:#bee1eb;}*/
+/*::-webkit-scrollbar-thumb{background-color:#00aff0;}*/

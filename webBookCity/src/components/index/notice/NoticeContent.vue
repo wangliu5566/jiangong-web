@@ -3,7 +3,7 @@
     <div class='global-box'>
       <searchNoMenu></searchNoMenu>
     </div>
-    <div class='power-content global-box'  :style="{minHeight:(clientHeight-142)+'px'}">
+    <div class='power-content global-box'>
       <div class="path" style="cursor: pointer;">
         <span @click="goPath('index')">首页</span> &gt; 
         <span  @click="goPath('noticeList')" class="hover">公告</span>&gt; 
@@ -13,9 +13,9 @@
       	<h3>{{NoticeObj.Title?NoticeObj.Title:'暂无'}}</h3>
       	<p>{{NoticeObj.CreateTime?NoticeObj.CreateTime:'暂无'}}</p>
       	<div class="line"></div>
-      	<div class="detail"  :style="{minHeight:(clientHeight-520)+'px'}">{{NoticeObj.Contents?NoticeObj.Contents:'暂无'}}</div>
+      	<div class="detail">{{NoticeObj.Contents?NoticeObj.Contents:'暂无'}}</div>
       </div>
-      <div class="mt20">
+      <div class="mt20 mb20">
         <img src="../../../../static/images/downbanner.jpg">
       </div>
     </div>
@@ -30,7 +30,6 @@ export default {
       NoticeObj:{}
     }
   },
-  props: ['clientHeight'],
   components: {
     searchNoMenu,
   },

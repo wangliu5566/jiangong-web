@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+  <link rel="stylesheet" href="../css/multimediaView.css">
+  <link href="../plug/VariantHLSPlayer/Contents/video-js.css" rel="stylesheet">
+  <link rel="stylesheet" href="../css/message.css">
+  <script language="javascript" type="text/javascript" src="../plug/VariantHLSPlayer/Contents/video.js"></script>
+  <script language="javascript" type="text/javascript" src="../plug/VariantHLSPlayer/Contents/videojs-contrib-hls.js"></script>
+  <script language="javascript" type="text/javascript" src="../plug/VariantHLSPlayer/Contents/crypto-js.js"></script>
+  <script language="javascript" type="text/javascript" src="../plug/VariantHLSPlayer/Contents/cipher-core.js"></script>
+  <script language="javascript" type="text/javascript" src="../plug/VariantHLSPlayer/Contents/enc-base64.js"></script>
+  <script language="javascript" type="text/javascript" src="../plug/VariantHLSPlayer/Contents/u8array.js"></script>
+  <script src="../js/ajax.js"></script>
+  <script src="../js/jquery-1.11.0.min.js"></script>
+  <script src="../js/vue.js"></script>
+</head>
+
+<body>
+  <div class="img-view" id="videoView">
+    <!--      <p><img src="" alt="" ></p> -->
+    <div class="container">
+      <div>&nbsp;</div>
+      <div class="content">
+        <div class="video-content">
+          <video id="example-video" width="1080" height="720" class="video-js vjs-default-skin" controls="controls">
+          </video>
+          <ul class="media-controll">
+            <li><img src="../images/目录.png" alt="" @click="isLibShow = !isLibShow"></li>
+            <li><img :src=" !hasCollect ? '../images/收藏(16).png': '../images/收藏(成功6).png'" alt="" @click="collect"></li>
+            <div class="lib-right" ref="libRight" v-show="isLibShow">
+              <ul class="lib-right-content">
+                <li v-for="(item,index) in libList" @click="changeVideoSrc(item)" v-cloak>
+                  {{item.Title}}
+                </li>
+              </ul>
+            </div>
+            <img src="../images/三角形2.png" class="right-arrow" alt="" v-show="isLibShow">
+          </ul>
+        </div>
+        <ul class="media-title" v-show="isCourseMedia">
+          <li> <b>{{vedio.Title}}</b> </li>
+          <li>本视频学习次数:
+            <span>2522次</span>
+          </li>
+          <li>习题正确率:
+            <span>20%</span>
+          </li>
+          <li class="media-button">
+            <button>
+              测试
+            </button>
+          </li>
+        </ul>
+        <ul class="media-related-label" :style="{marginTop:isCourseMedia ? '0':'30px'}">
+          <li class="no-relate-css"> 知识标签： </li>
+          <li :class="{active:index == activeLabelIndex ? true : false,'normalLable':true}" v-for="(item,index) in relatedExpList" @click="activeLabelIndex = index">
+            {{item.Title}}
+          </li>
+        </ul>
+      </div>
+    </div>
+    <!--      <div class="view-relatedexp-list">
+       <b>知识标签：</b> 
+       <span v-for="(item,index) in relatedExpList" v-show="relatedExpList.length !== 0">{{item.Title}}</span>
+       <span v-show="relatedExpList.length == 0">暂无标签</span>
+     </div>
+ -->
+    <div class="message" id="message">
+      <img class="el-message__img" src="" id="messageType">
+      <div class="el-message__group">
+        <p id="messageText"></p>
+      </div>
+    </div>
+  </div>
+  <script language="javascript" type="text/javascript">
+  // var data = '/static/public/xxx.html?data=' + encodeURIComponent('{"Key":"uCPa4JPsFkPMIVH25I7kyV1kbqP5bYQR9r/8bSbP6TU=","Url":"http://file.kingchannels.cn/files/encryptfiles/e93/05045b2d5a1bddcf333cf8dfe04302408c0afd7b/575478/playlist.m3u8","FileId":575479,"objectId":575478,"objectType":109}');
+  var data = decodeURIComponent(location.href.slice(location.href.indexOf('data=') + 5));
+
+  var videoData = {};
+
+  videoData = JSON.parse(data)
+
+  console.log(videoData);
+
+  // console.log(videoData)
+  // console.log(JSON.stringify(videoData))
+
+  //下面是针对视频解密部分
+  videojs.Hls.xhr.beforeRequest = function(req) {
+    if (req.uri.indexOf("resource/authorize") != -1)
+      req.uri = 'data:,';
+    return req;
+  };
+
+
+  videojs.hook("afterHlsKeyRequest", function(req, resp) {
+    // var u8arr = CryptoJS.enc.u8array;
+
+    // // var key =  DecryptKey(videoData.Key);  //解密key
+    // //获取deviceKey，解密视频的key文件
+    // if(!sessionStorage.deviceKey) {
+    //    alert('获取deviceKey错误，请登录！');
+    //    location.href = '/index.html#/login';
+    // }
+
+
+    // var deviceKeyHex = CryptoJS.enc.Utf8.parse(sessionStorage.deviceKey);
+
+    // // var keyHex = CryptoJS.enc.Utf8.parse(videoData.Key);
+    // var keyHex = CryptoJS.enc.Hex.parse(videoData.Key);
+    // var keyHex64 =  CryptoJS.enc.Base64.stringify(keyHex);
+
+
+    // // // 插件要求密文是base64格式. 因此需要将 ArrayBuffer 转为 Base64 字串.
+    // // contentWA = CryptoJS.enc.u8array.parse(new Uint8Array(deviceKeyHex));
+    // // var dcBase64String = contentWA.toString(CryptoJS.enc.Base64);
+
+    // var decrypted = CryptoJS.AES.decrypt(keyHex64,
+    //     deviceKeyHex, {
+    //         mode: CryptoJS.mode.ECB,
+    //         padding: CryptoJS.pad.Pkcs7
+    //     });
+
+
+    // // //转回 ArrayBuffer, 这个就是真正的密钥文件. 用于解锁 .ts 文件
+    // var keyHex1 = u8arr.stringify(CryptoJS.enc.Utf8.parse(decrypted));
+
+    // // CryptoJS.enc.u8array.stringify(decrypted).buffer
+
+    // // var keyHex = u8arr.stringify(CryptoJS.enc.Utf8.parse(key));
+    // return keyHex1.buffer;
+
+
+
+
+
+
+
+    // var u8arr = CryptoJS.enc.u8array;
+
+    // var key =  DecryptKey(videoData.Key);
+
+    // var keyHex = u8arr.stringify(CryptoJS.enc.Utf8.parse(key));
+
+    // return keyHex.buffer;
+  });
+
+  function play() {
+
+    var url = videoData.Url;
+
+    if (url == "") {
+      alert("URL is empty");
+
+      return;
+    }
+
+    var player = videojs('example-video');
+
+
+    player.src({
+      src: url,
+      type: 'application/x-mpegURL'
+    });
+
+    player.play();
+  }
+
+  </script>
+  <script src="../js/message.js"></script>
+  <script>
+  'use strict';
+
+  var $vm = new Vue({
+    el: '#videoView',
+    data: {
+      winWidth: window.innerWidth,
+      winHeight: window.innerHeight,
+      videoSrc: 'C:/Users/admin/Desktop/wind.mp4',
+      audioSrc: '',
+      isVideo: true,
+      relatedExpList: [{
+        Title: '測試標籤1'
+      }, {
+        Title: '測試標籤2'
+      }, {
+        Title: '測試標籤3'
+      }],
+      isPlaying: false,
+      message: null,
+      activeLabelIndex: 0,
+      vedio: {},
+      hasCollect: false,
+      isLibShow: false,
+      libList: [{
+        Title: '课程视频一'
+      }, {
+        Title: '课程视频二'
+      }, {
+        Title: '课程视频三'
+      }], //目录列表
+      isCourseMedia: false //是否是课程视频
+    },
+    methods: {
+      setWindow: function setWindow() {
+        this.winWidth = window.innerWidth;
+        this.winHeight = window.innerHeight;
+      },
+
+
+      /**
+       * [getContentDetail 获取资源详情]
+       * @Author   罗文
+       * @DateTime 2017-12-22
+       * @return   {[type]}   [description]
+       */
+      getContentDetail: function getContentDetail() {
+        var _this = this;
+        $.ajax({
+          type: "GET",
+          url: baseUrl + "/Content/Detail",
+          data: Object.assign({}, {
+            id: videoData.objectId,
+            objectType: videoData.objectType,
+            deviceToken: sessionStorage.deviceToken,
+            apiname: '/Content/Detail'
+          }, systemParams),
+          success: function success(res) {
+            if (res.Success) {
+              this.vedio = res.Data;
+            } else {
+              _this.message.showMessage('error', res.Description);
+            }
+          }
+        });
+      },
+
+
+      /**
+       * [addRecordReadHistory 添加一条阅读历史]
+       * @Author   罗文
+       * @DateTime 2017-12-06
+       */
+      addRecordReadHistory: function addRecordReadHistory() {
+        var _this = this;
+        $.ajax({
+          type: "POST",
+          url: baseUrl + "/History/Record",
+          data: Object.assign({}, {
+            id: videoData.objectId,
+            userId: localStorage.userId,
+            objectType: videoData.objectType,
+            deviceToken: sessionStorage.deviceToken,
+            apiname: '/History/Record',
+            actionType: 3 //操作动作，3-阅读（点击阅读按钮），4-分享，5-打印，6-点赞
+          }, systemParams),
+          success: function success(res) {
+            if (res.Success) {} else {
+              _this.message.showMessage('error', res.Description);
+            }
+          }
+        });
+      },
+
+
+      /**
+       * [getRelatedExpList 获取相关知识标签列表]
+       * @Author   罗文
+       * @DateTime 2017-12-04
+       * @return   {[type]}   [description]
+       */
+      getRelatedExpList: function getRelatedExpList() {
+        var _this = this;
+        $.ajax({
+          type: "GET",
+          url: baseUrl + "/ExplicitWordLabel/List",
+          data: Object.assign({}, {
+            objectId: videoData.objectId,
+            type: videoData.objectType,
+            deviceToken: sessionStorage.deviceToken,
+            apiname: '/ExplicitWordLabel/List',
+            level: 0
+          }, systemParams),
+          success: function success(res) {
+            if (res.Success) {
+              //根据echats需求，重组数据
+              console.log(res.Data);
+              // _this.relatedExpList = res.Data; 
+            } else {
+              // this.$message.warning(res.data.Description);
+            }
+          }
+        });
+      },
+
+
+      /**
+       * [changeVideoSrc 改变课程目录视频]
+       * @Author   罗文
+       * @DateTime 2017-12-22
+       * @param    {[type]}   item [description]
+       * @return   {[type]}        [description]
+       */
+      changeVideoSrc: function changeVideoSrc(item) {
+        console.log(item);
+      },
+
+
+      /**
+       * [collect 收藏]
+       * @Author   罗文
+       * @DateTime 2017-12-05
+       * @return   {[type]}   [description]
+       */
+      collect: function collect() {
+        var _this = this;
+        $.ajax({
+          type: "POST",
+          url: baseUrl + "/Favorite/CreateOrUpdate",
+          data: Object.assign({}, {
+            objectId: videoData.objectId,
+            objectType: videoData.objectType,
+            deviceToken: sessionStorage.deviceToken,
+            apiname: '/Favorite/CreateOrUpdate'
+          }, systemParams),
+          success: function success(res) {
+            if (res.Success) {
+
+              if (res.Description.indexOf('取消') !== -1) {
+                // ChangeFavoriteIcon(false,3);
+              } else {
+                // ChangeFavoriteIcon(true,3);
+              }
+              _this.message.showMessage('success', res.Description);
+            } else {
+              _this.message.showMessage('error', res.Description);
+            }
+          }
+        });
+      },
+
+
+      //检查是否已经收藏
+      gethasCollect: function gethasCollect() {
+        var _this = this;
+        $.ajax({
+          type: "GET",
+          url: baseUrl + "/Content/Detail",
+          data: Object.assign({}, {
+            id: videoData.objectId,
+            deviceToken: sessionStorage.deviceToken,
+            apiname: '/Content/Detail'
+          }, systemParams),
+          success: function success(res) {
+            console.log(res);
+            if (res.Success) {
+              if (res.Data.ExtendData.IsFavorited) {
+                console.log(1111);
+                // ChangeFavoriteIcon(true,3);
+              } else {
+                // ChangeFavoriteIcon(false,3);
+              }
+            } else {
+              _this.message.showMessage('error', res.Description);
+            }
+          }
+        });
+      }
+    },
+    created: function created() {
+      // setInterval(()=>{
+      //    var src = GetArgument();
+      //    if(src.indexOf('videoSrc') !== -1) {
+      //       //此时传入的是视频地址
+      //       this.isVideo = true;
+      //       this.videoSrc = src.slice(src.indexOf('videoSrc')+9);
+
+      //    }else if(src.indexOf('audioSrc') !== -1) {
+      //       //此时传入的是视频地址
+      //       this.isVideo = false;
+      //       this.audioSrc = src.slice(src.indexOf('audioSrc')+9);
+      //    }
+
+      // }, 300)
+    },
+    mounted: function mounted() {
+      var _this2 = this;
+
+      // ShowDevTools();
+      this.setWindow();
+      this.message = new Message();
+
+      //获取资源详情
+      this.getContentDetail();
+
+      //添加阅读历史
+      this.addRecordReadHistory();
+
+      //获取关联标签
+      this.getRelatedExpList();
+
+      //获取收藏
+      this.gethasCollect();
+
+      this.isCourseMedia = videoData.isCourseMedia ? videoData.isCourseMedia : false;
+
+      var _this = this;
+      window.onresize = function() {
+        _this2.setWindow();
+      };
+
+      if (!this.isPlaying) {
+        play();
+        this.isPlaying = true;
+      }
+
+    },
+    updated: function updated() {
+      // if(!this.isPlaying) {
+      //    play();
+      //    this.isPlaying = true;
+      // }
+
+      // var _this = this;
+
+      // $('.example-video-dimensions').css({
+      //    width:_this.winWidth - 100 +'px',
+      //    height:_this.winHeight - 100 +'px'
+      // })
+    }
+  });
+
+  </script>
+  <script>
+  //添加收藏
+  function addCollect() {
+    $vm.collect();
+  }
+
+  /**
+   * [toPdfDetail 查看PDF详情]
+   * @Author   罗文
+   * @DateTime 2017-12-07
+   * @return   {[type]}   [description]
+   */
+  function showDetail() {
+    let packageData = GetPackageData(parseInt(videoData.objectId));
+    console.log(packageData)
+    if (packageData) {
+      packageData = JSON.parse(packageData);
+      SaveArgument('id=' + packageData.PackageId);
+      switch (packageData.Type) {
+        case '电路包':
+          loadForm('/index.html#/circuitPackage', '详情', packageData.PackageTitle, true);
+          break;
+        default:
+          // statements_def
+          break;
+      }
+    }
+  }
+
+  </script>
+</body>
+
+</html>

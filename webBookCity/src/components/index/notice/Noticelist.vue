@@ -1,5 +1,5 @@
 <template>
-  <div class="notice-list" :style="{minHeight:clientHeight+'px'}">
+  <div class="notice-list">
     <searchNoMenu></searchNoMenu>
     <div class='power-content global-box'>
       <div class="path" style="cursor: pointer;"><span @click="goPath('index')">首页</span> &gt; <span>公告</span></div>
@@ -37,7 +37,6 @@ export default {
       dataList: [],
     }
   },
-  props: ['clientHeight'],
   components: {
     searchNoMenu,
   },

@@ -16,7 +16,7 @@
               支付成功
             </h4>
             <p>
-              <el-button v-if="hasEleContent" plain @click="$router.push('/wrap/Myshop')">阅读资源</el-button>
+              <el-button plain v-if="hasEleContent" @click="$router.push('/wrap/Myshop')">阅读资源</el-button>
               <el-button plain @click="goOrderDetail()">查看订单</el-button>
               <el-button plain @click="goPath('index')">返回首页</el-button>
             </p>
@@ -25,12 +25,14 @@
         <!-- 相关推荐 -->
         <div class="recommend">
           <div class="shopp-bottom">
-            <p>同类已购资源推荐</p>
-            <ul>
+            <p style="line-height: 50px;border-bottom: 1px solid #e6e6e6;font-weight: bold;">
+              <span class="red-border"></span>同类已购资源推荐
+            </p>
+            <ul style="overflow: hidden;margin-top: 20px;">
               <li class="small-img" v-for="(item,index) in dataList">
                 <div class="img-box" @click="goDetail(getDetailPath(item.ObjectType),item.Id)" :style="{backgroundImage:'url('+item.CoverUrl+')',backgroundSize:'cover',backgroundRepeat:'no-repeat',backgroundPosition:'center center'}"></div>
-                <p class="names" @click="goDetail(getDetailPath(item.ObjectType),item.Id)">{{item.Title}}</p>
-                <p class="price-text">&yen;{{formatPrice(item.CurrentPrice,2)}}</p>
+                <p class="names" style="margin: 5px 0 2px;" @click="goDetail(getDetailPath(item.ObjectType),item.Id)">{{item.Title}}</p>
+                <p class="price-text">&yen;{{handleCurrentPrice(item.ObjectType, item)}}</p>
               </li>
             </ul>
           </div>
@@ -45,7 +47,7 @@ export default {
   data() {
     return {
       dataList: [],
-      hasEleContent:false,
+      hasEleContent: false,
 
       orderList: [],
       page: 1,
@@ -66,7 +68,7 @@ export default {
     },
     /**
      * [getOrderList 获取订单列表]
-     * @Author   王柳
+     * @Author   赵雯欣
      * @DateTime 2018-01-08
      * @return   {[type]}   [description]
      */
@@ -79,8 +81,8 @@ export default {
         .then((res) => {
           if (res.data.Success) {
             this.orderList = res.data.Data.OrderDetails;
-            this.orderList.forEach((item)=>{
-              if(item.MediaType =="Elec"){
+            this.orderList.forEach((item) => {
+              if (item.MediaType == "Elec" || item.MediaType == "MediumPic") {
                 this.hasEleContent = true;
               }
             })
@@ -89,27 +91,26 @@ export default {
     },
     /**
      * [getlist 获取同类资源]
-     * @Author   王柳
+     * @Author   赵雯欣
      * @DateTime 2018-01-08
      * @return   {[type]}   [description]
      */
     getlist() {
-      this.$http.post("/Content/Search", {
-          cp: 1,
-          ps: 6,
-          query: JSON.stringify({
-            objectTypes: [104], //图书
-          })
+      this.$http.get("/Content/Recommend", {
+          params: {
+            objectId: '',
+            count: 6,
+          }
         })
         .then((res) => {
           if (res.data.Success) {
-            this.dataList = res.data.Data.ItemList;
+            this.dataList = res.data.Data;
           }
         })
     },
     /**
      * [isReadFn 阅读资源]
-     * @Author   王柳
+     * @Author   赵雯欣
      * @DateTime 2018-01-08
      * @return   {Boolean}  [description]
      */
@@ -122,7 +123,7 @@ export default {
     // },
     /**
      * [getOrderDetail 获取内容详情]
-     * @Author   王柳
+     * @Author   赵雯欣
      * @DateTime 2018-01-08
      * @return   {[type]}   [description]
      */
@@ -192,15 +193,15 @@ export default {
     height: 55px;
     width: 1200px;
     margin: 0 auto;
-    &>.red-border {
-      position: relative;
-      top: 3px;
-      display: inline-block;
-      margin-right: 10px;
-      width: 8px;
-      height: 20px;
-      background: #e71515;
-    }
+  }
+  .red-border {
+    position: relative;
+    top: 3px;
+    display: inline-block;
+    margin-right: 10px;
+    width: 8px;
+    height: 20px;
+    background: #e71515;
   }
   .power-content {
     margin-top: 20px;
@@ -236,13 +237,9 @@ export default {
   }
   .recommend {
     background: #fff;
-    &>.shopp-bottom {
+    .shopp-bottom {
       margin: 20px 20px 0;
       height: 326px;
-      &>p {
-        height: 70px;
-        line-height: 70px;
-      }
       .small-img {
         display: inline-block;
         width: 140px;
@@ -255,50 +252,42 @@ export default {
           cursor: pointer;
         }
       }
-      .book-name {
-        height: 20px;
-        overflow: hidden;
-        margin-top: 10px;
-        color: #464646;
-      }
+      
       .price-text {
-        margin-top: 10px;
         color: #e71617;
       }
     }
   }
 
-  #myModal{
-    .el-dialog__header{
+  #myModal {
+    .el-dialog__header {
       border-bottom: 1px solid #ddd;
     }
-    .el-dialog__body{
+    .el-dialog__body {
       padding: 30px 90px 0 90px;
     }
-    .boxs{
+    .boxs {
       height: 210px;
       float: left;
       margin-right: 30px;
       margin-bottom: 30px;
 
-      .el-button{
+      .el-button {
         padding: 7px 20px;
       }
     }
-    .boxs:nth-child(5n){
+    .boxs:nth-child(5n) {
       margin-right: 0;
     }
-    .boxs:last-child{
+    .boxs:last-child {
       margin-right: 0;
     }
-    .img-box{
+    .img-box {
       width: 138px;
       height: 138px;
-      border:1px solid #ddd;
+      border: 1px solid #ddd;
       cursor: pointer;
     }
-
-
   }
 }
 

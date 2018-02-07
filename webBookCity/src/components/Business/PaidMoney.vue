@@ -15,11 +15,11 @@
           <div class="pay-method">
             <p>支付方式</p>
             <div style="margin-top: 50px;">
-              <div class="wenxin-btn" :class="hasBGpic==1?'has-bgi':''" @click='changePaidMethod(1)'>
+              <div class="wenxin-btn" :class="hasBGpic==1?'has-bgi':''" @click="changePaidMethod(1,'weixin')">
                 <div class="wenxins"></div>
                 微信
               </div>
-              <div class="paid-btn" :class="hasBGpic==2?'has-bgi':''" @click='changePaidMethod(2)'>
+              <div class="paid-btn" :class="hasBGpic==2?'has-bgi':''" @click="changePaidMethod(2,'alipay')">
                 <div class="paids"></div>
                 支付宝
               </div>
@@ -28,9 +28,9 @@
           <!-- 商品信息 -->
           <div class="goods-info">
             <p style="font-weight: bold;font-size: 16px;line-height: 20px;margin-bottom: 25px;">商品金额</p>
-            <p>商品金额：<span>&yen;{{orderObj.TotalMoney?formatPrice(orderObj.TotalMoney,2):'0.00'}}</span></p>
+            <p>商品金额：<span>&yen;{{orderObj.UndiscountTotalMoney?formatPrice(orderObj.UndiscountTotalMoney,2):'0.00'}}</span></p>
             <p>运费：<span>&yen;{{orderObj.ExtendData&&orderObj.ExtendData.Freight?formatPrice(orderObj.ExtendData.Freight,2):'0.00'}}</span></p>
-            <p>促销优惠：<span>- &yen;{{orderObj.ExtendData&&orderObj.ExtendData.DiscountMoney?formatPrice(orderObj.ExtendData.DiscountMoney,2):'0.00'}}</span></p>
+            <p>促销优惠：<span>- &yen;{{orderObj.ExtendData&&orderObj.ExtendData.Benefit?formatPrice(orderObj.ExtendData.Benefit,2):'0.00'}}</span></p>
             <p>合计：<span class="red">&yen;{{orderObj.TotalMoney?formatPrice(orderObj.TotalMoney,2):'0.00'}}</span></p>
           </div>
           <!-- 支付按钮一栏 -->
@@ -39,7 +39,7 @@
             应付总额：<span style="font-size: 30px;font-weight: bold;color:#e71515;margin-left: 15px;">&yen;{{orderObj.TotalMoney?formatPrice(orderObj.TotalMoney,2):'0.00'}}</span>
           </div>
           <div style="text-align: center;position: absolute;bottom: 60px;width: 1160px;">
-            <el-button type="primary" @click="PaidFn()" style="padding:12px 66px;font-size: 18px;">支付</el-button>
+            <el-button type="primary" @click="PaidFn()" :loading="paidLoading" style="padding:12px 66px;font-size: 18px;">支付</el-button>
           </div>
         </div>
         <!-- 相关推荐 -->
@@ -53,27 +53,46 @@
                 <div style="width:100%;height:100%;" @click="goDetail(getDetailPath(item.ObjectType),item.Id)" :style="{backgroundImage:'url('+item.CoverUrl+')',backgroundSize:'cover',backgroundRepeat:'no-repeat',backgroundPosition:'center center'}"></div>
               </div>
               <p class="names" @click="goDetail(getDetailPath(item.ObjectType),item.Id)">{{item.Title}}</p>
-              <p class="price-text">&yen;{{formatPrice(item.CurrentPrice,2)}}</p>
+              <p class="price-text">&yen;{{handleCurrentPrice(item.ObjectType, item)}}</p>
             </li>
           </ul>
         </div>
       </div>
     </div>
+    <!-- <div id="showHtml" style="overflow: hidden;height: 500px;"></div> -->
+    <el-dialog title="" :visible.sync="paidModal" width="520px" id="paidModal" :close-on-click-modal="false" :show-close="false" :close-on-press-escape="false">
+      <div class="paid-img-warps">
+        <img :src="paidImgUrl" style="width:200px;height:200px;margin:190px 0 0 162px" >
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="paidModal=false">取 消</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 <script>
 import searchNoMenu from "../common/SearchNoMenu.vue"
+import { mapGetters } from 'vuex'
 export default {
   data() {
     return {
+      paidLoading:false,
+      baseUrl: baseUrl,
       orderObj: {},
       dataList: [],
       hasBGpic: 1,
+      payType: 'weixin',
+      showHtmls: '',
+      paidModal: false,
+      paidImgUrl: '',
     }
   },
   components: {
     searchNoMenu,
   },
+  computed: mapGetters([
+    'userInfo'
+  ]),
   mounted() {
     this.getDetail()
     this.getlist()
@@ -87,58 +106,101 @@ export default {
         })
         .then((res) => {
           if (res.data.Success) {
-            this.orderObj = res.data.Data
+            this.orderObj = res.data.Data;
+            if (this.orderObj.Status == 1) {
+              this.paidModal = false;
+              this.$message.success('支付成功')
+              this.$router.push({ path: '/wrap/paymentAccomplish', query: { orderId: this.$route.query.orderId } })
+            }
           }
         })
     },
     /**
      * [PaidFn 支付]
-     * @Author   王柳
+     * @Author   赵雯欣
      * @DateTime 2017-12-25
      */
     PaidFn() {
-      this.$http.post("/Pay/Execute", {
-          orderId: this.$route.query.orderId,
-          userid: JSON.parse(window.sessionStorage.getItem('bg_user_info')).Id ? JSON.parse(window.sessionStorage.getItem('bg_user_info')).Id : '',
-        })
-        .then((res) => {
-          if (res.data.Success) {
-            this.$message.success('支付成功')
-            this.$router.push({ path: '/wrap/paymentAccomplish', query: { orderId: this.$route.query.orderId } })
-          } else {
-            // this.$message.error(res.data.Des) 
+      var backUrl = 'http://demo.cabp.web.kingchannels.cn';
+      if (this.payType == "alipay") { //支付宝
+        this.$http.post("/Pay/Execute", {
+            orderId: this.$route.query.orderId,
+            userid: this.userInfo.Id,
+          })
+          .then((res) => {
+            if (res.data.Success) {
+              this.$message.success('支付成功')
+              this.$router.push({ path: '/wrap/paymentAccomplish', query: { orderId: this.$route.query.orderId } })
+              // this.$router.push('/wrap/paymentAccomplish')
+            } else {
+              this.$message.error(res.data.Des)
+            }
+          })
+        // window.location.href = "http://demo.bridge.kingchannels.cn/Pay/Index?orderId=" + this.$route.query.orderId + "&payType=" + this.payType + "&returnUrl=" + encodeURIComponent(backUrl) + "&ApiName=/Pay/Index&DeviceToken=" + this.$cookies.get('deviceToken') + "&random=" + Math.random() + "&BridgePlatformName=cabp_web&"
+
+      } else if (this.payType == "weixin") {
+        this.paidLoading = true;
+        this.$http.get("/Pay/Index", {
+            params: {
+              orderId: this.$route.query.orderId,
+              payType: this.payType,
+              returnUrl: backUrl,
+            }
+          })
+          .then((res) => {
+            this.paidLoading = false;
+            if (res.data.Success) {
+              this.paidImgUrl = res.data.Data;
+              this.paidModal = true;
+              var count = 0;
+              this.timer = setInterval(() => {
+                this.getDetail()
+                // console.log(count++)
+              }, 2000)
+            } else {
+              this.$message.error(res.data.Des)
+            }
+          })
+      }
+    },
+    getlist() {
+      this.$http.get("/Content/Recommend", {
+          params: {
+            objectId: '',
+            count: 6,
           }
         })
-    },
-    // goOrderDetail() {
-    //   this.$router.push({ path: 'OrderDetail', query: { orderId: this.$route.query.orderId } })
-    // },
-    getlist() {
-      this.$http.post("/Content/Search", {
-          cp: 1,
-          ps: 6,
-          query: JSON.stringify({
-            objectTypes: [104], //图书
-          })
-        })
         .then((res) => {
           if (res.data.Success) {
-            this.dataList = res.data.Data.ItemList;
-            this.totalCount = res.data.Data.RecordCount;
+            this.dataList = res.data.Data;
           }
         })
     },
     /**
      * [changePaidMethod 切换支付方式]
-     * @Author   王柳
+     * @Author   赵雯欣
      * @DateTime 2017-12-26
      * @param    {[type]}   index [description]
      * @return   {[type]}         [description]
      */
-    changePaidMethod(index) {
+    changePaidMethod(index, payType) {
       this.hasBGpic = index;
-    }
+      this.payType = payType;
+    },
   },
+  beforeDestroy(){
+    clearInterval(this.timer)
+  },
+  watch:{
+    'paidModal':function(val){
+      if(!val){
+        console.log('-----')
+        if (this.timer) {
+          clearInterval(this.timer)
+        }
+      }
+    }
+  }
 
 }
 
@@ -262,7 +324,7 @@ export default {
     overflow: hidden;
     width: 1160px;
     margin: 20px 0;
-    padding:10px 20px 0;
+    padding: 10px 20px 0;
     height: 316px;
     line-height: 40px;
     background: #fff;
@@ -278,13 +340,30 @@ export default {
         cursor: pointer;
       }
     }
-    .small-img:nth-child(6){
+    .small-img:nth-child(6) {
       margin-right: 0;
     }
     .price-text {
       color: #e71617;
       line-height: 30px;
     }
+  }
+}
+
+#paidModal {
+  .el-dialog__body {
+    padding: 0 0 20px 0;
+    width: 520px;
+    overflow: hidden;
+  }
+  .paid-img-warps {
+    width: 520px;
+    padding: 0;
+    height: 500px;
+    background: url('../../../static/images/zifu.jpg') no-repeat;
+  }
+  .el-dialog__footer {
+    text-align: center;
   }
 }
 

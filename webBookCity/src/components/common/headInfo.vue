@@ -13,10 +13,10 @@
           <el-button icon="el-icon-search" @click="dealJump()" class="head-button"></el-button>
         </div>
         <div class="height-search hover" @click="goPath('searchBook')">高级搜索</div>
-        <div class="shopping-icon" @click="goShoppingCar('shoppingCart')">
+        <div class="shopping-icon" @click="goShoppingCar('shoppingCart',hasLogin)">
           <div class="shopping-num">{{shoppingCount}}</div>
         </div>
-        <div class="erwei"> <img src="../../../static/images/base64.png" style="width:100%;"></div>
+        <div class="erwei"> <img src="http://124.204.40.3:50683/files/apk_url.png" style="width:100%;"></div>
       </div>
     </div>
   </div>
@@ -35,13 +35,13 @@ export default {
   },
   computed: mapGetters([
     'shoppingCount',
+    'hasLogin'
   ]),
   created() {
     this.fetchDate();
-  },
-  mounted() {
     this.getShoppingCount()
   },
+
   methods: {
     fetchDate() {
       if (location.href.indexOf('resuKnowledgeSearch') > 0) {
@@ -60,12 +60,13 @@ export default {
       } else {
         if (this.select1 == "资源") {
           this.keyWordObj.Title = this.Title
-          if (this.$route.path.indexOf('resuResSearch') > 0) {
+          if (this.$route.path.indexOf('resuResSearch') > 0) {  //本页面
             if (location.href.indexOf('inSearch') > 0) {
               location.href = location.href.split('inSearch=')[0] + "?inSearch=" + this.Title
             } else {
               location.href = location.href + "?inSearch=" + encodeURI(this.Title)
             }
+
           } else {
             this.resuResSearch(this.keyWordObj)
           }

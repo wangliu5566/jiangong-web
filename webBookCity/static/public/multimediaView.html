@@ -2,11 +2,21 @@
 <html lang="en">
 
 <head>
+  <meta name="renderer" content="webkit"/>
   <meta charset="UTF-8">
   <title id="readerTitle">视频阅读</title>
+  <link rel="shortcut icon" href="../images/logo_28.jpg" />
   <link rel="stylesheet" href="../css/multimediaView.css">
-  <link href="http://vjs.zencdn.net/6.4.0/video-js.css" rel="stylesheet">
+  <link href="../plug/VariantHLSPlayer/Contents/video-js.css" rel="stylesheet">
   <link rel="stylesheet" href="../css/message.css">
+  <script language="javascript" type="text/javascript" src="../plug/VariantHLSPlayer/Contents/video.js"></script>
+  <script language="javascript" type="text/javascript" src="../plug/VariantHLSPlayer/Contents/videojs-contrib-hls.js"></script>
+  <script language="javascript" type="text/javascript" src="../plug/VariantHLSPlayer/Contents/crypto-js.js"></script>
+  <script language="javascript" type="text/javascript" src="../plug/VariantHLSPlayer/Contents/cipher-core.js"></script>
+  <script language="javascript" type="text/javascript" src="../plug/VariantHLSPlayer/Contents/enc-base64.js"></script>
+  <script language="javascript" type="text/javascript" src="../plug/VariantHLSPlayer/Contents/u8array.js"></script>
+  <script src="../js/videojs-settings-menu.min.js"></script>
+
 
   <script src="../js/ajax.js"></script>
   <script src="../js/jquery-1.11.0.min.js"></script>
@@ -25,21 +35,23 @@
     <div class="container">
       <div>&nbsp;</div>
       <div class="content">
+        <h1 v-cloak>{{video.Title}}</h1>
         <div class="video-content">
-          <video id="my-video" class="video-js vjs-big-play-centered" controls width="1080" height="720" preload="auto" 
+<!--           <video id="my-video" class="video-js vjs-big-play-centered" controls width="1080" height="720" preload="auto" 
            data-setup="{}">
             <source :src="videoData.Url" type='video/mp4'>
             <p class="vjs-no-js">
               To view this video please enable JavaScript, and consider upgrading to a web browser that
             </p>
+          </video> -->
+
+
+          <video id="example-video" width="1080" height="720" class="video-js vjs-default-skin" preload="auto"  controls="controls">
           </video>
 
-
-<!--           <video id="example-video" width="1080" height="720" class="video-js vjs-default-skin" controls="controls">
-          </video> -->
           <ul class="media-controll">
             <li v-if="isCourseMedia"><img src="../images/目录.png" alt="" @click="isLibShow = !isLibShow"></li>
-            <li><img :src=" !hasCollect ? '../images/收藏(16).png': '../images/收藏(成功6).png'" alt="" @click="collect"></li>
+            <!-- <li><img :src=" !hasCollect ? '../images/收藏(16).png': '../images/收藏(成功6).png'" alt="" @click="collect"></li> -->
             <div class="lib-right" ref="libRight" v-show="isLibShow">
               <ul class="lib-right-content">
                 <li v-for="(item,index) in libList" @click="changeVideoSrc(item)" v-cloak>
@@ -52,6 +64,9 @@
         </div>
         <ul class="media-title" v-if="isCourseMedia" v-cloak>
           <li> <b v-cloak>{{video.Title}}</b> </li>
+          
+
+
           <li>本视频学习次数:
             <span>2522次</span>
           </li>
@@ -67,7 +82,12 @@
 
         <ul class="media-title" v-else v-cloak>
           <li> <b v-cloak>{{video.Title}}</b> </li>
+          <li class="media-button media-title-collect">
+            <img :src=" !hasCollect ? '../images/收藏-视频.png': '../images/收藏-视频2.png'" alt="" @click="collect">
+            <span>收藏</span>
+          </li>
         </ul>
+
         <ul class="media-related-label" >
           <li class="no-relate-css"> 知识标签： </li>
           <li 
@@ -102,6 +122,104 @@
 
  
   <script src="../js/message.js"></script>
+
+  <script>
+    //第一步本地拦截
+    if(!getCookie('bg_user_info') || !getCookie('accessToken') || !JSON.parse(getCookie('bg_user_info')).Id) {
+       alert('您无权观看此资源，请先登录授权！');
+       location.href = '/index.html#/login';
+    }
+    
+    //第二步参数拦截
+    if (location.href.indexOf('data=') !== -1) {
+        var videoData = decodeURIComponent(location.href.slice(location.href.indexOf('data=') + 5));
+
+        videoData = JSON.parse(videoData);
+        
+        
+        if(!videoData.objectId || !videoData.objectType || !videoData.authorizeToken || !videoData.authorizeUrl) {
+            alert('阅读资源所需参数错误，请确认参数！');
+            window.close();
+        }
+
+
+        $.ajax({
+            type: "POST",
+            url: videoData.authorizeUrl,
+            async:false,
+            data: Object.assign({}, {
+                id: videoData.objectId,
+                authorizeToken:videoData.authorizeToken,
+                deviceToken: getCookie('deviceToken'),
+            }, systemParams),
+            success: function success(res) {
+                if(res.Success) {
+                    videoData = Object.assign({},videoData,res.Data);
+                }else {
+                    alert(res.Description);
+                    window.close();
+                }
+            }
+        });
+
+
+        //下面是针对视频解密部分
+        videojs.Hls.xhr.beforeRequest = function(req) {
+          if (req.uri.indexOf("resource/authorize") != -1)
+            req.uri = 'data:,';
+          return req;
+        };
+
+        function play() {
+          var url = videoData.Url;
+
+          if (url == "") {
+            alert("URL is empty");
+
+            return;
+          }
+
+          var player = videojs('example-video',{
+              'playbackRates': [0.5, 1, 1.5, 2],
+              controlBar: {
+                  children: {
+                      'playToggle':{},
+                      
+                      'currentTimeDisplay':{},
+
+                      'liveDisplay':{},
+                      'flexibleWidthSpacer':{},
+                      'progressControl':{},
+
+
+                      'timeDivider':{},
+                      'durationDisplay':{},
+                      
+
+                      'muteToggle':{},
+                      'volumeControl':{
+                      },
+                      'fullscreenToggle':{}
+                  }
+              }
+          });
+
+
+          player.src({
+            src: url,
+            type: 'application/x-mpegURL'
+          });
+
+          player.play();
+        }
+
+    }else {
+        alert('阅读资源所需参数错误，请确认参数！');
+        window.close();
+    }
+
+
+  </script>
   <script>
   'use strict';
 
@@ -138,7 +256,14 @@
         
       toExpDetail:function toExpDetail(id,index) {
          this.activeLabelIndex = index;
-         location.href= '/index.html#/wrap/details/exp?id='+ id;
+
+          var aPoint = document.createElement("a");
+          var href = '/index.html#/wrap/details/exp?id=' + id;
+          aPoint.setAttribute('href', href);
+          aPoint.setAttribute('target', '_blank');
+          aPoint.click();
+
+         // location.href= '/index.html#/wrap/details/exp?id='+ id;
       },
 
 
@@ -156,7 +281,7 @@
       //     data: Object.assign({}, {
       //       id: _this.videoData.objectId,
       //       objectType: _this.videoData.objectType,
-      //       deviceToken: sessionStorage.deviceToken,
+      //       deviceToken: getCookie('deviceToken'),
       //       apiname: '/Content/Detail'
       //     }, systemParams),
       //     success: function success(res) {
@@ -184,7 +309,7 @@
             id: _this.videoData.objectId,
             userId: localStorage.userId,
             objectType: _this.videoData.objectType,
-            deviceToken: sessionStorage.deviceToken,
+            deviceToken: getCookie('deviceToken'),
             apiname: '/History/Record',
             actionType: 3 //操作动作，3-阅读（点击阅读按钮），4-分享，5-打印，6-点赞
           }, systemParams),
@@ -211,7 +336,7 @@
           data: Object.assign({}, {
             objectId: _this.videoData.objectId,
             type: _this.videoData.objectType,
-            deviceToken: sessionStorage.deviceToken,
+            deviceToken: getCookie('deviceToken'),
             apiname: '/ExplicitWordLabel/List',
             level: 0
           }, systemParams),
@@ -248,28 +373,37 @@
        */
       collect: function collect() {
         var _this = this;
-        $.ajax({
-          type: "POST",
-          url: baseUrl + "/Favorite/CreateOrUpdate",
-          data: Object.assign({}, {
-            objectId: _this.videoData.objectId,
-            objectType: _this.videoData.objectType,
-            deviceToken: sessionStorage.deviceToken,
-            apiname: '/Favorite/CreateOrUpdate'
-          }, systemParams),
-          success: function success(res) {
-            if (res.Success) {
+        this.validSafe(function() {
+           $.ajax({
+              type: "POST",
+              url: baseUrl + "/Favorite/CreateOrUpdate",
+              data: Object.assign({}, {
+                objectIds: _this.videoData.objectId,
+                objectTypes: _this.videoData.objectType,
+                state:_this.hasCollect ? false:true,
+                deviceToken: getCookie('deviceToken'),
+                apiname: '/Favorite/CreateOrUpdate'
+              }, systemParams),
+              success: function success(res) {
+                if (res.Success) {
 
-              if (res.Description.indexOf('取消') !== -1) {
-                _this.hasCollect = false;
-              } else {
-                _this.hasCollect = true;
+                  if (res.Description.indexOf('取消') !== -1) {
+                    _this.hasCollect = false;
+                  } else {
+                    _this.hasCollect = true;
+                  }
+                  _this.message.showMessage('success', res.Description);
+                } else {
+                  if(res.Description.indexOf('AccessToken') != -1) {
+                      alert('您的登录已过期，请重新登录再试！');
+                      location.href = '/index.html#/login';
+                  }else {
+                      alert(res.Description);
+                      location.href = '/index.html#/login';
+                  }
+                }
               }
-              _this.message.showMessage('success', res.Description);
-            } else {
-              _this.message.showMessage('error', res.Description);
-            }
-          }
+            });
         });
       },
 
@@ -282,7 +416,7 @@
           url: baseUrl + "/Content/Detail",
           data: Object.assign({}, {
             id: _this.videoData.objectId,
-            deviceToken: sessionStorage.deviceToken,
+            deviceToken: getCookie('deviceToken'),
             apiname: '/Content/Detail'
           }, systemParams),
           success: function success(res) {
@@ -301,7 +435,46 @@
             }
           }
         });
-      }
+      },
+
+
+      /**
+       * [validSafe description]
+       * @Author   罗文
+       * @DateTime 2018-02-01
+       * @param    {Function} callback [验证通过后的回调]
+       * @return   {[type]}            [description]
+       */
+      validSafe(callback) {
+          var fileData = decodeURIComponent(location.href.slice(location.href.indexOf('data=') + 5));
+              fileData = JSON.parse(fileData);
+
+           var _this = this;    
+         //验证登录是否异常
+          $.ajax({
+              type: "GET",
+              url: baseUrl + "/Content/Detail",
+              data: Object.assign({}, {
+                  id: _this.videoData.objectId,
+                  deviceToken: getCookie('deviceToken'),
+                  apiname: '/Content/Detail'
+              }, systemParams),
+              success: function success(res) {
+                  if (res.Success) {
+                      if(res.Data.ExtendData.AuthorizeToken  &&  res.Data.ExtendData.AuthorizeToken == fileData.authorizeToken) {
+                          // 验证通过
+                          if(callback)  callback();
+                      }else {
+                          alert('登录超时，请重新登录！');
+                          close();
+                      }
+                  } else {
+                      alert(res.Description);
+                      window.close();
+                  }
+              }
+          });
+      },
     },
     created: function created() {
       var data = decodeURIComponent(location.href.slice(location.href.indexOf('data=') + 5));
@@ -353,6 +526,21 @@
       };
 
 
+      //禁止选中
+      document.addEventListener('selectstart', function (e) {
+          e.preventDefault();
+      }, false);
+
+
+      if (!this.isPlaying) {
+        play();
+        this.isPlaying = true;
+        
+        //解决下部留白的兼容性问题
+        document.body.style.height = document.body.scrollHeight + 'px';
+      }
+
+
     },
     updated: function updated() {
 
@@ -372,7 +560,6 @@
 
   </script>
 
-   <script src="http://vjs.zencdn.net/6.4.0/video.js"></script>
 
    <script>
      document.getElementById('loadMenban').parentNode.removeChild(document.getElementById('loadMenban'));

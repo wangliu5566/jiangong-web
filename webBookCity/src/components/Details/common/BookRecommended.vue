@@ -11,10 +11,12 @@
         </div>
         <div class="book-info" :class="detailType.flag==1?'other-info':''">
           <p class="book-title">
-
-          {{item.Title}}</p>
-          <span class="original-price">&yen;{{formatPrice(item.MarketPrice,2)}}</span>
-          <span class="price">&yen;{{formatPrice(item.CurrentPrice,2)}}</span>
+            <ellipsis :data="item.Title" :line-clamp="2" :line-height="'20px'">
+            </ellipsis>
+          </p>
+          
+          <span class="original-price">&yen;{{handleMarketPrice(item.ObjectType,item)}}</span>
+          <span class="price">&yen;{{handleCurrentPrice(item.ObjectType,item)}}</span>
         </div>
       </li>
     </ul>
@@ -67,8 +69,7 @@ export default {
       this.$http.get('/Content/Recommend', {
           params: {
             objectId: this.$route.query.id,
-            ps: 15,
-            cp: 1,
+            count:10,
           }
         })
         .then((res) => {

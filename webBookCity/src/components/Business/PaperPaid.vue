@@ -5,7 +5,7 @@
       <span class="red-border"></span>
       <span>确认订单</span>
     </p>
-    <div class="con-box">
+    <div class="con-box" v-loading="loadings" element-loading-text="拼命加载中" element-loading-spinner="el-icon-loading" element-loading-background="rgba(256, 256, 256, 0.8)">
       <div class="global-box power-content">
         <!-- 收货人信息 -->
         <div class="buyer-info">
@@ -50,8 +50,8 @@
         <div class="delivery">
           <h5>配送方式</h5>
           <div class="distribution">
-            <el-radio v-model="sendMethod" label="0">快递</el-radio>
-            <el-radio v-model="sendMethod" label="1">EMS</el-radio>
+            <el-radio v-model="sendMethod" label="1">快递</el-radio>
+            <el-radio v-model="sendMethod" label="2">EMS</el-radio>
             <el-radio v-model="sendMethod" label="3">自提书(限北京地区)</el-radio>
           </div>
           <p style="margin-top: 10px;">快递费用说明：快递:书款151元以下，15元；151元(含)以上，书款的15%，300元以上包邮。</p>
@@ -123,7 +123,7 @@
             </el-table-column>
             <el-table-column label="商品类型" width="170">
               <template slot-scope='scope'>
-                <p>{{scope.row.ObjectType==104?returnType(scope.row.MediaType):confirmType(scope.row.ObjectType)}}</p>
+                <p>{{confirmType(scope.row.ObjectType,scope.row.MediaType)}}</p>
               </template>
             </el-table-column>
             <el-table-column prop="oldPrice" label="价格" width="170">
@@ -136,11 +136,11 @@
                 <p>{{scope.row.Count?scope.row.Count:'0'}}</p>
               </template>
             </el-table-column>
-            <el-table-column prop="onSale" label="优惠" width="170">
+            <!--  <el-table-column prop="onSale" label="优惠" width="170">
               <template slot-scope='scope'>
                 <p>&yen;{{scope.row.ExtendData&&scope.row.ExtendData.DiscountMoney?formatPrice(scope.row.ExtendData.DiscountMoney,2):'0.00'}}</p>
               </template>
-            </el-table-column>
+            </el-table-column> -->
             <el-table-column label="小计" width="120">
               <template slot-scope='scope'>
                 <p>&yen;{{scope.row.ExtendData&&scope.row.ExtendData.TotalMoney?formatPrice(scope.row.ExtendData.TotalMoney,2):'0.00'}}</p>
@@ -163,7 +163,7 @@
             </el-table-column>
             <el-table-column label="商品类型" width="170">
               <template slot-scope='scope'>
-                <p>{{scope.row.ObjectType==104?returnType(scope.row.MediaType):confirmType(scope.row.ObjectType)}}</p>
+                <p>{{confirmType(scope.row.ObjectType,scope.row.MediaType)}}</p>
               </template>
             </el-table-column>
             <el-table-column prop="oldPrice" label="价格" width="170">
@@ -176,11 +176,11 @@
                 <p>{{scope.row.Count?scope.row.Count:'0'}}</p>
               </template>
             </el-table-column>
-            <el-table-column prop="onSale" label="优惠" width="170">
+            <!-- <el-table-column prop="onSale" label="优惠" width="170">
               <template slot-scope='scope'>
                 <p>&yen;{{scope.row.ExtendData&&scope.row.ExtendData.DiscountMoney?formatPrice(scope.row.ExtendData.DiscountMoney,2):'0.00'}}</p>
               </template>
-            </el-table-column>
+            </el-table-column> -->
             <el-table-column label="小计" width="120">
               <template slot-scope='scope'>
                 <p>&yen;{{scope.row.ExtendData&&scope.row.ExtendData.TotalMoney?formatPrice(scope.row.ExtendData.TotalMoney,2):'0.00'}}</p>
@@ -192,14 +192,14 @@
       <!-- 去支付 -->
       <div class="global-box power-content">
         <div class="go-pay">
-          <p>商品金额：<span>&yen;{{formatPrice(TotalMoney,2)?formatPrice(TotalMoney,2):'0.00'}}</span></p>
+          <p>商品金额：<span>&yen;{{formatPrice(OriginalTotalMoney,2)?formatPrice(OriginalTotalMoney,2):'0.00'}}</span></p>
           <p>运费：<span>&yen;{{formatPrice(freight,2)}}</span></p>
           <p>促销优惠：<span>- &yen;{{formatPrice(DiscountMoney,2)?formatPrice(DiscountMoney,2):'0.00'}}</span></p>
           <div class="line"></div>
-          <p>合计：<span class="red-word">&yen;{{formatPrice(TotalMoney+freight,2)}}</span></p>
+          <p>合计：<span class="red-word">&yen;{{formatPrice(totalMoney,2)}}</span></p>
           <p class="mt20">应付总额：
-            <b class="red-word total">&yen;{{formatPrice(TotalMoney+freight,2)}}</b>
-            <el-button type="primary" @click="PaidFn()" :loading="paidLoading">去支付</el-button>
+            <b class="red-word total">&yen;{{formatPrice(totalMoney,2)}}</b>
+            <el-button type="primary" @click="saveOrderAddress()" :loading="paidLoading">去支付</el-button>
           </p>
         </div>
       </div>
@@ -213,17 +213,21 @@
 <script>
 import searchNoMenu from "../common/SearchNoMenu.vue"
 import myAddress from "./address.vue"
+
+import { mapGetters } from 'vuex'
 export default {
   data() {
     return {
+      loadings: true,
       orderObj: {},
       addressObj: {},
 
-      tableData: [],
       elecList: [],
       paperList: [],
-      TotalMoney: 0,
+      totalMoney: 0,
       DiscountMoney: 0,
+      OriginalTotalMoney: 0,
+
       addressList: [],
       selectAddress: {},
       showAddressModal: false,
@@ -235,7 +239,7 @@ export default {
 
       hasDefault: false, //是否有收货地址
 
-      sendMethod: "0",
+      sendMethod: "1",
       checked: false,
 
       paidLoading: false,
@@ -272,28 +276,59 @@ export default {
       }
     }
   },
+  computed: mapGetters([
+    'userInfo'
+  ]),
   components: {
     searchNoMenu,
     myAddress
   },
   mounted() {
-    this.getUserAddress() //获取地址
+    var ObjectIds = this.$route.query.ObjectIds.toString()
 
-    if (!!localStorage.shoppingObj) {
-      this.tableData = JSON.parse(localStorage.shoppingObj)
-      console.log(this.tableData)
-      this.tableData.forEach((item, index) => {
-        if (item.ObjectType == 104 && item.MediaType != 'Elec') {
-          this.paperList.push(item)
-        } else {
-          this.elecList.push(item)
-        }
-      })
-      this.getTotalMoney()
-      this.getFreight()
-    }
+    this.getlist() //获取资源
+    this.getUserAddress() //获取地址
   },
   methods: {
+    /**
+     * [getlist 从购物车中筛选出已勾选资源]
+     * @Author   赵雯欣
+     * @DateTime 2018-01-25
+     * @return   {[type]}   [description]
+     */
+    getlist() {
+      this.loadings = true;
+      this.$http.get("/ShoppingCart/List", {
+          params: {
+            ids:this.$route.query.ObjectIds.toString(),
+            cp: this.page,
+            ps: this.pageSize,
+          }
+        })
+        .then((res) => {
+          this.loadings = false;
+          if (res.data.Success) {
+            res.data.Data.ItemList.forEach((item, index) => {
+              if (item.ObjectType == 104 && item.MediaType != "Elec") { //实体书
+                this.paperList.push(item);
+              } else { //电子资源
+                this.elecList.push(item);
+              }
+
+              //为支付和计算总价做准备
+              this.shoppingCartIdsArr.push(item.Id)
+            })
+            if (this.paperList.length == 0 && this.elecList.length == 0) {
+              this.$router.push('/wrap/noContent')
+            } else {
+              this.getTotalMoney() //计算总价
+            }
+
+          } else if (res.data.Code == 14) {
+            this.$message.error(res.data.Description)
+          }
+        })
+    },
     tableRowClassName({ row, rowIndex }) {
       if (rowIndex === 0) {
         return 'head-row';
@@ -302,23 +337,31 @@ export default {
     },
     /**
      * [getTotalMoney 获取总价]
-     * @Author   王柳
+     * @Author   赵雯欣
      * @DateTime 2017-12-26
      * @return   {[]}   [description]
      */
     getTotalMoney() {
-      if (this.tableData.length > 0) {
-        this.tableData.forEach((item, index) => {
-          this.TotalMoney = this.TotalMoney + parseFloat(item.ExtendData && item.ExtendData.TotalMoney ? item.ExtendData.TotalMoney : 0)
-          this.DiscountMoney = this.DiscountMoney + parseFloat(item.ExtendData && item.ExtendData.DiscountMoney ? item.ExtendData.DiscountMoney : 0)
+      this.$http.post("/Order/CalcTotalAmount", {
+          shoppingCartIds: this.shoppingCartIdsArr.join(','),
+          sendMethod: this.sendMethod
         })
-      }
+        .then((res) => {
+          this.loadings = false;
+          if (res.data.Success) {
+            this.totalMoney = res.data.Data.TotalMoney;
+            this.OriginalTotalMoney = res.data.Data.OriginalTotalMoney;
+            this.DiscountMoney = res.data.Data.DiscountAmount;
+            this.freight = res.data.Data.FreightFee;
+          }
+        })
     },
+    //获取用户地址
     getUserAddress() {
       this.hasDefault = false;
       this.getAddressListLoading = true;
       this.$http.post("/UserAddressBook/List", {
-          userId: JSON.parse(window.sessionStorage.getItem('bg_user_info')).Id,
+          userId: this.userInfo.Id,
           ps: 9999,
           cp: 1,
         })
@@ -344,43 +387,18 @@ export default {
           }
         })
     },
-    /**
-     * [PaidFn 生成订单并跳转支付页面]
-     * @Author   王柳
-     * @DateTime 2017-12-26
-     */
-    PaidFn() {
-      this.shoppingCartIdsArr = []
-      this.objectIdsArr = []
-      this.countsArr = []
-      this.objectTypesArr = [];
-      this.MediaType = []
-      this.tableData.forEach((item, index) => {
-        this.shoppingCartIdsArr.push(item.Id)
-        this.objectIdsArr.push(item.ObjectId)
-        this.countsArr.push(item.Count)
-        this.objectTypesArr.push(item.ObjectType)
-        this.MediaType.push(item.MediaType)
-      })
-
-      this.saveOrderAddress()
-    },
     //创建订单
     orderCreate() {
       this.$http.post("/Order/Create", {
           addressId: this.orderAddressId,
           sendMethod: this.sendMethod,
           invoiceId: this.invoiceId,
-          objectIds: this.objectIdsArr.join(','),
-          objectTypes: this.objectTypesArr.join(','),
-          counts: this.countsArr.join(','),
           shoppingCartIds: this.shoppingCartIdsArr.join(','),
-          mediaTypes: this.MediaType.join(',')
         })
         .then((res) => {
           this.paidLoading = false;
           if (res.data.Success) {
-            var orderId = res.data.Data
+            var orderId = res.data.Data;
             this.$router.push({ path: '/wrap/paid', query: { orderId: orderId } })
           } else {
             this.$message.error(res.data.Description)
@@ -390,35 +408,7 @@ export default {
     changeAddressFn(item) {
       this.selectAddress = item;
     },
-    /**
-     * [getFreight 计算运费]
-     * @Author   王柳
-     * @DateTime 2018-01-22
-     * @return   {[type]}   [description]
-     */
-    getFreight() {
-      if (this.sendMethod == 0) {  //快递
-        if (this.TotalMoney < 151) {
-          this.freight = 15;
-        } else if ((this.TotalMoney > 151 ||this.TotalMoney == 151 )&& this.TotalMoney < 300) {
-          this.freight = this.TotalMoney * 0.15;
-        } else {
-          this.freight = 0;
-        }
-      }else if(this.sendMethod == 1){
-        if (this.TotalMoney < 80 ||this.TotalMoney==80) {
-          this.freight = 35;
-        } else if (this.TotalMoney > 80 && this.TotalMoney < 300) {
-          this.freight = this.TotalMoney * 0.45;
-        } else {
-          this.freight = 0;
-        }
-      }else{
-        this.freight = 0;
-      }
-
-    },
-    //存储订单地址
+    //先判断存储订单地址，再提交订单
     saveOrderAddress() {
       if (this.hasDefault) {
         this.paidLoading = true;
@@ -444,7 +434,7 @@ export default {
     },
     /**
      * [addAddressModal 新增修改收货地址模态框]
-     * @Author   王柳
+     * @Author   赵雯欣
      * @DateTime 2017-12-24
      */
     addAddressModal(type, item) {
@@ -455,7 +445,7 @@ export default {
     },
     /**
      * [changeDefaultAd 修改默認收穫地址]
-     * @Author   王柳
+     * @Author   赵雯欣
      * @DateTime 2018-01-15
      * @return   {[type]}   [description]
      */
@@ -509,7 +499,7 @@ export default {
       this.isShowType = val
     },
     'sendMethod': function(val, old) {
-      this.getFreight()
+      this.getTotalMoney()
     }
   }
 }

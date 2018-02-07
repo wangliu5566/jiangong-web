@@ -3,7 +3,7 @@
     <!-- logo搜索部分 -->
     <search :selectType='6'></search>
     <div class="account-right">
-      <a href="#">账户设置 &gt; 修改密码</a>
+      <span>账户设置 &gt; 修改密码</span>
       <ul class="account-center">
         <li v-if='first'>
           <img src="../../assets/38.png">
@@ -33,7 +33,11 @@
 <script>
     import search from "./module/Search.vue"
     import otherBook from "./module/OtherBook.vue"
+    import { mapGetters } from 'vuex'
     export default {
+          computed: mapGetters([
+            'userInfo',
+          ]),
         data() {
             const validatecode = (rule, value, callback) => {
                 if (!value || value.trim().length == 0) {
@@ -65,7 +69,7 @@
         },
         methods: {
             getphone() {
-                this.MobileNumber = JSON.parse(window.sessionStorage.getItem('bg_user_info')).Email
+                this.MobileNumber = this.userInfo.Email
             },
             next(formName) {
                 this.$refs[formName].validate((valid) => {
@@ -97,7 +101,7 @@
             margin: auto;
             padding-bottom: 395px;
         }
-        .account-right>a {
+        .account-right>span{
             display: block;
             margin: 20px 0;
             text-decoration: none;

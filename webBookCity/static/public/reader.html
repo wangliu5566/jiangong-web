@@ -2,8 +2,10 @@
 <html lang="en">
 
 <head>
+    <meta name="renderer" content="webkit"/>
     <meta charset="UTF-8">
     <title id="readerTitle">图书阅读</title>
+    <link rel="shortcut icon" href="../images/logo_28.jpg" />
     <link rel="stylesheet" href="../css/reader.css">
     <link rel="stylesheet" type="text/css" href="../css/bootstrap.min.css">
     <link rel="stylesheet" href="../css/message.css">
@@ -13,6 +15,18 @@
     <script src="../js/ajax.js"></script>
     <script src="../js/bootstrap.min.js"></script>
     <script src="../js/localStorage.js"></script>
+
+
+<!--      <script language="javascript" type="text/javascript" src="../plug/VariantHLSPlayer/Contents/crypto-js.js"></script>
+    <script language="javascript" type="text/javascript" src="../plug/VariantHLSPlayer/Contents/cipher-core.js"></script>
+    <script language="javascript" type="text/javascript" src="../plug/VariantHLSPlayer/Contents/enc-base64.js"></script>
+    <script language="javascript" type="text/javascript" src="../plug/VariantHLSPlayer/Contents/u8array.js"></script>
+    <script language="javascript" type="text/javascript" src="../plug/VariantHLSPlayer/Contents/mode-ecb.js"></script>
+    <script language="javascript" type="text/javascript" src="../plug/VariantHLSPlayer/Contents/pad-pkcs7.js"></script>
+    <script language="javascript" type="text/javascript" src="../plug/VariantHLSPlayer/Contents/tripledes.js"></script>
+    <script language="javascript" type="text/javascript" src="../plug/VariantHLSPlayer/Contents/aes.js"></script>
+
+ -->
     <style>
         [v-cloak]{
             display: none;
@@ -21,11 +35,10 @@
 </head>
 
 <body>
-    <div class="index-cont" :style="{height:winHeight-10 +'px'}" id="bookCont" ref="bookCont" @mouseleave="bodyMouseenter = false">
+    <div class="index-cont" @click="closeReaderControl" :style="{height:winHeight-10 +'px'}" id="bookCont" ref="bookCont" @mouseleave="bodyMouseenter = false">
         <div style="position: fixed;left: 0;top:0;z-index: 99999;display: flex;justify-content: center;align-items: center; width: 100%;height: 100%;background: white;" id="loadMenban">
             
         </div>
-
 
         <!-- <div class="book-cont-bottom" :style="{background:bottomBg}">
             <span style="font-style: italic;font-family:'微软雅黑'">
@@ -48,19 +61,19 @@
             </div>
 
             <ul class="wrap-cont-margin">
-                <li @click="isFontModalShow = false;isBgModalShow = !isBgModalShow">
+                <li @click.stop="isFontModalShow = false;isBgModalShow = !isBgModalShow">
                     <img src="../images/图片.png" alt="" >
                     <ul class="bg-colors" v-show="isBgModalShow">
-                        <li style="background: white" @click="setBgColor('#fff')"></li>
+                        <li style="background: white" @click.stop="setBgColor('#fff')"></li>
                         <!-- <li style="background: #e2e3d9" @click="setBgColor('#e2e3d9')"></li> -->
-                        <li style="background: #eeeeee" @click="setBgColor('#eeeeee')"></li>
-                        <li style="background: #f6efce" @click="setBgColor('#f6efce')"></li>
-                        <li style="background: #f3e7aa" @click="setBgColor('#f3e7aa')"></li>
+                        <li style="background: #eeeeee" @click.stop="setBgColor('#eeeeee')"></li>
+                        <li style="background: #f6efce" @click.stop="setBgColor('#f6efce')"></li>
+                        <li style="background: #f3e7aa" @click.stop="setBgColor('#f3e7aa')"></li>
                     </ul>
 
                     <img src="../images/三角形1.png" class="top-arrow" alt="" v-show="isBgModalShow">
                 </li>
-                <li  @click="isBgModalShow = false;isFontModalShow = !isFontModalShow"> 
+                <li  @click.stop="isBgModalShow = false;isFontModalShow = !isFontModalShow"> 
                     <img src="../images/字体.png" alt="">
                     <ul class="bg-colors set-fonts" v-show="isFontModalShow">
                         <li @click="setFontSize(1)">A + </li>
@@ -77,28 +90,28 @@
         <!-- 图书顶部 -->
         <div class="book-cont-top" ref="bookContTop">
             <div class="book-content" >
-                <img src="../images/上一步.png" alt="" class="book-content-back" style="cursor: pointer;" onclick="window.opener=null;window.close();"> 
-                <span class="book-content-cur-tag tag-next" @click="changeTag(-1)">
-                    <img src="../images/jian1.png" alt="">
+                <img src="../images/上一步.png" alt="" class="book-content-back" style="cursor: pointer;" @click="backUp"> 
+                <span class="book-content-cur-tag tag-next" @click="changeTag(-1)" @mouseenter="leftActiveArrow = true" @mouseleave="leftActiveArrow = false" >
+                    <img :src="!leftActiveArrow? '../images/箭头深.png' : '../images/箭头浅2.png'" alt="">
                 </span>
 
-                <span class="book-content-cur-tag" style="margin: 0 10px">
+                <span class="book-content-cur-tag" style="margin: 0 10px;padding: 0px 10px;min-width: 80px;">
                     {{curTag}}
                 </span>
 
-                <span class="book-content-cur-tag tag-next" @click="changeTag(1)">
-                    <img src="../images/jian2.png" alt="">
+                <span class="book-content-cur-tag tag-next" @click="changeTag(1)" @mouseenter="rightActiveArrow = true" @mouseleave="rightActiveArrow = false" >
+                    <img style="transform: rotate(90deg) translate(-2px,-2px)" :src="!rightActiveArrow? '../images/箭头深.png' : '../images/箭头浅2.png'" alt="">
                 </span>
 
                  <div class="exp-map-level">
                   <i>
                     显示级别
                   </i>
-                  <span :class="ralationLevel == 1 ? 'active':''" @click="getExplicitWordLabelList(1)">1</span>
+                  <span  @click="getExplicitWordLabelList(1)"><i :class="ralationLevel == 1 ? 'active':''"></i></span>
                   <b></b>
-                  <span :class="ralationLevel == 2 ? 'active':''" @click="getExplicitWordLabelList(2)">2</span>
+                  <span  @click="getExplicitWordLabelList(2)"><i :class="ralationLevel == 2 ? 'active':''"></i></span>
                   <b></b>
-                  <span :class="ralationLevel == 3 ? 'active':''" @click="getExplicitWordLabelList(3)">3</span>
+                  <span  @click="getExplicitWordLabelList(3)"><i :class="ralationLevel == 3 ? 'active':''"></i></span>
                 </div>
 
                 <span class="book-content-cur-tag tag-next book-search" @click="changeTag(1)" v-show="isBookSearchNextShow">
@@ -124,40 +137,39 @@
                 >
 
             </div>
-        </div>
 
-<!--         <div class="lib-cate" :style="{left:libLeft + 'px',boxShadow:libLeft >= -20 ?'5px 5px 10px #ccc':'' }">
-            <div class="book-or-section-lib">
-                <span :class="libIsActive?'lib-active':''" style="margin-left: -15px">章节目录</span>
-            </div>
-            <div class="lib-list-wrap">
-                <div class="book-or-section-lib-list">
-                    <ul v-if="libIsActive">
+
+
+            <!-- 章节目录 -->
+            <div class="right-bar" >
+                <img src="../images/目录.png" alt="" @click.stop="isLibShow = !isLibShow">
+                <img :src=" !hasCollect ? '../images/收藏(16).png': '../images/收藏(成功6).png'" alt="" @click="addCollect">
+                <div class="right-bar-switch" v-show="libIsActive">
+                    <span @mouseenter="topActiveArrow = true" @mouseleave="topActiveArrow = false" @click="pageExchange(-1,true)">
+                        <img :src="!topActiveArrow? '../images/箭头深.png' : '../images/箭头浅2.png'" alt="">
+                    </span>
+                    <span @mouseenter="bottomActiveArrow = true" @mouseleave="bottomActiveArrow = false" @click="pageExchange(1,true)">
+                        <img :src="bottomActiveArrow? '../images/箭头浅.png' : '../images/箭头深1.png'" alt="">
+                    </span>
+                </div>
+
+
+                <div class="lib-right" ref="libRight" v-show="isLibShow">
+                    <ul class="lib-right-content">
                         <li v-for="(item,index) in sectionLibList" @click="changeIframeSrc(item.Src,index)" v-cloak>
                             {{item.Title}}
                         </li>
                     </ul>
                 </div>
-            </div>
-        </div> -->
-
-        
 
 
-        <!-- 左右切换 -->
-<!--         <div class="page-exchange page-exchange-left"  v-show="bodyMouseenter">
-             <div >
-                <img :src="leftArrow" alt="" @mouseenter="enterArrowSrc(-1)" @mouseleave="leaveArrowSrc(-1)" @click="pageExchange(-1)">
+                <img src="../images/三角形2.png" class="right-arrow" alt="" v-show="isLibShow">
             </div>
         </div>
-       <div class="page-exchange page-exchange-right"  v-show="bodyMouseenter">
-            <div >
-                <img :src="rightArrow" alt="" @mouseenter="enterArrowSrc(1)" @mouseleave="leaveArrowSrc(1)" @click="pageExchange(1)">
-            </div>
-       </div> -->
+
+
        
         <iframe 
-        :src="iframeSrc" 
         frameborder="0" 
         class="iframe-css" 
         width="90%" 
@@ -167,44 +179,21 @@
         :style="{marginTop:winHeight > 900 ? '-111px' :'-96px'}"
         ></iframe>
 
+    
+
         
-        <!-- 章节目录 -->
-        <div class="right-bar" :style="{right:winWidth >= 1200 ? '5.8%':'1%'}">
-            <img src="../images/目录.png" alt="" @click="isLibShow = !isLibShow">
-            <img :src=" !hasCollect ? '../images/收藏(16).png': '../images/收藏(成功6).png'" alt="" @click="addCollect">
-            <div class="right-bar-switch" v-show="libIsActive">
-                <span @mouseenter="topActiveArrow = true" @mouseleave="topActiveArrow = false" @click="pageExchange(-1)">
-                    <img :src="!topActiveArrow? '../images/箭头深.png' : '../images/箭头浅2.png'" alt="">
-                </span>
-                <span @mouseenter="bottomActiveArrow = true" @mouseleave="bottomActiveArrow = false" @click="pageExchange(1)">
-                    <img :src="bottomActiveArrow? '../images/箭头浅.png' : '../images/箭头深1.png'" alt="">
-                </span>
-            </div>
-
-
-            <div class="lib-right" ref="libRight" v-show="isLibShow">
-                <ul class="lib-right-content">
-                    <li v-for="(item,index) in sectionLibList" @click="changeIframeSrc(item.Src,index)" v-cloak>
-                        {{item.Title}}
-                    </li>
-                </ul>
-            </div>
-
-
-            <img src="../images/三角形2.png" class="right-arrow" alt="" v-show="isLibShow">
-        </div>
+        
 
 
 
-
+<!-- 
         <div class="loading-content" v-show="loading">
              
         </div>
 
         <div class="loading-content load-other" v-show="loading" v-cloak>
-             <!-- <p>{{downLoadPercent}} %</p> -->
              <p>正在为您排版，请稍候...</p>
-        </div>
+        </div> -->
 
 
         <!-- 切换设备 -->
@@ -251,7 +240,6 @@
 var $vm = new Vue({
     el: '#bookCont',
     data: {
-
         //建工书城阅读器
         ralationLevel: 0,
         isQueryOpen: true,
@@ -262,6 +250,8 @@ var $vm = new Vue({
         isFullScreen: false, //全屏
         isLibShow: false, //是否显示目录
         isBookSearchNextShow:false,
+        leftActiveArrow: false,
+        rightActiveArrow: false,
         topActiveArrow: false,
         bottomActiveArrow: false,
         searchKey: '', //文内检索
@@ -283,7 +273,7 @@ var $vm = new Vue({
         downLoadPercent: 0,
         libLeft: -300,
         // libLeft: 0,
-        iframeSrc: '',
+        iframeSrc: '../OPS/chapter8.xhtml#A4d7a0027-4c5f-4839-98db-e56e67b32c48',
         sectionName: '',
         radio3: '章节目录',
         bookIframeBody: null,
@@ -335,6 +325,9 @@ var $vm = new Vue({
         message: null,
         searchConf: null,
         formId: '',
+
+        key:'',
+        rootUrl:'',
 
         expLableData: []
     },
@@ -421,34 +414,27 @@ var $vm = new Vue({
 
             var _this = this;
 
-            for (var i = 0; i < listofImg.length; i++) {
-                if ($(listofImg[i]).attr('src') && $(listofImg[i]).attr('src').indexOf('/static/images') !== -1) continue;
-                if (!$(listofImg[i]).parent().hasClass('center')) continue;
+            // for (var i = 0; i < listofImg.length; i++) {
+            //     if ($(listofImg[i]).attr('src') && $(listofImg[i]).attr('src').indexOf('/static/images') !== -1) continue;
+            //     if (!$(listofImg[i]).parent().hasClass('center')) continue;
 
-                // maxHeight:_this.winHeight * 0.8 +'px'
-                var imgHeight = parseInt($(listofImg[i]).css('height'));
-                imgHeight = imgHeight >= _this.winHeight * 0.8 ? _this.winHeight * 0.8 : imgHeight;
+            //     // maxHeight:_this.winHeight * 0.8 +'px'
+            //     var imgHeight = parseInt($(listofImg[i]).css('height'));
+            //     imgHeight = imgHeight >= _this.winHeight * 0.8 ? _this.winHeight * 0.8 : imgHeight;
 
-                $(listofImg[i]).parent().css({
-                    '-webkit-column-break-inside': 'avoid',
-                    'height': imgHeight + 30 + 'px'
-                });
+            //     $(listofImg[i]).parent().css({
+            //         '-webkit-column-break-inside': 'avoid',
+            //         'height': imgHeight + 30 + 'px'
+            //     });
 
-                $(listofImg[i]).attr('class', '');
+            //     $(listofImg[i]).attr('class', '');
 
-                $(listofImg[i]).css({
-                    maxWidth: _this.isTwoCol ? '40%' : '95%',
-                    maxHeight: '90%'
-                });
+            //     $(listofImg[i]).css({
+            //         maxWidth: _this.isTwoCol ? '40%' : '95%',
+            //         maxHeight: '90%'
+            //     });
 
-                // if(winWidthRate > winHeightRate) {
-                //     $(listofImg[i]).css('width',parseInt(getComputedStyle(listofImg[i],null).width)*winHeightRate + 'px');
-                //     $(listofImg[i]).css('height',parseInt(getComputedStyle(listofImg[i],null).height)*winHeightRate + 'px');
-                // }else {
-                //     $(listofImg[i]).css('width',parseInt(getComputedStyle(listofImg[i],null).width)*winWidthRate + 'px');
-                //     $(listofImg[i]).css('height',parseInt(getComputedStyle(listofImg[i],null).height)*winWidthRate + 'px');
-                // }
-            }
+            // }
         },
 
         //根据屏幕缩放文内图片变化
@@ -716,42 +702,45 @@ var $vm = new Vue({
 
         //添加或取消收藏
         addCollect: function addCollect() {
-
-            var data = {
-                objectid: this.sectionid,
-                objecttype: this.objectType
-                // userid:localStorage.getItem("userId")
-            };
-
             var _this = this;
+            this.validSafe(function() {
+                var data = {
+                    objectids: _this.sectionid,
+                    objecttypes: _this.objectType,
+                    state:_this.hasCollect ? false:true
+                };
 
-            $.ajax({
-                type: "POST",
-                url: baseUrl + '/Favorite/CreateOrUpdate',
-                data: Object.assign({
-                    deviceToken: sessionStorage.deviceToken,
-                    apiname: '/Favorite/CreateOrUpdate'
-                    // accessToken:sessionStorage.accessToken
-                }, data, systemParams),
-                success: function success(res) {
-                    if (res.Success) {
-                        _this.hasCollect = !_this.hasCollect;
-                        if (res.Description == "收藏成功") {
-                            _this.message.showMessage('success', '收藏成功！');
-                            _this.hasCollect = true;
+                $.ajax({
+                    type: "POST",
+                    url: baseUrl + '/Favorite/CreateOrUpdate',
+                    data: Object.assign({
+                        deviceToken: getCookie('deviceToken'),
+                        apiname: '/Favorite/CreateOrUpdate'
+                        // accessToken:getCookie('accessToken')
+                    }, data, systemParams),
+                    success: function success(res) {
+                        if (res.Success) {
+                            _this.hasCollect = !_this.hasCollect;
+                            if (res.Description == "收藏成功") {
+                                _this.message.showMessage('success', '收藏成功！');
+                                _this.hasCollect = true;
+                            } else {
+                                _this.hasCollect = false;
+                                _this.message.showMessage('success', '取消收藏成功！');
+                            }
                         } else {
-                            _this.hasCollect = false;
-                            _this.message.showMessage('success', '取消收藏成功！');
-                        }
-                    } else {
-                        if(res.Description.indexOf('AccessToken') != -1) {
-                            _this.message.showMessage('error', '您的登录已过期，请重新登录再试！');
-                        }else {
-                            _this.message.showMessage('error', res.Description);
+                            if(res.Description.indexOf('AccessToken') != -1) {
+                                alert('您的登录已过期，请重新登录再试！');
+                                location.href = '/index.html#/login';
+                            }else {
+                                alert(res.Description);
+                                location.href = '/index.html#/login';
+                            }
                         }
                     }
-                }
+                });
             });
+            
         },
         getRelatedMap: function getRelatedMap() {},
 
@@ -763,8 +752,8 @@ var $vm = new Vue({
                 url: baseUrl + "/Content/Detail",
                 data: Object.assign({}, {
                     id: _this.sectionid,
-                    deviceToken: sessionStorage.deviceToken,
-                    // accessToken:sessionStorage.accessToken,
+                    deviceToken: getCookie('deviceToken'),
+                    // accessToken:getCookie('accessToken'),
                     apiname: '/Content/Detail'
                 }, systemParams),
                 success: function success(res) {
@@ -781,6 +770,20 @@ var $vm = new Vue({
                 }
             });
         },
+
+        /**
+         * [backUp 返回操作]
+         * @Author   罗文
+         * @DateTime 2018-01-29
+         * @return   {[type]}   [description]
+         */
+        backUp() {
+           window.opener=null;
+           window.close();
+           sessionStorage.removeItem('sectionid');
+           sessionStorage.removeItem('sectionUrl');
+           // window.history.go(-1);
+        },
         
 
         /**
@@ -791,7 +794,10 @@ var $vm = new Vue({
          * @return   {[type]}        [description]
          */
         changeTag: function changeTag(type) {
-           if(this.curTag == '当前标签' || this.curTag == '') return; 
+           if(this.curTag == '当前标签' || this.curTag == '') {
+              this.message.showMessage('info','请先选择一个标签！');
+              return;
+           } 
            searchExpLabelByOrder(this.curTag, type);
         },
 
@@ -814,8 +820,8 @@ var $vm = new Vue({
                 type: "GET",
                 url: baseUrl + '/ExplicitWordLabel/List',
                 data: Object.assign({
-                    deviceToken: sessionStorage.deviceToken,
-                    // accessToken:sessionStorage.accessToken,
+                    deviceToken: getCookie('deviceToken'),
+                    // accessToken:getCookie('accessToken'),
                     apiname: '/ExplicitWordLabel/List'
                 }, data, systemParams),
                 success: function success(res) {
@@ -832,6 +838,14 @@ var $vm = new Vue({
                         }
                         _this.expLableData = res.Data;
                         _this.setExplicitWordLable(res.Data, level);
+                        // _this.setExplicitWordLable([
+                        //     {ExplicitWord:{Title:'测试标签测试标签'},Position:200},
+                        //     {ExplicitWord:{Title:'测试标签测试标签'},Position:500},
+                        //     {ExplicitWord:{Title:'测试标签测试标签'},Position:900},
+                        //     {ExplicitWord:{Title:'另一个测试标签'},Position:300},
+                        //     {ExplicitWord:{Title:'另一个测试标签'},Position:1200},
+                        //     {ExplicitWord:{Title:'另一个测试标签'},Position:3500},
+                        //     ], 1);
                     } else {
                         _this.message.showMessage('error', res.Description);
                     }
@@ -947,7 +961,7 @@ var $vm = new Vue({
                     //如果有克隆的节点，说明需要替换原节点
                     if (nodeClone) {
                         // var nodeCloneHtml = $(nodeClone).html();
-                        var cssText = 'position:absolute;width:auto;height:24px;line-height:24px;font-size:14px; min-width:120px;opacity:0.5;transform: translateY(-13px);text-indent: initial;color:white;text-align:center;box-shadow:2px 2px 5px #888;background-size:100% 100%;background-position:center center;cursor:pointer;background:#94908a';
+                        var cssText = 'position:absolute;min-height:24px;white-space:nowrap;line-height:normal;font-size:16px; min-width:120px;opacity:0.5;transform: translateY(-13px);text-indent: initial;color:white;text-align:center;box-shadow:2px 2px 5px #888;background-size:100% 100%;background-position:center center;cursor:pointer;background:#94908a;padding:0px 10px'
 
                         //切中间和结尾
                         expOffsets.forEach(function (sitem, sindex) {
@@ -1106,148 +1120,122 @@ var $vm = new Vue({
             }]));
         },
 
+        
+        /**
+         * [closeReaderControl 关闭阅读器的各个菜单栏]
+         * @Author   罗文
+         * @DateTime 2018-01-30
+         * @return   {[type]}   [description]
+         */
+        closeReaderControl() {
+            this.conMenuShow = false;
+            this.isBgModalShow = false;
+            this.isFontModalShow = false;
+            this.isLibShow = false;
+        },
+
+        /**
+         * [validSafe description]
+         * @Author   罗文
+         * @DateTime 2018-02-01
+         * @param    {Function} callback [验证通过后的回调]
+         * @return   {[type]}            [description]
+         */
+        validSafe(callback) {
+            var fileData = decodeURIComponent(location.href.slice(location.href.indexOf('data=') + 5));
+
+                fileData = JSON.parse(fileData);
+             var _this = this;    
+           //验证登录是否异常
+            $.ajax({
+                type: "GET",
+                url: baseUrl + "/Content/Detail",
+                data: Object.assign({}, {
+                    id: _this.sectionid,
+                    deviceToken: getCookie('deviceToken'),
+                    apiname: '/Content/Detail'
+                }, systemParams),
+                success: function success(res) {
+                    if (res.Success) {
+                        if(res.Data.ExtendData.AuthorizeToken  &&  res.Data.ExtendData.AuthorizeToken == fileData.authorizeToken) {
+                            // 验证通过
+                            if(callback)  callback();
+                        }else {
+                            alert('登录超时，请重新登录！');
+                            close();
+                        }
+                    } else {
+                        alert(res.Description);
+                        window.close();
+                    }
+                }
+            });
+        },
+
 
         //改变iframe链接地址
         changeIframeSrc: function changeIframeSrc(src, index, clickItemId) {
-            var _this5 = this;
+            
+            var _this = this;
 
-            // if ((!index && index !== 0) && !src) return;
             if (src) {
-                this.iframeSrc = src;
-                this.isLibShow = false;
+                var modalDiv = document.createElement('div');
+                    modalDiv.style.cssText = 'position: fixed;left: 0;top:0;z-index: 99999;display: flex;justify-content: center;align-items: center; width: 100%;height: 100%;background: white;';
+                    modalDiv.setAttribute('id', 'loadMenban');
+                    document.body.appendChild(modalDiv);
 
-                if(this.libIsActive) {
-                    this.countLeft = 0;
-                }
-                return;
-            }
+                var imgNode = document.createElement('img');
+                    imgNode.setAttribute('src', '../images/loading.gif');
+                    document.getElementById('loadMenban').appendChild(imgNode);   
 
-            if (index || index == 0) {
-                //验证有没有用户信息
-                var hasUserId = volidUserId();
-                if (!hasUserId) return;
-
-                //单独处理点击切换目录的index的值
-                if (clickItemId) {
-                    //判断是否能匹配到这个id,如果匹配不到，说明是点击的章，不是节，则return
-                    var isIdMatched = false;
-
-                    this.tableofSections.forEach(function (titem, tindex) {
-                        if (titem.Id == clickItemId) {
-                            index = tindex;
-                            isIdMatched = true;
-                        }
-                    });
-
-                    if (!isIdMatched) return;
-                }
-
-                this.curSectionIndex = index;
-                if (this.libLeft >= -280) {
-                    this.openLibCate();
-                }
-
-                //检查是否开启了文内检索，开启了的话就关掉
-                localStorage.setItem('closeBookSearchBySectionId', this.sectionid);
-
-                //防止页面没刷新，用户在下载中心删除了地图，再点这个地图报错，需要再次验证是否有本地文件
-                GetDownLoadedResources(this.tableofSections[index].Id + '', localStorage.getItem('userId'), function (hasDownLoadedContent) {
-
-                    hasDownLoadedContent = JSON.parse(hasDownLoadedContent);
-
-                    if (hasDownLoadedContent.length == 0) {
-                        //此时被用户删除了这个文件，重新去下载
-                        _this5.loading = true;
-                        _this5.downLoadPercent = 0;
-                        var item = _this5.tableofSections[index];
-
-                        //新增一条足迹
-                        ApiTransfer('get', '/resource/detail', JSON.stringify({
-                            resourceid: item.Id,
-                            userid: localStorage.getItem('userId')
-                        }), function (winResult) {});
-
-                        var data = {
-                            fileid: item.DefaultFileId,
-                            isPC: true,
-                            userid: localStorage.getItem('userId'),
-                            type: 2,
-                            resourceid: item.Id,
-                            source: item.Source,
-                            title: item.Title
-
-                            //多线程异步下载
-                        };DownLoadProgress('get', '/file/stream', JSON.stringify(data), function (progress, nativeUrl, err) {
-
-                            if (err) {
-                                OpenForm(480, 500, '/index.html#/userCenter', '个人信息');
-                                localStorage.setItem('fromWhere', 3);
-                                _this5.loading = false;
-                            } else {
-                                item.nativeUrl = nativeUrl;
-                                //获取下载进度
-                                if (Math.floor(progress) >= 100) {
-                                    _this5.downLoadPercent = 100;
-                                    item.hasDown = true;
-
-                                    _this5.sectionid = item.Id;
-                                    _this5.bookSecret = item.Secret;
-                                    _this5.nativeUrl = item.nativeUrl;
-                                    _this5.fileId = item.DefaultFileId;
-
-                                    var a = ReadBook(_this5.nativeUrl, _this5.bookSecret);
-                                    _this5.sectionLibList = JSON.parse(a);
-                                    _this5.iframeSrc = _this5.sectionLibList[0].Src;
-
-                                    //初始化下一章的数据
-                                    SetTabTitle(_this5.sectionLibList[0].Title, GetFormId());
-                                    //获取是否已经收藏
-                                    // //清理文内检索数据
-                                    // this.clearCurBookSearchData();
-                                    _this5.gethasCollect();
-                                    //获取相关地图
-                                    _this5.getCurSectionMapData();
-
-                                    _this5.loading = false;
-                                } else {
-                                    _this5.downLoadPercent = Math.floor(progress);
-                                }
-
-                                // this.$set(this.bookListData, index, item)
-                            }
-                        });
-                    } else {
-
-                        //如果是已经下载完成的
-                        // 要获取本地路径 和 密钥
-                        var item = _this5.tableofSections[index];
-
-                        //新增一条足迹
-                        ApiTransfer('get', '/resource/detail', JSON.stringify({
-                            resourceid: item.Id,
-                            userid: localStorage.getItem('userId')
-                        }), function (winResult) {});
-
-                        _this5.sectionid = item.Id;
-                        _this5.bookSecret = item.Secret;
-                        _this5.nativeUrl = item.nativeUrl;
-                        _this5.fileId = item.DefaultFileId;
-
-                        var a = ReadBook(_this5.nativeUrl, item.Secret);
-                        _this5.sectionLibList = JSON.parse(a);
-                        _this5.iframeSrc = _this5.sectionLibList[0].Src;
-
-                        SetTabTitle(_this5.sectionLibList[0].Title, GetFormId());
-
-                        //获取是否已经收藏
-                        _this5.gethasCollect();
-                        //获取相关地图
-                        _this5.getCurSectionMapData();
-                    }
+                
+                //验证通过的后续操作
+                this.validSafe(function() {
+                    $(_this.bookIframeWindow.document).off('mousewheel');
+                    $(_this.bookIframeWindow.document).off('click');
+                    $(_this.bookIframeWindow.document).off('keydown');
+                    _this.$nextTick(function() {
+                        _this.getFileData(src);
+                        // _this.iframeSrc = src;
+                        _this.isLibShow = false;
+                    })
                 });
-
-                return;
+                
             }
+            
+            // if ((!index && index !== 0) && !src) return;
+            
+        },
+
+        
+        //传统翻页切换为瀑布阅读
+        changeReaderSecema: function changeReaderSecema() {
+           var modalDiv = document.createElement('div');
+                modalDiv.style.cssText = 'position: fixed;left: 0;top:0;z-index: 99999;display: flex;justify-content: center;align-items: center; width: 100%;height: 100%;background: white;';
+                modalDiv.setAttribute('id', 'loadMenban');
+                document.body.appendChild(modalDiv);
+
+            var imgNode = document.createElement('img');
+                imgNode.setAttribute('src', '../images/loading.gif');
+                document.getElementById('loadMenban').appendChild(imgNode);    
+
+            setTimeout(()=>{
+                document.getElementById('loadMenban').parentNode.removeChild(document.getElementById('loadMenban'));
+             },700)
+            //瀑布阅读
+            $(this.bookIframeWindow.document.body).css({
+                margin: '0 auto',
+                letterSpacing: '1px',
+                overflowY: 'auto',
+                width: '90%',
+                height: 'auto',
+                marginTop: '10px',
+                transform:'scale(1)'
+            });
+
+            this.clearBookSearch();
+
+            this.bookIframeWindow.scrollTo(0,0);
         },
 
         //获取所有的标题的offsetLeft, 不是top
@@ -1392,9 +1380,17 @@ var $vm = new Vue({
             } else {
                 if (type == -1) {
                     action = -2;
+                    if(this.fontCount < -10) {
+                        this.message.showMessage('info','当前已经是最小字体！');
+                        return;
+                    }
                     this.fontCount--;
                 } else if (type == 1) {
                     action = 2;
+                    if(this.fontCount  > 10) {
+                        this.message.showMessage('info','当前已经是最大字体！');
+                        return;
+                    }
                     this.fontCount++;
                 }
 
@@ -1409,22 +1405,6 @@ var $vm = new Vue({
 
             if (this.firstEle) {
                 // 设置回到之前阅读位置,要判断是单栏还是双栏
-                //如果是单栏
-                // if(!this.isTwoCol) {
-                //    this.countLeft = this.firstEle.offsetLeft;
-                //    this.bookIframeWindow.document.body.scrollLeft = this.countLeft;
-                //    // this.flexMove1(this.bookIframeWindow.document.body, this.countLeft);
-                // }else {
-                //    console.log(this.firstEle)
-                //    //此时是双栏，要根据是在左半屏还是右半屏来判断
-                //    console.log(this.firstEle.offsetLeft % (this.winWidth * 0.95 - 0.3) / (this.winWidth * 0.95 - 0.3));
-                //    // if(this.firstEle.offsetLeft % (this.winWidth * 0.95 - 0.3) /) {
-
-                //    // }                    
-                //    this.countLeft = this.firstEle.offsetLeft;
-                //    this.flexMove1(this.bookIframeWindow.document.body, this.countLeft);
-                // }
-                // 
                 this.countLeft = this.firstEle.offsetLeft;
                 this.bookIframeWindow.document.body.scrollLeft = this.countLeft;
             }
@@ -1541,7 +1521,8 @@ var $vm = new Vue({
                 columnGap: _this.winWidth / 20 + 'px',
                 // columnBreakInside:'avoid',
                 height: _this.winHeight - 80 + 'px',
-                marginTop: '40px',
+                // marginTop: '40px',
+                marginTop: '0px',
                 transform: 'scaleY(0.9)'
             });
 
@@ -1550,18 +1531,38 @@ var $vm = new Vue({
 
 
         //上下页切换函数
-        pageExchange: function pageExchange(type) {
+        pageExchange: function pageExchange(type,isClickBtn) {
             //手动翻页，清除之前保存的左上角第一个元素
             if(this.libIsActive) {
                 this.firstEle = null;
 
                 switch (type) {
-                    case -1:
+                    case -1:   //向前走
                         // var left = this.winWidth > 1000 ? this.winWidth:100
+                        if(this.countLeft <= 0 && isClickBtn) {
+                           if(parseInt(sessionStorage.getItem('sectionIndex')) <= 0 ) {
+                              this.message.showMessage('info','已经是第一章！');
+                           }else {
+                              this.changeIframeSrc(this.sectionLibList[parseInt(sessionStorage.getItem('sectionIndex')) - 1].Src);
+                           }
+                           return;
+                        }
                         this.countLeft -= this.winWidth * 0.95 - 0.3;
                         this.flexMove1(this.bookIframeWindow.document.body, this.countLeft);
+                        
                         break;
-                    case 1:
+
+                    case 1:   //向后走
+                        if(this.countLeft >= (this.bookIframeWindow.document.body.scrollWidth - this.winWidth * 0.95)  && isClickBtn ) {
+                           if(parseInt(sessionStorage.getItem('sectionIndex')) >= this.sectionLibList.length - 1) {
+                              this.message.showMessage('info','已经是最后一章！');
+                           }else {
+                              this.changeIframeSrc(this.sectionLibList[parseInt(sessionStorage.getItem('sectionIndex')) + 1].Src);
+                           }
+                           return;
+                        }
+
+
                         if (this.bookIframeWindow.document.body.scrollWidth - (this.countLeft + this.winWidth) <= this.winWidth * 0.95 / 2) {
                             //当滚动最后一页，只有半页的时候，始终切不过去，所以这种情况下只切半页
                             this.countLeft += (this.winWidth * 0.95 + 0.3) / 2;
@@ -1586,11 +1587,10 @@ var $vm = new Vue({
                 type = 1;
             }
             //获取向右还是向左 1- 向左 -1 -向右
-            this.pageExchange(type);
+            this.pageExchange(type,false);
         },
         flexMove1: function flexMove1(obj, target) {
-            console.log(target)
-            var time = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 30;
+            var time = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 1;
 
             target = Math.round(target * 10) / 10;
 
@@ -1625,6 +1625,7 @@ var $vm = new Vue({
                     clearInterval(obj.timer);
                     obj.timer = null;
                     obj.scrollLeft = target;
+
                 } else {
                     obj.scrollLeft = left;
 
@@ -1731,6 +1732,38 @@ var $vm = new Vue({
             // }); 
         },
 
+        /**
+         * [getLib 获取目录信息]
+         * @Author   罗文
+         * @DateTime 2018-01-29
+         * @return   {[type]}   [description]
+         */
+        getLib: function getLib() {
+           var _this = this;
+           $.ajax({
+                type: "GET",
+                url: baseUrl + "/TableOfContent/List",
+                data: Object.assign({}, {
+                    isRecursive:true,
+                    objectId:_this.sectionid,
+                    deviceToken: getCookie('deviceToken'),
+                    // accessToken:getCookie('accessToken'),
+                    apiname: '/TableOfContent/List',
+                }, systemParams),
+                success: function success(res) {
+                    console.log(res)
+                    if(res.Success) {
+                       // var rootUrl = '../OPS/';
+                       // _this.sectionLibList = res.Data.map(function(item){
+                       //    return Object.assign({},item,{Src:rootUrl + item.Url})
+                       // });
+                    }else {
+                       _this.message.showMessage('error',res.Description);
+                    }
+                }
+            });
+        },
+
 
         /**
         * [scrollToLibIndex 如果是点击的小节进入的]
@@ -1801,8 +1834,8 @@ var $vm = new Vue({
                     id: _this.sectionid,
                     userId: localStorage.userId,
                     objectType: _this.sectionType,
-                    deviceToken: sessionStorage.deviceToken,
-                    // accessToken:sessionStorage.accessToken,
+                    deviceToken: getCookie('deviceToken'),
+                    // accessToken:getCookie('accessToken'),
                     apiname: '/History/Record',
                     actionType: 3 //操作动作，3-阅读（点击阅读按钮），4-分享，5-打印，6-点赞
                 }, systemParams),
@@ -1812,40 +1845,174 @@ var $vm = new Vue({
                     }
                 }
             });
+        },
+        
+
+        //获取资源文件加密后的数据，并解密，写入iframe
+        getFileData:function getFileData(url,key) {
+            var _this  = this;
+            if(!url) {
+                alert('加载资源文件失败！');
+                return;
+            }
+            
+            this.setCurLibInfo(url);
+
+            $.ajax({
+                type: "GET",
+                url: url,
+                async:false,
+                success: function success(res) {
+                    if(res !== '') {
+                        res = res.replace(/src="/g,'src="'+_this.rootUrl);
+                        res = res.replace(/href="/g,'href="'+_this.rootUrl);
+                    }
+                   
+                   _this.$refs.bookIframe.contentWindow.document.body.innerHTML = res;
+
+
+                   function setIframeLoad() {
+                      if(window.iframeOnload) {
+                          iframeOnload(_this.$refs.bookIframe);
+                          if(_this.libIsActive) {
+                            _this.countLeft = 0;
+                            _this.bookIframeWindow.document.body.scrollLeft = 0;
+                          }else {
+                            _this.changeReaderSecema();
+                          }
+                       }else {
+                          setTimeout(function() {
+                            setIframeLoad();
+                          },100)
+                       }
+                   }
+
+                   setIframeLoad();
+                   
+                },
+                error:function(err) {
+                   
+                }
+            });
+
+//             $.ajax({
+//                 type: "GET",
+//                 url: url,
+//                 async:false,
+//                 dataType:'blob',
+//                 success: function success(res) {
+//                     console.log(res)
+//                 },
+//                 error:function(err) {
+//                     var responseText = err.responseText;
+//                     var deviceKey = getCookie('deviceKey');
+// console.log(key)
+// console.log(getCookie('deviceKey'))
+
+//                     var decryptedKey = CryptoJS.AES.decrypt(key,
+//                     deviceKey, {
+//                         mode: CryptoJS.mode.ECB,
+//                         padding: CryptoJS.pad.Pkcs7
+//                     });
+
+//                     console.log(decryptedKey.toString())
+
+//                     var decrypted = CryptoJS.AES.decrypt(responseText,
+//                     decryptedKey, {
+//                         mode: CryptoJS.mode.ECB,
+//                         padding: CryptoJS.pad.Pkcs7
+//                     });
+
+//                    console.log(decrypted.toString())
+//                     // _this.iframeSrc = URL.createObjectURL(err.responseText);
+//                 }
+//             });
+        },
+
+        //保存当前目录的信息
+        setCurLibInfo(url) {
+           sessionStorage.setItem('sectionid',this.sectionid);
+           sessionStorage.setItem('sectionUrl',url);
+
+           this.sectionLibList.forEach(function(item,index) {
+              if(item.Src == sessionStorage.getItem('sectionUrl')) {
+                  sessionStorage.setItem('sectionIndex',index); 
+              }
+           })
+
         }
     },
-    created: function created() {
-        // setTimeout(()=>{
-        // if(env == 'prod') {
-
-        //     var sectionData = GetArgument(); 
-
-        //     this.sectionid = sectionData.split('&')[0];
-        //     this.sectionType = sectionData.split('&')[1];
-
-        //     this.formId = GetFormId();
-
-        //     //清理文内检索数据
-        //     this.clearCurBookSearchData();
-
-        // }else if(env == 'dev') {
-        //     this.sectionid = 251576;
-        //     localStorage.removeItem('searchKeyword');
-        // }
-
+    beforeCreate:function beforeCreate() {
+        // 第一步本地拦截
+        if(!getCookie('bg_user_info') || !getCookie('accessToken') || !JSON.parse(getCookie('bg_user_info')).Id) {
+           alert('您无权观看此资源，请先登录授权！');
+           location.href = '/index.html#/login';
+        }
+        
+        //第二步参数拦截
         if (location.href.indexOf('data=') !== -1) {
             var fileData = decodeURIComponent(location.href.slice(location.href.indexOf('data=') + 5));
 
             fileData = JSON.parse(fileData);
+            
+            
+            if(!fileData.objectId || !fileData.objectType || !fileData.authorizeToken || !fileData.authorizeUrl) {
+                alert('阅读资源所需参数错误，请确认参数！');
+                window.close();
+            }
 
-            this.sectionid = fileData.objectId;
-            this.objectType = fileData.objectType;
-
-            console.log(this.sectionid,this.objectType)
+        }else {
+            alert('阅读资源所需参数错误，请确认参数！');
+            window.close();
         }
+    },
+    created: function created() {
+        var fileData = decodeURIComponent(location.href.slice(location.href.indexOf('data=') + 5));
+
+        fileData = JSON.parse(fileData);
+
+        var _this = this;
+
+        $.ajax({
+            type: "POST",
+            url: fileData.authorizeUrl,
+            async:false,
+            data: Object.assign({}, {
+                id: fileData.objectId,
+                authorizeToken:fileData.authorizeToken,
+                deviceToken: getCookie('deviceToken'),
+            }, systemParams),
+            success: function success(res) {
+                if(res.Success) {
+                   sessionStorage.userId = JSON.parse(getCookie('bg_user_info')).Id;
+                   _this.sectionid = fileData.objectId;
+                   _this.objectType = fileData.objectType;
+                   _this.key = res.Data.Key;
+
+                   if(res.Data.SplitFileUrls.length !== 0) {
+                      var furl = res.Data.SplitFileUrls[0];
+                      _this.rootUrl = furl.slice(0,furl.lastIndexOf('/') + 1);
+                   }
+                   
+                   res.Data.SplitFileUrls.forEach(function(item,index){
+                      _this.sectionLibList.push({
+                        Src:item,
+                        Title:'目录 '+ index
+                      })
+                   });
+
+                }else {
+                   alert(res.Description);
+                   window.close();
+                }
+            },
+            error:function (err) {
+                alert('获取资源授权错误，请重试！');
+                window.close();
+            }
+        });
 
         localStorage.removeItem('searchArr');
-        // },500)
     },
     mounted: function mounted() {
         var _this9 = this;
@@ -1866,48 +2033,29 @@ var $vm = new Vue({
 
         // this.sectionLibList = JSON.parse(a);
 
-        var rootUrl = '../OPS/';
-        this.sectionLibList = [{
-            Title: '第六章 木结构的维修',
-            Src: rootUrl + 'chapter8.xhtml#A4d7a0027-4c5f-4839-98db-e56e67b32c48'
-        }, {
-            Title: '第一节 一般规定',
-            Src: rootUrl + 'chapter8.xhtml#A68e90027-746e-4bf1-a9f8-ff1854420a76'
-        }, {
-            Title: '第二节 荷载',
-            Src: rootUrl + 'chapter8.xhtml#A9ab20028-d1c6-48ad-b4ab-2ea1f1694914'
-        }, {
-            Title: '第三节 木材及胶粘剂',
-            Src: rootUrl + 'chapter8.xhtml#Aa3550028-a557-4404-91b3-61c911aa16f8'
-        }, {
-            Title: '第四节 计算原则',
-            Src: rootUrl + 'chapter8.xhtml#A7bdc002d-7308-46b0-bb95-9ab8c27f5333'
-        },{
-            Title: '第五节 木构架的整体维修与加固',
-            Src: rootUrl + 'chapter8.xhtml#A79f1002e-f73e-4ebd-b7f8-b5f9be99cf40'
-        },{
-            Title: '第六节 木柱',
-            Src: rootUrl + 'chapter8.xhtml#A67560030-8336-4c08-8e45-3ef8c934891f'
-        },{
-            Title: '第七节 梁枋',
-            Src: rootUrl + 'chapter8.xhtml#A35170032-c52c-4585-bba9-1afe65a0c7e4'
-        },{
-            Title: '第八节 斗栱',
-            Src: rootUrl + 'chapter8.xhtml#A3c080035-3d73-4b27-9577-13dfb7c761ea'
-        },{
-            Title: '第九节 梁枋、柱的化学加固',
-            Src: rootUrl + 'chapter8.xhtml#A48e80036-70b6-4def-bcf9-7df29783be8e'
-        }];
+        
 
 
-
-        this.iframeSrc = this.sectionLibList[0].Src;
+        // this.iframeSrc = this.sectionLibList[0].Src;
         // this.iframeSrc = '../toc/txt015.xhtml';
 
         //初始化提示信息
         this.message = new Message();
 
         var _this = this;
+
+
+        //获取图书目录
+        this.getLib();
+        
+        //获取文件数据
+
+        if(!!sessionStorage.sectionUrl && !!sessionStorage.sectionid && sessionStorage.sectionid == this.sectionid) {
+           this.getFileData(sessionStorage.sectionUrl);
+        }else {
+           this.getFileData(_this.sectionLibList[0].Src,this.key);
+        }
+
 
         //获取文件其他信息，如文件id
         this.getCurSectionOtherInfo();
@@ -1921,14 +2069,16 @@ var $vm = new Vue({
         this.addRecordReadHistory();
 
         //实例化一个消息盒子
+        
 
+        var _this = this;
 
         document.oncontextmenu = function (e) {
             e.preventDefault();
         };
 
         //按左右键翻页
-        var _this = this;
+        
         document.onkeydown = function (e) {
             _this.changePageByKeyDown(e);
         };
@@ -1936,6 +2086,11 @@ var $vm = new Vue({
         //显示左右翻页
         document.addEventListener('mousemove', function (e) {
             _this.showExchange(e);
+        }, false);
+
+        //显示左右翻页
+        document.addEventListener('selectstart', function (e) {
+            e.preventDefault();
         }, false);
 
         window.onresize = function () {
@@ -1964,32 +2119,8 @@ var $vm = new Vue({
 
         'libIsActive': function libIsActive(nv, ov) {
             if(!nv) {
-                var modalDiv = document.createElement('div');
-                    modalDiv.style.cssText = 'position: fixed;left: 0;top:0;z-index: 99999;display: flex;justify-content: center;align-items: center; width: 100%;height: 100%;background: white;';
-                    modalDiv.setAttribute('id', 'loadMenban');
-                    document.body.appendChild(modalDiv);
-
-                var imgNode = document.createElement('img');
-                    imgNode.setAttribute('src', '../images/loading.gif');
-                    document.getElementById('loadMenban').appendChild(imgNode);    
-
-                setTimeout(()=>{
-                    document.getElementById('loadMenban').parentNode.removeChild(document.getElementById('loadMenban'));
-                 },700)
-                //瀑布阅读
-                $(this.bookIframeWindow.document.body).css({
-                    margin: '0 auto',
-                    letterSpacing: '1px',
-                    overflowY: 'auto',
-                    width: '90%',
-                    height: 'auto',
-                    marginTop: '10px',
-                    transform:'scale(1)'
-                });
-
-                this.clearBookSearch();
-
-                this.bookIframeWindow.scrollTo(0,0);
+                this.changeReaderSecema();
+                
             }else {
                 window.location.reload();
             }

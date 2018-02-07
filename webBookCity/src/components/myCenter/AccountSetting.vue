@@ -18,21 +18,25 @@
             <img v-if="user.MobileNumber" src="../../assets/gou1.png" alt="">
             <img v-if="!user.MobileNumber" src="../../assets/gantanhao1.png" alt="">
             <span style="font-size: 20px;font-weight: bold;margin-left: 20px;flex-grow:2">手机绑定</span>
+<!--
             <span class='account-url'>
                 <a v-if="!user.MobileNumber" @click='goPath("accountBindTel")'>首次绑定 ></a>
                 <a v-if="user.MobileNumber" @click='goPath("accountVerifyTel")'>修改 ></a>
                 <br>
             </span>
+-->
         </li>
         <li>
             <img v-if="user.Email" src="../../assets/gou1.png" alt="">
             <img v-if="!user.Email" src="../../assets/gantanhao1.png" alt="">
             <span style="font-size: 20px;font-weight: bold;margin-left: 20px;flex-grow:2">邮箱绑定</span>
+<!--
             <span class='account-url'>
                <a  v-if="!user.Email" @click='goPath("accountBindEmail")'>首次绑定 ></a>
                 <a v-if="user.Email" @click='goPath("amend")'>修改 ></a>
                 <br>
             </span>
+-->
         </li>
         <li>
             <img v-if="user.ExtendData.OrganizationTitle" src="../../assets/gou1.png" alt="">
@@ -52,7 +56,11 @@
 <script>
     import search from "./module/Search.vue"
     import otherBook from "./module/OtherBook.vue"
+    import { mapGetters } from 'vuex'
     export default {
+          computed: mapGetters([
+            'userInfo',
+          ]),
         data() {
             return {
                 user:{
@@ -73,7 +81,7 @@
             getDetail(){
                  this.$http.get("/User/Detail", {
                         params: {
-                            id:JSON.parse(window.sessionStorage.getItem('bg_user_info')).Id
+                            id:this.userInfo.Id
                         }
                     })
                     .then((res) => {

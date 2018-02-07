@@ -62,7 +62,7 @@
                         <span>商品出库</span>
                         <span>等待收货</span>
 -->
-                        <span style="margin-left: 485px;">{{orderdata.PayTime}}</span>
+                        <span style="margin-left: 480px;">{{orderdata.PayTime}}</span>
                     </div>
                 </div>
             </div>
@@ -116,46 +116,47 @@
                             <div @click="goDetail(getDetailPath(props.row.ObjectType),props.row.ObjectId)" class="goods-info-detail">
                                 <div class="divimg1" style="background-image:url('/static/images/no_cover_m.jpg');background-size: 100% 100%;">
                                 <div class="divimg" :style="{background:'url('+props.row.Content.CoverUrl+')',backgroundSize:'cover',backgroundRepeat:'no-repeat',backgroundPosition:'center center'}"></div></div>
-                                <p class="hover">{{props.row.Content.Title}}</p>
+                                <span class="hover">{{props.row.Content.Title}}</span>
+                               <span v-if='props.row.ObjectType==108&&props.row.MediaType=="OriginalPic"' style='color: #999'>请联系人工客服获取文件，服务热线4008-188-688</span>
                             </div>
                         </template>
-                    </el-table-column>
-                    <el-table-column class-name="border-left" align="center" prop="goodsType" label="商品类型" width="120">
-                      <template slot-scope='props'>
+</el-table-column>
+<el-table-column class-name="border-left" align="center" prop="goodsType" label="商品类型" width="120">
+    <template slot-scope='props'>
                         {{props.row.ObjectType==104?returnType(props.row.MediaType):returnObjectType(props.row.ObjectType)}}
                         </template>
-                    </el-table-column>
-                    <el-table-column class-name="border-left" align="center" label="原价" width="120">
-                    <template slot-scope='props'>
+</el-table-column>
+<el-table-column class-name="border-left" align="center" label="原价" width="120">
+    <template slot-scope='props'>
                             &yen;{{formatPrice(props.row.Price, 2)}}
                         </template>
-                    </el-table-column>
-                    <el-table-column class-name="border-left" align="center" prop="Count" label="数量" width="120">
-                    <template slot-scope='props'>
+</el-table-column>
+<el-table-column class-name="border-left" align="center" prop="Count" label="数量" width="120">
+    <template slot-scope='props'>
                            {{props.row.Count}}
                         </template>
-                    </el-table-column>
-                    <el-table-column class-name="border-left" align="center" prop="onSale" label="优惠" width="120">
-                    <template slot-scope='props'>
-                           &yen;{{formatPrice(props.row.TotalMoney-props.row.Price, 2)}}
+</el-table-column>
+<el-table-column class-name="border-left" align="center" prop="onSale" label="优惠" width="120">
+    <template slot-scope='props'>
+                           &yen; {{props.row.ExtendData&&props.row.ExtendData.Benefit?formatPrice(props.row.ExtendData.Benefit, 2):'0.00'}}
                         </template>
-                    </el-table-column>
-                    <el-table-column class-name="border-left" align="center" label="小计" width="120">
-                     <template slot-scope='props'>
+</el-table-column>
+<el-table-column class-name="border-left" align="center" label="小计" width="120">
+    <template slot-scope='props'>
                             &yen;{{formatPrice(props.row.TotalMoney, 2)}}
                         </template>
-                    </el-table-column>
-                    </el-table>
-            </template>
-            </div>
-            </div>
-            
-            
+</el-table-column>
+</el-table>
+</template>
+</div>
+</div>
+
+
 <div class="box-con mt20 global-box">
     <div class="go-pay">
-        <p>商品金额：<span>&yen;{{formatPrice(orderdata.TotalMoney, 2)}}</span></p>
-<!--        <p>运费：<span>&yen;10.00</span></p>-->
-        <p>促销优惠：<span>&yen;{{formatPrice(orderdata.TotalMoney, 2)}}</span></p>
+        <p>商品金额：<span>&yen;{{formatPrice(orderdata.UndiscountTotalMoney?orderdata.UndiscountTotalMoney:0, 2)}}</span></p>
+        <!--        <p>运费：<span>&yen;10.00</span></p>-->
+        <p>促销优惠：<span>-&yen;{{formatPrice(orderdata.ExtendData&&orderdata.ExtendData.Benefit?orderdata.ExtendData.Benefit:0, 2)}}</span></p>
         <div class="line"></div>
         <p>合计：<span class="red-word">&yen;{{formatPrice(orderdata.TotalMoney, 2)}}</span></p>
         <p class="mt20">实付总额：
@@ -174,7 +175,7 @@
     export default {
         data() {
             return {
-                orderdata:'',
+                orderdata: '',
                 tableData: []
             }
         },
@@ -186,22 +187,22 @@
             over() {
                 console.log('over!');
             },
-            gopath(url){
+            gopath(url) {
                 this.$router.push(url)
             },
             //获取详情
             getlist() {
                 this.$http.get("/Order/Detail", {
                         params: {
-                            id:this.$route.query.orderId,
+                            id: this.$route.query.orderId,
                             ps: 20,
                             cp: 1
                         }
                     })
                     .then((res) => {
                         if (res.data.Success) {
-                            this.orderdata=res.data.Data
-                            this.tableData=res.data.Data.OrderDetails
+                            this.orderdata = res.data.Data
+                            this.tableData = res.data.Data.OrderDetails
                         }
                     })
             },
@@ -229,6 +230,9 @@
     }
 
     .order-detail {
+        .type-menus {
+            display: none
+        }
         width: 100%;
         padding-bottom: 20px;
         .global-box>a {
@@ -237,12 +241,12 @@
             text-decoration: none;
             font-size: 14px;
         }
-        .global-box-top{
+        .global-box-top {
             width: 1200px;
             margin: auto;
         }
-        .global-box-top>span{
-/*             display: block;*/
+        .global-box-top>span {
+            /*             display: block;*/
             margin: 20px 0;
             text-decoration: none;
             font-size: 14px;
@@ -282,28 +286,28 @@
                         float: left;
                         color: #666;
                         margin-left: 20px;
-                        .tempo{
+                        .tempo {
                             display: flex;
                             width: 820px;
                             align-items: center;
-                            margin-top:35px;
+                            margin-top: 35px;
                             margin-left: 30px;
                         }
-                        .orderTime>span{
+                        .orderTime>span {
                             display: inline-block;
                             width: 115px;
                             font-size: 14px;
                             margin-right: 60px;
                             margin-left: 15px;
-/*                            text-align: center;*/
+                            /*                            text-align: center;*/
                         }
-                        .orderTime>span:last-child{
-                            margin-right:0px;
+                        .orderTime>span:last-child {
+                            margin-right: 0px;
                             margin-left: 27px;
                             width: 40px;
                         }
-                        .noworderTime>span{
-                             display: inline-block;
+                        .noworderTime>span {
+                            display: inline-block;
                             width: 93px;
                             font-size: 14px;
                             text-align: center
@@ -343,25 +347,28 @@
                 &>.goods-info {
                     .goods-info-detail {
                         width: 430px;
-                        text-align: left;
-                        overflow: hidden;
-                        text-overflow: ellipsis;
-                        white-space: nowrap;
-                        .divimg1{
-                             border: 1px solid #eee;
+                        .divimg1 {
+                            border: 1px solid #eee;
                             float: left;
                             width: 80px;
                             height: 112px;
                             margin-right: 10px;
                         }
                         .divimg {
-                            
+
                             float: left;
                             width: 78px;
                             height: 110px;
-                            
-                        }                        p {
+
+                        }
+                        span {
+                            width: 330px;
                             margin-top: 28px;
+                            float: left;
+                            text-align: left;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            white-space: nowrap;
                         }
                     }
                 }
@@ -375,7 +382,7 @@
                             width: 100px;
                         }
                         &>b {
-/*                            margin: 0 20px;*/
+                            /*                            margin: 0 20px;*/
                             font-size: 24px;
                         }
                     }

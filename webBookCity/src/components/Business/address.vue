@@ -35,6 +35,7 @@
   </div>
 </template>
 <script>
+import { mapGetters } from 'vuex'
 export default {
   data() {
     var validatePass = (rule, value, callback) => {
@@ -69,7 +70,7 @@ export default {
 
       },
       formLabelAlign: {
-        userId: JSON.parse(window.sessionStorage.getItem('bg_user_info')).Id
+        userId: ''
       },
       openModalType:1,
       cityList: [{
@@ -212,6 +213,9 @@ export default {
 
     }
   },
+  computed: mapGetters([
+    'userInfo'
+  ]),
   mounted() {
     this.openModalType = localStorage.openModalType;
     if (this.openModalType == 1) {
@@ -219,7 +223,7 @@ export default {
     } else {
       this.formLabelAlign = JSON.parse(localStorage.changeAddressObj)
     }
-    this.formLabelAlign.userId = JSON.parse(window.sessionStorage.getItem('bg_user_info')).Id
+    this.formLabelAlign.userId = this.userInfo.Id
   },
   methods: {
     submitForm(formName) {

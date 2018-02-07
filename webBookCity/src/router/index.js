@@ -25,6 +25,9 @@ export default new Router({
   },{
     path: '/findpassword',
      component: resolve => require(['@/components/login/Findpassword'], resolve),
+  },{
+    path:'/accredit',
+    component: resolve => require(['@/components/common/Accredit'], resolve),
   }],
   scrollBehavior(to, from, savedPosition) {
     return { x: 0, y: 0 }

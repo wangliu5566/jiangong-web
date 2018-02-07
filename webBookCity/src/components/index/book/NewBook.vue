@@ -9,12 +9,25 @@
           </div>
           <p class="title" @click="goDetail(getDetailPath(item.ObjectType),item.Id)">{{item.Title}}</p>
           <p class="price-line">
-            <span class="price">&yen;{{formatPrice(item.CurrentPrice,2)}}</span>
-            <span class="market-price" style="float:right;">&yen;{{formatPrice(item.MarketPrice,2)}}</span>
+            <span class="price">&yen;{{handleCurrentPrice(item.ObjectType, item)}}</span>
+            <span class="market-price" style="float:right;">&yen;{{handleMarketPrice(item.ObjectType, item)}}</span>
           </p>
-          <p :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" @click="collectFn(item.Id,item.ObjectType,!item.ExtendData.IsFavorited,getlist)" style="background-position: 0 4px;">收藏</p>
+          <!-- <p :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" @click="collectFn(item,index,changeIsFavorited)" style="background-position: 0 4px;">收藏</p> -->
+          <div style="width: 140px;">
+            <el-row>
+              <el-col :span="12">
+                <p :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" @click="collectFn(item,index,changeIsFavorited)" style="width:45px;background-position: 0 4px;">收藏</p>
+              </el-col>
+              <el-col :span="12">
+                <div class="shopping-car" v-if="showShoppingIcon(item)" @click="addShopping(item,hasLogin)" style="background-position: 0 2px">购物车</div>
+              </el-col>
+            </el-row>
+          </div>
         </div>
       </div>
+    </div>
+    <div v-if="noContent" style="overflow: hidden;padding:140px 310px;" >
+      <img src="/static/images/no_detail.png" height="60" width="311">
     </div>
   </div>
 </template>
@@ -24,6 +37,7 @@ import { mapGetters } from 'vuex'
 export default {
   data() {
     return {
+      noContent:false,
       loading: true,
       page: 1,
       pageSize: 52,
@@ -35,11 +49,23 @@ export default {
   computed: mapGetters([
     'loginModal',
     'callbackAfterLogin',
+    'hasLogin'
   ]),
   mounted() {
     this.getlist()
   },
   methods: {
+    /**
+     * [changeIsFavorited 修改收藏状态]
+     * @Author   赵雯欣
+     * @DateTime 2018-02-01
+     * @param    {[type]}   index [description]
+     * @return   {[type]}         [description]
+     */
+    changeIsFavorited(index){
+      this.bookList[index].ExtendData.IsFavorited = true ;
+      this.$set(this.bookList,index,this.bookList[index])
+    },
     getlist() {
       this.loading = true;
       this.$http.post("/Content/Search", {
@@ -62,6 +88,11 @@ export default {
             this.bookList = res.data.Data.ItemList;
             this.totalCount = res.data.Data.RecordCount;
             this.loading = false;
+            if(this.bookList.length==0){
+              this.noContent = true;
+            }else{
+              this.noContent = false;
+            }
           }
         })
     },
@@ -79,7 +110,11 @@ export default {
   watch: {
     'loginModal': function(val, oldVal) {
       if (!val && this.callbackAfterLogin.position == 'index') {
-        this.collectFn(this.callbackAfterLogin.id, this.callbackAfterLogin.ObjectType, true, this.getlist)
+        if(this.callbackAfterLogin.callback == 'indexCollect'){
+           this.collectFn(this.callbackAfterLogin.id,this.callbackAfterLogin.ObjectType,true,this.getlist)
+        }else if (this.callbackAfterLogin.callback == 'indexAddShopping') {
+           this.addShopping(this.callbackAfterLogin.item)
+        }
       }
     },
     'menuId':function(val,old){

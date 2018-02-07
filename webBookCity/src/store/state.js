@@ -11,36 +11,32 @@ export default {
       HasElectronicalBook: false,
       HasPod: false,
       HasPaperBook: false,
-      IsFavorited:false,
+      IsFavorited: false,
     },
-    ObjectType:'',
-    CoverUrl:'',
+    ObjectType: '',
+    CoverUrl: '',
   },
-	//详情资源类型
-  typeAndPrice: {
-    bookType: '',
-    bookCurrentPrice: '',
-    bookMarketPrice: '',
-  },
-
+  countDownTimer:'',
+  //详情资源类型
+  typeAndPrice:[],
+  nowTypeAndPrice:{},
   //收藏成功模态框
-  collectModal:false,
+  collectModal: false,
 
   //详情页面收藏
-  collectDetail:false,
+  collectDetail: false,
 
-  detailLoading:false,
-
-  userInfo:{
-  	isLogin:false,
-  	NickName:'',
-  },
+  detailLoading: false,
 
   //登录弹窗
-  loginModal:false,
-  loginIsByModal:false,
+  loginModal: false,
+  loginIsByModal: false,
 
 
   //登录后回调
-  callbackAfterLogin:{},
+  callbackAfterLogin: {},
+
+
+  //用户信息
+  userInfo: window.$cookies.get('bg_user_info') ? JSON.parse(window.$cookies.get('bg_user_info')) : '',
 }

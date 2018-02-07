@@ -17,80 +17,93 @@ axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded
 
 // http request 拦截器
 axios.interceptors.request.use(
-  config => {
-    let deviceToken = window.sessionStorage.getItem('deviceToken');
+    config => {
+        let deviceToken = window.$cookies.get('deviceToken');
 
-    if (deviceToken == "undefined") {
-      deviceToken = '';
-    }
-    if (config.method === 'post') {
-      if (!config.data.ApiName) {
-        let urlArr = config.url.split(baseUrl)
-        config.data.ApiName = urlArr[0];
-      }
-      if (deviceToken && deviceToken != null && deviceToken != undefined && deviceToken != '' && config.url.indexOf('/Device/Register') == -1) {
-        config.data.DeviceToken = deviceToken;
-      }
+        if (deviceToken == "undefined") {
+            deviceToken = '';
+        }
+        if (config.method === 'post') {
+            if (!config.data.ApiName) {
+                let urlArr = config.url.split(baseUrl)
+                config.data.ApiName = urlArr[0];
+            }
+            if (deviceToken && deviceToken != null && deviceToken != undefined && deviceToken != '' && config.url.indexOf('/Device/Register') == -1) {
+                config.data.DeviceToken = deviceToken;
+            }
 
-      config.data.random = Math.random();
+            config.data.random = Math.random();
 
-      config.data = qs.stringify(Object.assign({}, config.data, { BridgePlatformName: "cabp_web" }));
-    } else if (config.method === 'get') {
-      if (!config.params.ApiName) {
-        let urlArr = config.url.split(baseUrl)
-        config.params.ApiName = urlArr[0];
-      }
+            config.data = qs.stringify(Object.assign({}, config.data, {
+                BridgePlatformName: "cabp_web"
+            }));
+        } else if (config.method === 'get') {
+            if (!config.params.ApiName) {
+                let urlArr = config.url.split(baseUrl)
+                config.params.ApiName = urlArr[0];
+            }
 
-      if (deviceToken == "undefined") {
-        deviceToken = '';
-      }
+            if (deviceToken == "undefined") {
+                deviceToken = '';
+            }
 
-      if (deviceToken && deviceToken != null && deviceToken != undefined && deviceToken != '' && config.url.indexOf('/Device/Register') == -1) {
-        config.params.DeviceToken = deviceToken;
-      }
+            if (deviceToken && deviceToken != null && deviceToken != undefined && deviceToken != '' && config.url.indexOf('/Device/Register') == -1) {
+                config.params.DeviceToken = deviceToken;
+            }
 
-      config.params.random = Math.random();
-      config.params = Object.assign({}, config.params, { BridgePlatformName: "cabp_web" })
-    }
-    return config;
-  },
-  err => {
-    return Promise.reject(err);
-  });
+            config.params.random = Math.random();
+            config.params = Object.assign({}, config.params, {
+                BridgePlatformName: "cabp_web"
+            })
+        }
+        return config;
+    },
+    err => {
+        return Promise.reject(err);
+    });
 
 // http response 拦截器
 /**
  * 拦截器也可以判定返回的response成功时的状态码进行拦截
  */
 axios.interceptors.response.use(
-  res => {
-    if (res.data.Success) {
-      return res;
-    } else {
-      console.log(12)
-      // Message.error(res.data.Description);
-      switch (parseInt(res.data.Code)) {
-        case 17:
-        // console.log(123)
-        router.push({
-            path: '/login',
-            query: {
-              redirect:router.currentRoute.fullPath
+    res => {
+        if (res.data.Success) {
+            return res;
+        } else {
+            if (router.currentRoute.fullPath.indexOf('/login?redirect') == -1) {
+                switch (parseInt(res.data.Code)) {
+                    case 17:
+                        router.replace({
+                            path: '/login',
+                            query: {
+                                redirect: router.currentRoute.fullPath
+                            }
+                        })
+                        break;
+                    case 34:
+                        router.replace({
+                            path: '/login',
+                            query: {
+                                redirect: router.currentRoute.fullPath
+                            }
+                        })
+                        break;
+                    default:
+                        return res;
+                }
+            } else {
+                return res;
             }
-          })
-          break;
-        default:
-          return res;
-      }
-    }
-  },
-  error => {
-    if (error.response) {
-      switch (error.response.status) {
-        case 500:
-          // Message.error(error.response.request.responseURL + '服务器无响应')
-      }
-    }
-  });
+        }
+    },
+    error => {
+        if (error.response) {
+            switch (error.response.status) {
+                case 500:
+                    // Message.error(error.response.request.responseURL + '服务器无响应')
+            }
+        }
+    });
 
 export default axios;

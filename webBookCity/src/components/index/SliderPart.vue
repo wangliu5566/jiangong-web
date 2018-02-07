@@ -27,7 +27,7 @@
           <div style="width:100%;height:100%;" @click="goDetail(getDetailPath(item.ObjectType),item.Id)" :style="{backgroundImage:'url('+item.CoverUrl+')',backgroundSize:'cover',backgroundRepeat:'no-repeat',backgroundPosition:'center center'}"></div>
           </div>
           <p class="names"  @click="goDetail(getDetailPath(item.ObjectType),item.Id)">{{item.Title}}</p>
-          <p class="price red">&yen;{{formatPrice(item.CurrentPrice,2)}}</p>
+          <p class="price red">&yen;{{handleCurrentPrice(item.ObjectType, item)}}</p>
         </div>
       </div>
     </div>
@@ -35,6 +35,7 @@
 </template>
 <script>
 import slider from "../common/slider.vue"
+
 export default {
   data() {
     return {

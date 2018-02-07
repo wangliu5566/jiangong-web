@@ -8,6 +8,7 @@ import {
   UPDATEDETAILDATA,
   RESETDETAILDATA,
   SETDETAILTYPEANDPRICE,
+  SETNOWTYPEANDPRICE,
   SETUSERINFO,
   SETDETAILDATACOLLECT,
   SETCOLLECTMODAL,
@@ -17,7 +18,9 @@ import {
   LOGINISBYMODAL,
   SETCALLBACKAFTERLOGIN,
   SETDETAILLOADING,
-  TIMECOUNTDOWN
+  TIMECOUNTDOWN,
+  RESETUSERINFO,
+  COUNTDOWNTIMER
 
 } from './types.js';
 
@@ -42,6 +45,10 @@ const mutations = {
     state.typeAndPrice = data;
   },
 
+  [SETNOWTYPEANDPRICE]:(state,val)=>{
+    state.nowTypeAndPrice = val;
+  },
+
   [RESETDETAILDATA]: (state, data) => {
     state.detailsData = data;
   },
@@ -51,10 +58,7 @@ const mutations = {
   },
 
   [SETDETAILDATACOLLECT]: (state, data) => {
-
     state.detailsData = Object.assign({},state.detailsData,data);
-
-    
   },
 
   [SETCOLLECTMODAL]:(state,status)=>{
@@ -78,8 +82,12 @@ const mutations = {
   },
 
   [TIMECOUNTDOWN]:(state,val)=>{
-    state.detailsData.ExtendData.countDown = val;
-  }
+    state.detailsData.ExtendData.SaleStrategyExpireIn = val;
+  },
+
+  [RESETUSERINFO]:(state)=>{
+    state.userInfo = '';
+  },
 }
 
 

@@ -17,9 +17,10 @@
     "less": "^2.7.3",
     "less-loader": "^4.0.5",
     "vue": "^2.5.2",
-    "vue-cookie": "^1.1.4",
+    "vue-cookies": "^1.5.4",
     "vue-ellipsis": "^1.1.0",
-    "vue-router": "^3.0.1"
+    "vue-router": "^3.0.1",
+    "vue-social-share": "0.0.3"
   },
   "devDependencies": {
     "autoprefixer": "^7.1.2",

@@ -22,17 +22,23 @@ var deviceToken = '';
 //     return deviceToken;
 // }
 
+var cookie = document.cookie;
+
+function getCookie(name) {
+	 var arr,reg = new RegExp("(^| )"+name+"=([^;]*)(;|$)");
+ 
+    if(arr = cookie.match(reg))
+        return decodeURIComponent(arr[2]); 
+    else 
+        return null; 
+}
+
 
 //系统参数
 var systemParams = {
-    // appId:'2',
-    // version:'1.0',
-    // timestamp:new Date().getTime(),
-    // appVersion:'1.0.0',
     BridgePlatformName:"cabp_web",
-    random:Math.random()
-    // deviceToken:deviceToken ? deviceToken : setDeviceToken(),
-    // accessToken:localStorage.accessToken
+    random:Math.random(),
+    appId:7
 }
 
 //如果accessToken发生变化，立即更新

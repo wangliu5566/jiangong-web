@@ -1,5 +1,5 @@
 <template>
-  <div class="course-page" :style="{minHeight:clientHeight+'px'}">
+  <div class="course-page">
     <search :sendObj="sendObj"></search>
     <div class='power-content'>
       <div class="aside-left">
@@ -16,9 +16,9 @@
             <div class="box-img" @click="goDetail(getDetailPath(item.ObjectType),item.Id)" :style="{backgroundImage:'url('+item.CoverUrl+')',backgroundSize:'cover',backgroundRepeat:'no-repeat',backgroundPosition:'center center'}"></div>
             <p class="title" @click="goDetail(getDetailPath(item.ObjectType),item.Id)">{{item.Title}}</p>
             <p class="price-line">
-              <span class="price">&yen;{{formatPrice(item.CurrentPrice,2)}}</span>
+              <span class="price">&yen;{{handleCurrentPrice(item.ObjectType, item)}}</span>
             </p>
-            <p :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" @click="collectFn(item.Id,item.ObjectType,!item.ExtendData.IsFavorited,getlist)" style="width:50px;float:right;margin-top: -30px;line-height: 30px;">收藏</p>
+            <p :class="item.ExtendData&&item.ExtendData.IsFavorited?'collect1':'collect'" @click="collectFn(item,index,changeIsFavorited)" style="width:50px;float:right;margin-top: -30px;line-height: 30px;">收藏</p>
           </div>
         </div>
          <div v-if="dataList.length==0">
@@ -73,6 +73,17 @@ export default {
      */
     getMenu(menuList) {
       this.menuList = menuList;
+    },
+    /**
+     * [changeIsFavorited 修改收藏状态]
+     * @Author   赵雯欣
+     * @DateTime 2018-02-01
+     * @param    {[type]}   index [description]
+     * @return   {[type]}         [description]
+     */
+    changeIsFavorited(index){
+      this.dataList[index].ExtendData.IsFavorited = true ;
+      this.$set(this.dataList,index,this.dataList[index])
     },
     /**
      * [clickMenu 点击左边菜单栏]

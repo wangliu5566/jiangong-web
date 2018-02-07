@@ -17,9 +17,8 @@ export default {
    	return state.mutations.typeAndPrice;
    },
 
-   //返回是否登录
-   userInfo:(state)=>{
-   	return state.mutations.userInfo;
+   nowTypeAndPrice:(state)=>{
+      return state.mutations.nowTypeAndPrice;
    },
 
    collectModal:(state)=>{
@@ -40,6 +39,19 @@ export default {
 
    detailLoading:(state)=>{
       return state.mutations.detailLoading;
+   },
+
+   userInfo:(state)=>{
+      return state.mutations.userInfo?state.mutations.userInfo:'';
+   },
+
+   hasLogin:(state)=>{
+      let user_info = state.mutations.userInfo?state.mutations.userInfo:'';
+      if (user_info && user_info.Id && (user_info.MobileNumber || user_info.NickName || user_info.RealName ) && user_info.Secret) {
+         return true;
+      }else{
+         return false;
+      }
    }
 
 }

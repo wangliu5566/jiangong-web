@@ -25,6 +25,8 @@ export const RESETDETAILDATA = 'RESETDETAILDATA';
 //显示当前资源类型和价格
 export const SETDETAILTYPEANDPRICE = 'SETDETAILTYPEANDPRICE';
 
+export const SETNOWTYPEANDPRICE = "SETNOWTYPEANDPRICE";
+
 //是否登录和登录信息
 export const SETUSERINFO = 'SETUSERINFO';
 
@@ -49,3 +51,9 @@ export const SETDETAILLOADING = 'SETDETAILLOADING';
 
 //活动倒计时
 export const TIMECOUNTDOWN = "TIMECOUNTDOWN";
+
+//重置用户信息
+export const RESETUSERINFO = "RESETUSERINFO";
+
+//价格倒计时定时器
+export const COUNTDOWNTIMER = "COUNTDOWNTIMER";

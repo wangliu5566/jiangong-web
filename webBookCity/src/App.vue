@@ -15,7 +15,7 @@ export default {
   },
   methods: {
     registerApp() {
-      let nowDeviceToken = window.sessionStorage.getItem('deviceToken');
+      let nowDeviceToken = this.$cookies.get('deviceToken');
       if (nowDeviceToken && nowDeviceToken != 'undefined' && nowDeviceToken != '') {
 
       } else {
@@ -24,16 +24,14 @@ export default {
           })
           .then((res) => {
             if (res.data.Success) {
-              window.sessionStorage.setItem('deviceToken', res.data.Data.DeviceToken);
-              window.sessionStorage.setItem('deviceKey', res.data.Data.DeviceKey);
-
+              this.$cookies.set('deviceToken', res.data.Data.DeviceToken,-1,'/');
+              this.$cookies.set('deviceKey', res.data.Data.DeviceKey,-1,'/');
             }
           })
       }
-
-
     },
   },
+
 }
 
 </script>
@@ -171,7 +169,8 @@ li {
     padding: 0;
   }
   .comment-modal {
-    padding: 38px 108px 30px;
+    /* padding: 38px 108px 30px; */
+    padding: 30px;
     >span {
       font-size: 20px;
       color: #323232;
@@ -182,6 +181,14 @@ li {
       .el-textarea__inner {
         border-radius: 0;
       }
+    }
+
+    .comment-limit{
+      font-size: 14px;
+      color: #ddd;
+      position: absolute;
+      right: 20px;
+      bottom:6px;
     }
   }
   .modal-header {
@@ -238,6 +245,23 @@ li {
       line-height: 67px;
     }
   }
+}
+
+.el-breadcrumb__inner, .el-breadcrumb__inner a{
+  font-weight: normal!important;
+  color: #666666;
+}
+
+.el-breadcrumb__separator{
+  color: #666666;
+}
+
+.el-breadcrumb__separator[class*=icon]{
+  margin: 0 2px;
+}
+
+.el-popover--plain{
+  padding: 5px 10px!important;
 }
 
 </style>

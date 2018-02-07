@@ -1,53 +1,57 @@
 <template>
-  <div>
-    <div class="exp-container">
-      <!-- 导航路径 -->
-      <HeaderNav></HeaderNav>
-      <div class="exp-intro">
-        <h2 class="exp-title text-center ellipsis">
+  <div class="exp-container">
+    <!-- 导航路径 -->
+    <div style="min-height: 200px;" v-loading="expLoading" element-loading-text="拼命加载中" element-loading-spinner="el-icon-loading" customClass="detail-loading">
+      <div v-show="detailsData.Id">
+        <HeaderNav :detailsData="detailsData"></HeaderNav>
+        <div class="exp-intro">
+          <h2 class="exp-title text-center ellipsis">
           {{detailsData.Title}}
         </h2>
-        <div class="area-title">
-          <b class="title">详细信息</b>
-          <span class="btn pull-right no-cursor">
-            阅读量：{{detailsData.ViewCount?detailsData.ViewCount:'0'}}
+          <div class="area-title">
+            <b class="title">详细信息</b>
+            <span class="btn pull-right no-cursor">
+            浏览量：{{detailsData.ViewCount?detailsData.ViewCount:'0'}}
           </span>
-          <span class="btn pull-right" @click="collectDetail(detailsData.ExtendData.IsFavorited)" :class="detailsData.ExtendData.IsFavorited=='true'?'has-collect':''">
+            <span class="btn pull-right" @click="collectDetail(detailsData.ExtendData.IsFavorited)" :class="detailsData.ExtendData.IsFavorited=='true'?'has-collect':''">
             <span class="icon">
               
             </span>
-          <span>收藏</span>
-          </span>
-          <!--           <span v-show="expRecords.length>1" class="btn pull-right" @click="returnExpRecords">
+            <span>收藏</span>
+            </span>
+            <!--           <span v-show="expRecords.length>1" class="btn pull-right" @click="returnExpRecords">
             <span>返回</span>
           </span> -->
+          </div>
+          <div class="intro-main">
+            <p>
+              名称：{{detailsData.Title}}
+            </p>
+            <p v-show="detailsData.AliasWordList.length!=0">
+              另名：{{detailsData.AliasWordList.length!=0?formatRelatedExp(detailsData.AliasWordList):'-'}}
+            </p>
+            <p class="link-list">
+              <span class="name">相关知识标签：{{detailsData.RelatedWordList.length==0?'-':''}}</span>
+              <ul class="knowledge-link" v-show="detailsData.RelatedWordList.length!=0">
+                <li @click="checkExpRelated(item.Id)" v-for="(item,index) in detailsData.RelatedWordList" :key="index">{{item.Title}}</li>
+              </ul>
+            </p>
+            <p>
+              描述：{{detailsData.Abstracts?detailsData.Abstracts:'-'}}
+            </p>
+            <p>
+              参考资料：{{detailsData.Source?detailsData.Source:'-'}}
+            </p>
+            <p>
+              编辑者：{{detailsData.Author?detailsData.Author:'-'}}
+            </p>
+          </div>
         </div>
-        <div class="intro-main">
-          <p>
-            名称：{{detailsData.Title}}
-          </p>
-          <p>
-            另名：{{detailsData.AliasWordList.length!=0?formatRelatedExp(detailsData.AliasWordList):'-'}}
-          </p>
-          <p class="link-list">
-            <span class="name">相关知识标签：</span>
-            <ul class="knowledge-link" v-show="detailsData.RelatedWordList.length!=0">
-              <li @click="checkExpRelated(item.Id)" v-for="(item,index) in detailsData.RelatedWordList" :key="index">{{item.Title}}</li>
-            </ul>
-          </p>
-          <p>
-            描述：{{detailsData.Abstracts?detailsData.Abstracts:'-'}}
-          </p>
-          <p>
-            参考资料：{{detailsData.Source?detailsData.Source:'-'}}
-          </p>
-          <p>
-            编辑者：{{detailsData.Author?detailsData.Author:'-'}}
-          </p>
-        </div>
-        <div class="area-title">
-          <b class="title">知识地图</b>
-          <span class="pull-right default-level">
+      </div>
+    </div>
+    <div class="area-title">
+      <b class="title">知识地图</b>
+      <span class="pull-right default-level">
             <el-select v-model="levelType" @change="levelChange"  placeholder="请选择" style="width:84px;">
               <el-option
                 v-for="item in levelList"
@@ -57,51 +61,37 @@
               </el-option>
             </el-select>
           </span>
-          <span class="btn pull-right go-back" @click="expRelatedBack" v-show="expRelatedBackIds.length!=0">
+      <span class="btn pull-right go-back" @click="expRelatedBack" v-show="expRelatedBackIds.length!=0">
             <span>退回</span>
-          </span>
-        </div>
-        <div class="exp-charts">
-          <div style='height:360px;width:600px;' v-show="expRelatedList.length!=0" ref="expChartsHas">
-          </div>
-          <div class="exp-charts-no" v-show="expRelatedList.length==0">
+      </span>
+    </div>
+    <div class="exp-charts">
+      <div style='height:360px;width:1200px;' ref="expChartsHas">
+      </div>
+      <!--           <div class="exp-charts-no" v-show="expRelatedList.length==0">
             暂无数据
-          </div>
+          </div> -->
+    </div>
+    <div class="exp-related-resource">
+      <div class="related-resources" v-show="relatedResource.length!=0">
+        <div class="area-title">
+          <b class="title">
+              精选推荐
+              </b>
         </div>
-        <div class="area-title" v-show="relatedProduct.length!=0">
-          <b class="title">相关产品</b>
-        </div>
-        <ul class="related-product">
-          <li @click="pushDeatilsPath(item.ObjectType,item.Id)" v-for="(item,index) in relatedProduct" :key="index">
-            <div class="product-cover" style="background-image:url('/static/images/no_cover_m.jpg')">
-              <div class="product-cover" :style="{backgroundImage:'url('+item.CoverUrl+')'}">
+        <ul class="related-list">
+          <li class="book" v-for="(item,index) in relatedResource" :key="index" @click="pushDeatilsPath(item.ObjectType,item.Id)">
+            <div class="cover" :style="{backgroundImage:'url(static/images/no_cover_s.jpg)'}">
+              <div class="cover" :style="{backgroundImage:'url('+item.CoverUrl+')'}">
               </div>
             </div>
-            <div class="product-info">
-              <h3 class="title ellipsis">
-                {{item.Title}}
-              </h3>
-              <p>
-                简介：{{item.Abstracts?item.Abstracts:'-'}}
-              </p>
-              <span>
-                阅读量：{{item.ReadCount?item.ReadCount:'0'}}
-              </span>
-            </div>
+            <p class="title">
+              {{item.Title}}
+            </p>
+            <span class="price">
+                  &yen;{{handleCurrentPrice(item.ObjectType,item)}}
+                </span>
           </li>
-          <!-- <li>
-            <div class="product-info no-cover">
-              <h3 class="title">
-                超高速拽引式电梯
-              </h3>
-              <p>
-                简介：超高速曳引式电梯指额定速度大于6.0m/s的电梯。超高速曳引式电梯指额定速度大于6.0m/s的电梯。超高速曳引式电梯指额定速度大于6.0m/s的电梯。超高速曳引式电梯指额定速度大于6.0m/s的电梯。超高速曳引式电梯指额定速度大于6.0m/s的电梯。超高速曳引式电梯指额定速度大于6.0m/s的电梯。超高速曳引式电梯指额定速度大于6.0m/s的电梯。超高速曳引式电梯指额定速度大于6.0m/s的电梯。超高速曳引式电梯指额定速度大于6.0m/s的电梯。超高速曳引式电梯指额定速度大于6.0m/s的电梯。超高速曳引式电梯指额定速度大于6.0m/s的电梯。超高速曳引式电梯指额定速度大于6.0m/s的电梯。
-              </p>
-              <span>
-                阅读量：132
-              </span>
-            </div>
-          </li> -->
         </ul>
       </div>
     </div>
@@ -109,6 +99,7 @@
 </template>
 <script>
 import HeaderNav from "details/common/HeaderNav"
+
 import { mapGetters } from 'vuex'
 
 let echarts = require('echarts/lib/echarts');
@@ -119,6 +110,12 @@ export default {
   data() {
     return {
       nowExpId: this.$route.query.id,
+
+      expLoading: false,
+
+      //切换显示几级标签时，关系图是否可以点击
+      canClick: true,
+
       //默认显示层级
       levelType: 1,
 
@@ -166,16 +163,16 @@ export default {
       //存储知识地图被点击的id
       expRelatedBackIds: [],
 
-      //相关产品推荐
-      relatedProduct: [],
+      relatedResource: [],
     }
   },
   components: {
-    HeaderNav
+    HeaderNav,
   },
   computed: mapGetters([
     'loginModal',
     'callbackAfterLogin',
+    'hasLogin'
   ]),
   created() {
     this.getDetails();
@@ -183,7 +180,11 @@ export default {
     // this.expRecords.push(this.$route.query.id);
     this.getExpRelated();
 
-    this.getRelatedProduct();
+    //记录知识元浏览次数
+    
+
+    this.getRelatedResource();
+
   },
 
   watch: {
@@ -194,7 +195,8 @@ export default {
 
       this.getExpRelated();
 
-      this.getRelatedProduct();
+      //记录知识元浏览次数
+      this.getRelatedResource();
     },
     'loginModal': function(val, oldVal) {
       if (!val && this.callbackAfterLogin.position == 'detail') {
@@ -205,6 +207,21 @@ export default {
     }
   },
   methods: {
+
+    getRelatedResource() {
+      this.$http.get('/Content/Recommend', {
+          params: {
+            objectId: this.$route.query.id,
+            count: 10
+          }
+        })
+        .then((res) => {
+          if (res.data.Success) {
+            this.relatedResource = [...res.data.Data]
+          }
+        })
+    },
+
     collectAndloginCallback() {
       this.$http.get('/ExplicitWord/Detail', {
         params: {
@@ -214,46 +231,27 @@ export default {
         this.detailsData = res.data.Data;
 
         if (this.detailsData.ExtendData.IsFavorited == "true") {
-          this.$message({
-            message:'收藏成功',
-            type:'success',
-          })
-        }else{
+          this.$store.dispatch('openCollectModal');
+        } else {
           this.$http.post('/Favorite/CreateOrUpdate', {
-            state: true,
-            objectIds: this.detailsData.Id,
-            objectTypes: 101
-          })
-          .then((res) => {
-            this.$message({
-              message: res.data.Description,
-              type: 'success'
-            });
-            this.detailsData.ExtendData = Object.assign({}, this.detailsData.ExtendData, {
-              IsFavorited: 'true',
+              state: true,
+              objectIds: this.detailsData.Id,
+              objectTypes: 101
             })
-          })
+            .then((res) => {
+              if (res.data.Success) {
+                this.detailsData.ExtendData = Object.assign({}, this.detailsData.ExtendData, {
+                  IsFavorited: 'true',
+                })
+
+                this.$store.dispatch('setDeatilDataCollect', 'true')
+
+              }
+
+            })
         }
 
       })
-    },
-    getRelatedProduct() {
-      this.$http.post('/Content/Search', {
-          query: JSON.stringify({
-            "objectTypes": [104, 107, 108],
-            "SearchOrderBy": {
-              "ColumnName": "onShelfDate",
-              "Descending": true
-            },
-          }),
-          ps: 5,
-          cp: 1
-        })
-        .then((res) => {
-          if (res.data.Success) {
-            this.relatedProduct = res.data.Data.ItemList;
-          }
-        })
     },
     formatRelatedExp(expList) {
       let data = [];
@@ -265,30 +263,33 @@ export default {
       return data.join(',');
     },
     collectDetail() {
-
-      let hasLogin = window.sessionStorage.getItem('accessToken') && JSON.parse(window.sessionStorage.getItem('bg_user_info')).Id ? true : false;
-      if (!hasLogin) {
+      if (!this.hasLogin) {
         this.$store.dispatch('setLoginByModal', true);
         this.$store.dispatch('loginByModalAndCallback', {
           callback: 'collectExp',
           position: 'detail'
         })
       } else {
-        let state = this.detailsData.ExtendData.IsFavorited == "true" ? 'false' : 'true';
-        this.$http.post('/Favorite/CreateOrUpdate', {
-            state: state,
-            objectIds: this.detailsData.Id,
-            objectTypes: 101
-          })
-          .then((res) => {
-            this.$message({
-              message: res.data.Description,
-              type: 'success'
-            });
-            this.detailsData.ExtendData = Object.assign({}, this.detailsData.ExtendData, {
-              IsFavorited: state,
+        if (this.detailsData.ExtendData.IsFavorited == "true") {
+          this.$store.dispatch('openCollectModal');
+        } else {
+          let state = 'true';
+          this.$http.post('/Favorite/CreateOrUpdate', {
+              state: state,
+              objectIds: this.detailsData.Id,
+              objectTypes: 101
             })
-          })
+            .then((res) => {
+              if (res.data.Success) {
+                this.detailsData.ExtendData = Object.assign({}, this.detailsData.ExtendData, {
+                  IsFavorited: state,
+                });
+                this.$store.dispatch('openCollectModal');
+              }
+
+            })
+        }
+
       }
 
     },
@@ -296,21 +297,29 @@ export default {
       this.expRelatedBackIds.push(this.nowExpId)
       // this.expRecords.push(id);
       this.nowExpId = id;
-
+      this.levelType = 1;
       this.getDetails(id);
       this.getExpRelated();
-      this.getRelatedProduct();
+      this.getRelatedResource();
     },
     closeForm(status) {
       this.loginModal = !status;
     },
     getDetails(id) {
+      this.expLoading = true;
       this.$http.get('/ExplicitWord/Detail', {
         params: {
           id: id ? id : this.nowExpId
         }
       }).then((res) => {
-        this.detailsData = Object.assign({}, this.detailsData, res.data.Data)
+        if (res.data.Success) {
+          this.detailsData = Object.assign({}, this.detailsData, res.data.Data);
+          this.expLoading = false;
+
+          this.recordHistory(this.nowExpId, 101, 1);
+
+        }
+
       })
     },
     returnExpRecords() {
@@ -320,7 +329,7 @@ export default {
         this.nowExpId = this.expRecords[nowIndex - 1];
         this.getDetails(this.nowExpId);
         this.getExpRelated();
-        this.getRelatedProduct();
+        this.getRelatedResource();
       }
 
     },
@@ -377,6 +386,7 @@ export default {
 
     //获取知识地图
     getRelatedExpByLevel(level = 1, type = 1) {
+      this.canClick = false;
       this.$http.get("/ExplicitWordRelation/Map", {
           params: {
             id: this.nowExpId,
@@ -385,14 +395,37 @@ export default {
           }
         })
         .then((res) => {
+          this.canClick = true;
           if (res.data.Success) {
-            //请求成功，根据type渲染知识地图或知识束
-            if (res.data.Data.length === 0) return;
 
-            if (type == 1) {
-              this.expRelatedList = res.data.Data;
-              this.renderMap(res.data.Data);
+            //请求成功，根据type渲染知识地图或知识束
+            if (res.data.Data.length != 0) {
+              if (type == 1) {
+                this.expRelatedList = res.data.Data;
+                this.renderMap(res.data.Data);
+              }
+            } else {
+              this.$http.get('/ExplicitWord/Detail', {
+                params: {
+                  id: this.nowExpId
+                }
+              }).then((res) => {
+                if (res.data.Success) {
+                  this.expRelatedList = [{
+                    Level: 1,
+                    FirstWordTitle: res.data.Data.Title,
+                    FirstWordId: res.data.Data.Id,
+                    SecondWordTitle: '',
+                    SecondWordId: '',
+                  }];
+                  this.renderMap(this.expRelatedList);
+
+                }
+              })
             }
+
+
+
             //暂不处理知识束
             // else if (type == 2) { 
             //   this.renderBeam(res.data.Data);
@@ -408,26 +441,33 @@ export default {
       let links = [];
       let hash = []; //存放所有的知识元名称，不能重复
 
-      data.forEach((item, index) => {
-        if (hash.indexOf(item.FirstWordTitle) == -1) {
-          hash.push(item.FirstWordTitle);
-          newData.push({
-            nodeData: item, //节点数据
-            nodeId: item.FirstWordId, //节点知识元Id
-            name: item.FirstWordTitle,
-          })
-        }
 
-        if (hash.indexOf(item.SecondWordTitle) == -1) {
-          hash.push(item.SecondWordTitle);
-          newData.push({
-            nodeData: item,
-            nodeId: item.SecondWordId,
-            name: item.SecondWordTitle,
-          })
-        }
+      if (data.length != 0) {
 
-      })
+        data.forEach((item, index) => {
+          if (hash.indexOf(item.FirstWordTitle) == -1 && item.FirstWordTitle) {
+            hash.push(item.FirstWordTitle);
+            newData.push({
+              nodeData: item, //节点数据
+              nodeId: item.FirstWordId, //节点知识元Id
+              name: item.FirstWordTitle,
+            })
+          }
+
+          if (hash.indexOf(item.SecondWordTitle) == -1 && item.SecondWordTitle) {
+            hash.push(item.SecondWordTitle);
+            newData.push({
+              nodeData: item,
+              nodeId: item.SecondWordId,
+              name: item.SecondWordTitle,
+            })
+          }
+
+        })
+
+
+      }
+
 
       newData = newData.map((item) => {
         //处理根节点颜色改变
@@ -554,7 +594,7 @@ export default {
           hoverAnimation: true, //是否开启鼠标悬停节点的显示动画
           force: { //力引导图基本配置
             repulsion: 200, //节点之间的斥力因子。
-            gravity: 0, //节点受到的向中心的引力因子。该值越大节点越往中心点靠拢
+            gravity: 0.1, //节点受到的向中心的引力因子。该值越大节点越往中心点靠拢
             edgeLength: 110, //边的两个节点之间的距离，
             layoutAnimation: true
             //因为力引导布局会在多次迭代后才会稳定，这个参数决定是否显示布局的迭代动画，在浏览器端节点数据较多（>100）的时候不建议关闭，布局过程会造成浏览器假死  
@@ -607,11 +647,11 @@ export default {
               },
               formatter: function(val) { //让series 中的文字进行换行 
                 let limit = 4;
-                if (val.name.length != 0 && val.name.length >= limit+1) {
-                  if (val.name.length <= limit*2) {
+                if (val.name.length != 0 && val.name.length >= limit + 1) {
+                  if (val.name.length <= limit * 2) {
                     return val.name.slice(0, limit) + '\n' + val.name.slice(limit, val.name.length);
                   } else {
-                    return val.name.slice(0, limit) + '\n' + val.name.slice(limit, limit*2-1) + '...'
+                    return val.name.slice(0, limit) + '\n' + val.name.slice(limit, limit * 2 - 1) + '...'
                   }
                 } else {
                   return val.name;
@@ -650,7 +690,9 @@ export default {
       myChart.on('click', function(params) {
         //这里面可以判断是不是点击的知识元
         //切换根节点
-
+        if (!_this.canClick) {
+          return;
+        }
         if (params.data.nodeId != _this.nowExpId) {
           //先存储当前知识元id
           if (params.data.nodeData) {
@@ -663,12 +705,12 @@ export default {
           // else {
           //    _this.beamRollbackData.push(_this.expId);
           // }
-
-
+          //切换中心知识元默认显示一级
+          _this.levelType = 1;
           //重绘地图
           _this.resetMap('expChartsHas');
           _this.getDetails(_this.nowExpId);
-          _this.getRelatedProduct();
+          _this.getRelatedResource();
         }
       });
 
@@ -704,11 +746,12 @@ export default {
 
       this.nowExpId = this.expRelatedBackIds.pop();
 
-      console.log(this.expRelatedBackIds)
+      //回退默认显示一级
+      this.levelType = 1;
 
       this.resetMap('expChartsHas');
       this.getDetails(this.nowExpId);
-      this.getRelatedProduct();
+      this.getRelatedResource();
     }
   }
 

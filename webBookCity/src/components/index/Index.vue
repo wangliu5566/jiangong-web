@@ -13,7 +13,7 @@
     <!-- 建筑图库 -->
     <course :title="type1"></course>
     <!-- 行业相关资源 -->
-    <resource></resource>
+    <!-- <resource></resource> -->
     <!-- 底部图片 -->
     <div class="bottom-img">
       <img src="../../../static/images/downbanner.jpg">
@@ -36,7 +36,6 @@ export default {
       type1: '建筑图库',
     }
   },
-  props:['widthData'],
   components: {
     logoPart,
     sliderPart,
@@ -58,7 +57,7 @@ export default {
   .bottom-img {
     width: 1200px;
     height: 200px;
-    margin: 20px auto;
+    margin: 20px auto 0;
   }
 
   

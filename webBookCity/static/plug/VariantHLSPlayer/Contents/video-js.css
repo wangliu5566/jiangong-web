@@ -412,7 +412,8 @@ body.vjs-full-window {
   color: inherit;
   display: inline-block;
   overflow: visible;
-  font-size: inherit;
+  /*font-size: inherit;*/
+  font-size: 12px;
   line-height: inherit;
   text-transform: none;
   text-decoration: none;
@@ -1082,7 +1083,7 @@ body.vjs-full-window {
 
 .video-js .vjs-current-time,
 .vjs-no-flex .vjs-current-time {
-  display: none; }
+  }
 
 .vjs-no-flex .vjs-remaining-time.vjs-time-control.vjs-control {
   width: 0px !important;
@@ -1090,7 +1091,7 @@ body.vjs-full-window {
 
 .video-js .vjs-duration,
 .vjs-no-flex .vjs-duration {
-  display: none; }
+  }
 
 .vjs-time-divider {
   display: none;

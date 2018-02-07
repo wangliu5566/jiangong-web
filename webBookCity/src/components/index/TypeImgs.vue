@@ -11,7 +11,7 @@
             <div style="width: 100%;height:100%;" @click="goDetail(getDetailPath(item.ObjectType),item.Id)" :style="{backgroundSize:'cover',backgroundRepeat:'no-repeat',backgroundPosition:'center center',backgroundImage:'url('+item.CoverUrl+')'}"></div>
           </div>
           <p class="names" @click="goDetail(getDetailPath(item.ObjectType),item.Id)">{{item.Title}}</p>
-          <p class="price red">&yen;{{formatPrice(item.CurrentPrice,2)}}</p>
+          <p class="price red">&yen;{{handleCurrentPrice(item.ObjectType, item)}}</p>
         </li>
       </ul>
     </div>

@@ -141,10 +141,8 @@ function setExplicitWordLabelLevel() {
  * @param    {[Number]}   type [上一个或下一个 1 - 下一个  -1 - 上一个]
  * @return   {[type]}        [description]
  */
-var sameLables = []; //保存与活跃标签一致的所有标签
-var activeText = ''; //保存活跃标签的文字
 function searchExpLabelByOrder(text, type) {
-    console.log(text, type);
+    var sameLables = []; //保存与活跃标签一致的所有标签
     //如果当前活跃标签与之前的一致，则
     $($vm.$data.bookIframeWindow.document.body).find('.exp-lablel').each(function (index, item) {
         if ($(item).text() == text) {
@@ -158,13 +156,21 @@ function searchExpLabelByOrder(text, type) {
             if (type == 1) {
                 //下一个
                 //如果已经是最后一项
-                if (i == sameLables.length - 1) break;
-                // $vm.$data.message.showMessage('info','已经是最后一个！');
+                if (i == sameLables.length - 1) {
+                    console.log(2222)
+                    $vm.$data.message.showMessage('info','已经是最后一个！');
+                    break;
+                }else {
+                    console.log(i);
+                    console.log(sameLables.length - 1)
+                }                
             } else if (type == -1) {
                 //上一个
                 //如果已经是第一项
-                // $vm.$data.message.showMessage('info','已经是第一个！');
-                if (i == 0) break;
+                if (i == 0) {
+                    $vm.$data.message.showMessage('info','已经是第一个！');
+                    break;
+                }
             }
 
             //移除当前活跃，跳转下个活跃
@@ -273,11 +279,15 @@ function init(iframeEle) {
     _this.setIframeImg();
     //获取知识标签
     _this.getExplicitWordLabelList(1);
+    _this.$data.countLeft = 0;
+    _this.$data.bookIframeWindow.document.body.scrollLeft = 0;
     _this.$data.bookIframeWindow.addEventListener('scroll', _this.setIframeReadingSectionName, false);
     setTimeout(function () {
         //清理文内检索数据
         _this.clearCurBookSearchData();
         _this.scrollToLibIndex(); //滚动到某小节的位置
+
+        
 
         //去除蒙层
         document.getElementById('loadMenban').parentNode.removeChild(document.getElementById('loadMenban'));
@@ -310,11 +320,7 @@ function iframeOnload(iframeEle) {
     
     //左侧目录栏收起
     $(iframeEle.contentWindow.document.body).on('click', function (e) {
-        _this.$data.conMenuShow = false;
-
-        $vm.$data.isBgModalShow = false;
-        $vm.$data.isFontModalShow = false;
-        $vm.$data.isLibShow = false;
+        $vm.closeReaderControl();
 
         if (_this.$data.libLeft >= -280) {
             var type = _this.isShowLibList ? 0 : 1;
@@ -327,7 +333,10 @@ function iframeOnload(iframeEle) {
     $(iframeEle.contentWindow.document.body).on('click', 'a', function (e) {
         e.preventDefault();
 
-        if ($(this).attr('href').indexOf('http://') !== -1) return;
+        if ($(this).attr('href').indexOf('http://') !== -1) {
+            // $vm.changeIframeSrc($(this).attr('href'));
+            return;
+        }
 
         //此时点击的是备注，提取其对应锚点信息
         var href = $(this).attr('href');
@@ -413,18 +422,15 @@ function iframeOnload(iframeEle) {
     });
 
     //查看文中的图片
-    // $(iframeEle.contentWindow.document.body).on('click', 'img', function(e) {
-    //     if(e.target.src.indexOf('/static/images') !== -1) return;
-    //     if (env == "dev") {
-    //         window.location.href = ymUrl + '/imgView?imgSrc=' + e.target.src;
-    //     } else if (env == "prod") {
-    //         if(_this.$data.canIaddNote) {
-    //             SaveArgument(e.target.src);
-    //             // SaveArgument('imgSrc='+e.target.src)
-    //             loadForm('/static/public/imgView.html','图片详情','文内图片',false);
-    //         }
-    //     }
-    // })
+    $(iframeEle.contentWindow.document).on('click', 'img', function(e) {
+        if(e.target.src.indexOf('/static/images') !== -1) return;
+
+        var aPoint = document.createElement("a");
+        var href = '/static/public/imgViewInnerReader.html?imgSrc=' + encodeURIComponent(e.target.src);
+        aPoint.setAttribute('href', href);
+        aPoint.setAttribute('target', '_blank');
+        aPoint.click();
+    })
 
     //右键操作,打开menu
     function openContextMenu(e, type) {
@@ -461,7 +467,6 @@ function iframeOnload(iframeEle) {
 
     //滚动翻页
     $(iframeEle.contentWindow.document).on('mousewheel', function (e) {
-
         if(!$vm.$data.libIsActive) return;
         //传统模式下
         if($vm.$data.libIsActive) e.preventDefault();
@@ -476,6 +481,7 @@ function iframeOnload(iframeEle) {
         _this.openOrCloseContextMenu(false);
         //获取向右还是向左 1- 向左 -1 -向右
         _this.pageExchange(type);
+
     });
 
 
@@ -522,7 +528,7 @@ function iframeOnload(iframeEle) {
     });
 
     //知识标签的相关事件
-    $(iframeEle.contentWindow.document.body).on('mouseenter', '.exp-lablel', function (e) {
+    $(iframeEle.contentWindow.document).on('mouseenter', '.exp-lablel', function (e) {
         $(this).css('opacity', 1);
     }).on('mouseleave', '.exp-lablel', function (e) {
         $(this).css('opacity', 0.5);
@@ -540,7 +546,13 @@ function iframeOnload(iframeEle) {
         $(this).css('outline', '2px solid #000');
         $(this).addClass('active-lable');
 
-        location.href= '/index.html#/wrap/details/exp?id='+ $(this).attr('data-lableId');
+        // location.href= '/index.html#/wrap/details/exp?id='+ $(this).attr('data-lableId');
+
+          var aPoint = document.createElement("a");
+          var href = '/index.html#/wrap/details/exp?id=' + $(this).attr('data-lableId');
+          aPoint.setAttribute('href', href);
+          aPoint.setAttribute('target', '_blank');
+          aPoint.click();
     });
 
     //文内检索功能

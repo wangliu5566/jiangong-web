@@ -12,18 +12,22 @@
         </el-input>
       </el-form-item>
       <el-col>
+<!--
         <span style="cursor: pointer;" @click='rememberChange(loginData.rememberMe)'><img style="vertical-align: -3px;margin-right: 14px" src="../../assets/kuang.png" v-if='!loginData.rememberMe' alt=""><img src="../../assets/gouxuan.png" style="vertical-align: -3px;margin-right: 14px"  v-if='loginData.rememberMe' alt="">
     <span v-if='!loginData.rememberMe'>记住账号密码</span>
         <span v-if='loginData.rememberMe'>请勿在公共电脑上勾选此项</span>
         </span>
+-->
         <a style='cursor: pointer' @click='$router.push("findpassword")'>忘记密码</a>
       </el-col>
       <el-button class='putin' type="primary" @click="handleSubmitLogin('bgSystemLoginForm')">登录</el-button>
-      <span style='padding: 8px 0;display: inline-block'>使用合作网站登录</span>
+<!--      <span style='padding: 8px 0;display: inline-block'>使用合作网站登录</span>-->
       <ul class='tripartite'>
+<!--
         <li><img src="../../assets/qq.png" alt=""></li>
         <li><img src="../../assets/weixin.png" alt=""></li>
         <li><img src="../../assets/weibo.png" alt=""></li>
+-->
         <li><span @click='goreg'>注册</span></li>
       </ul>
     </el-form>
@@ -37,9 +41,9 @@ export default {
     return {
       baseUrl: baseUrl,
       loginData: {
-        username: window.sessionStorage.getItem('bg_user_info') && JSON.parse(window.sessionStorage.getItem('bg_user_info')).username ? JSON.parse(window.sessionStorage.getItem('bg_user_info')).username : window.localStorage.getItem('bg_user_username') ? window.localStorage.getItem('bg_user_username') : '',
+        username: this.$cookies.get('bg_user_info') && JSON.parse(this.$cookies.get('bg_user_info')).username ? JSON.parse(this.$cookies.get('bg_user_info')).username : window.localStorage.getItem('bg_user_username') ? window.localStorage.getItem('bg_user_username') : '',
         password: '',
-        rememberMe: window.sessionStorage.getItem('bg_user_info') && JSON.parse(window.sessionStorage.getItem('bg_user_info')).rememberMe ? JSON.parse(window.sessionStorage.getItem('bg_user_info')).rememberMe : window.localStorage.getItem('bg_user_rememberMe') == "true" ? true : false,
+        rememberMe: window.localStorage.getItem('bg_user_rememberMe') == "true" ? true : false,
       },
       checked: '',
       loadLoginForm: false,
@@ -71,21 +75,11 @@ export default {
     goreg() {
       this.$router.push("/register")
     },
-    getDevice() {
-      this.$http.post('/Device/Register', {
-          title: '建工',
-        })
-        .then((res) => {
-          if (res.data.Success) {
-            sessionStorage.deviceToken = res.data.Data.DeviceToken
-          }
-        })
-    },
     handleSubmitLogin(formName) {
       this.$refs[formName].validate((valid) => {
         if (valid) {
-          if ((window.sessionStorage.getItem('bg_user_info') && JSON.parse(window.sessionStorage.getItem('bg_user_info')).rememberMe && !this.isChange) || (window.localStorage.getItem('bg_user_rememberMe')) && !this.isChange) {
-            if (this.$cookie.get('bg_user_psd')) {
+          if ((this.$cookies.get('bg_user_info') && !this.isChange) || (window.localStorage.getItem('bg_user_rememberMe')) && !this.isChange) {
+            if (this.$cookies.get('bg_user_psd')) {
               //this.submitLoading = true;
               this.login();
             }
@@ -104,16 +98,21 @@ export default {
         .then((res) => {
           //          this.submitLoading = false;
           if (res.data.Success) {
-            if (this.loginData.rememberMe) {
-              this.$cookie.set('bg_user_psd', this.loginData.password, {
-                expires: 30
-              });
-            }
-            window.sessionStorage.setItem('bg_user_info', JSON.stringify(res.data.Data));
-            sessionStorage.accessToken = res.data.Data.ExtendData.AccessToken;
+//            if (this.loginData.rememberMe) {
+//              //默认存一个月
+//              this.$cookies.set('bg_user_psd', this.loginData.password, '30d','/');
+//            }
+            this.$cookies.set('bg_user_info', JSON.stringify(res.data.Data),null,'');
+            this.$cookies.set('accessToken', res.data.Data.ExtendData.AccessToken,null,'/');
+            
             window.localStorage.setItem('bg_user_username', this.loginData.username);
             window.localStorage.setItem('bg_user_rememberMe', this.loginData.rememberMe);
             window.localStorage.setItem('bg_user_isOverdue', false); //cookie的过期时间
+
+            //登录后刷新用户信息和购物车信息
+            this.$store.dispatch('setUserInfo',res.data.Data);
+            this.$store.dispatch('getShoppingCount');
+
 
             //是否是弹窗登录
             if (this.loginIsByModal) {
@@ -121,23 +120,16 @@ export default {
             } else {
               this.$router.push(this.$route.query.redirect || '/')
             }
-
-            //登录后刷新用户信息和购物车信息
-            this.$store.dispatch('setUserInfo');
-            this.$store.dispatch('getShoppingCount');
-
-          } else {
-            this.$message({
-              message: res.data.Description,
-              type: 'error'
-            })
+            
+          }else{
+             this.$message.error(res.data.Description);
           }
         })
     },
     //初始化用户名
     initPsd() {
-      if ((window.sessionStorage.getItem('bg_user_info') && JSON.parse(window.sessionStorage.getItem('bg_user_info')).username && JSON.parse(window.sessionStorage.getItem('bg_user_info')).rememberMe) || (window.localStorage.getItem('bg_user_username') && window.localStorage.getItem('bg_user_rememberMe')) != "false") {
-        let lastPsd = this.$cookie.get('bg_user_psd');
+      if ((this.$cookies.get('bg_user_info') && JSON.parse(this.$cookies.get('bg_user_info')).username && JSON.parse(this.$cookies.get('bg_user_info')).rememberMe) || (window.localStorage.getItem('bg_user_username') && window.localStorage.getItem('bg_user_rememberMe')) != "false") {
+        let lastPsd = this.$cookies.get('bg_user_psd');
         if (lastPsd && !this.isChange) {
           if (this.loginData.username) {
             this.loginData.password = lastPsd;
@@ -150,9 +142,7 @@ export default {
             });
             window.localStorage.setItem('bg_user_isOverdue', true);
           }
-          window.sessionStorage.setItem('bg_user_info', JSON.stringify(Object.assign({}, JSON.parse(window.sessionStorage.getItem('bg_user_info')), {
-            rememberMe: false,
-          })));
+
           this.loginData.rememberMe = false;
         }
       }
@@ -160,7 +150,7 @@ export default {
     },
     rememberChange(value) {
       this.loginData.rememberMe = !value
-      if (window.sessionStorage.getItem('bg_user_info') && JSON.parse(window.sessionStorage.getItem('bg_user_info')).username && JSON.parse(window.sessionStorage.getItem('bg_user_info')).rememberMe && !this.isChange) {
+      if (this.$cookies.get('bg_user_info') && JSON.parse(this.$cookies.get('bg_user_info')).username && JSON.parse(this.$cookies.get('bg_user_info')).rememberMe && !this.isChange) {
         if (!value) {
           this.loginData.password = '';
         }
@@ -189,7 +179,7 @@ export default {
     setTimeout(() => {
       this.loadLoginForm = true;
     }, 0);
-    this.initPsd();
+//    this.initPsd();
   }
 }
 
@@ -245,7 +235,8 @@ export default {
     }
     .tripartite {
       border-bottom: 46px;
-      overflow: hidden;
+/*      overflow: hidden;*/
+        margin-top: 20px;
     }
     .tripartite>li:last-child {
       float: right;

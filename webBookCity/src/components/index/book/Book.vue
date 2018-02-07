@@ -1,10 +1,21 @@
 <template>
-  <div class="book-page" :style="{minHeight:clientHeight+'px'}">
+  <div class="book-page">
     <search :sendObj="sendObj"></search>
     <div class='power-content'>
       <div class="aside-left">
-        <ul>
-          <li v-for="(item,index) in menuList" :class="index==menuIndex?'active':''" @click="clickMenu(index,item.Id)">{{item.Category.Title}}</li>
+        <!-- <ul>
+          <li :class="0==menuIndex?'active':''" @click="clickMenu(0,'')">全部</li>
+          <li v-for="(item,index) in menuList" :class="index+1==menuIndex?'active':''" @click="clickMenu(index+1,item.Id)">{{item.Category.Title}}</li>
+        </ul> -->
+        <ul class="type-menus1">
+          <li v-for="(item,index) in menuList" :class="index+1==menuIndex?'active':'lis'">
+            <div style="width:220px;overflow:hidden" @mouseenter="showTwoMenu(item.Id)" @click="clickMenu(index+1,item.Id)">
+              {{item.Category.Title}}
+            </div>
+            <ul class="type-child-menu" v-if="twoMenuList.length>0">
+              <li v-for="inItem in twoMenuList" @click="clickMenu(index+1,inItem.Id)">{{inItem.Title}}</li>
+            </ul>
+          </li>
         </ul>
         <relateRes :ObjectTypes="104"></relateRes>
       </div>
@@ -36,10 +47,10 @@ export default {
 
       menuList: [],
       menuId: '',
-      menuIndex: 98,
+      menuIndex: 0,
+      twoMenuList: [],
     }
   },
-  props: ['clientHeight'],
   components: {
     search,
     relateRes
@@ -52,25 +63,46 @@ export default {
       this.bookType = 2
     }
 
-    this.getMenu()
+    this.getMenulist('CabpCourse', this.getMenu)
   },
   methods: {
     /**
-     * [getMenulist 获取菜单]
+     * [getTypeList 获取主菜单]
      * @Author   赵雯欣
-     * @DateTime 2017-12-19
+     * @DateTime 2017-12-18
      * @return   {[type]}   [description]
      */
-    getMenu() {
-      this.$http.get("/Hierarchy/GetCategoryList", {
+    getMenu(menuList) {
+      this.menuList = menuList;
+    },
+    /**
+     * [showTwoMenu 显示二级菜单]
+     * @Author   赵雯欣
+     * @DateTime 2017-12-18
+     * @param    {[type]}   id [description]
+     * @return   {[type]}      [description]
+     */
+    showTwoMenu(id) {
+      this.twoMenuList = []
+      if (localStorage.getItem("twoMenuList" + id)) {
+        if (JSON.parse(localStorage.getItem("twoMenuList" + id)).length > 0) {
+          this.twoMenuList = JSON.parse(localStorage.getItem("twoMenuList" + id));
+        } else {
+          this.twoMenuList = []
+        }
+        return false;
+      }
+      this.$http.get("/Category/ChildList", {
           params: {
-            id: '',
-            name: 'CabpCourse'
+            parentId: id,
+            cp: 1,
+            ps: 999999,
           }
         })
         .then((res) => {
           if (res.data.Success) {
-            this.menuList = res.data.Data
+            this.twoMenuList = res.data.Data.ItemList;
+            localStorage.setItem("twoMenuList" + id, JSON.stringify(res.data.Data.ItemList))
           }
         })
     },
@@ -83,6 +115,7 @@ export default {
      * @return   {[type]}         [description]
      */
     clickMenu(index, id) {
+      console.log(index)
       this.menuIndex = index;
       this.menuId = id;
     },
@@ -95,6 +128,7 @@ export default {
 
 </script>
 <style lang='less'>
+@red-color: #e71515;
 .book-page {
   width: 100%;
 
@@ -102,6 +136,83 @@ export default {
     width: 1200px;
     margin: 0 auto;
     overflow: hidden;
+  }
+
+  /*下拉菜单部分*/
+  .type-menus1 {
+    width: 241px;
+    z-index: 99;
+
+    border-bottom: 1px solid #e5e5e5;
+    margin-bottom: 20px;
+    .lis{
+      width: 221px;
+      padding-left: 20px;
+      font-size: 14px;
+      color: #464646;
+      line-height: 45px;
+      background-color: #fff;
+      border-left: 1px solid #e5e5e5;
+      border-right: 1px solid #e5e5e5;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .active {
+      width: 221px;
+      font-size: 14px;
+      line-height: 45px;
+      border-right: 1px solid #e5e5e5;
+      cursor: pointer;
+      position: relative;
+      color: @red-color;
+      background-color: #e5e5e5;
+      padding-left: 19px;
+      border-left: 2px solid @red-color;
+    }
+
+    .lis:hover {
+      color: @red-color;
+      background-color: #e5e5e5;
+      padding-left: 19px;
+      border-left: 2px solid @red-color;
+
+      .type-child-menu {
+        display: block;
+      }
+    }
+    /*二级目录*/
+    .type-child-menu {
+      position: absolute;
+      top: 0px;
+      left: 240px;
+      width: 240px;
+      border-top: 1px solid #e5e5e5;
+      border-right: 1px solid #e5e5e5;
+      border-bottom: 1px solid #e5e5e5;
+      z-index: 99;
+      display: none;
+      background-color: #e5e5e5;
+      overflow: hidden;
+
+      li {
+        width: 200px;
+        margin: 0 20px;
+        font-size: 14px;
+        color: #464646;
+        line-height: 45px;
+        border-bottom: 1px solid #999;
+        background-color: #e5e5e5;
+        cursor: pointer;
+        overflow: hidden;
+      }
+      li:last-child {
+        border-bottom: none;
+      }
+      li:hover {
+        color: @red-color;
+      }
+    }
   }
 
   .menus {
@@ -127,6 +238,7 @@ export default {
       border-bottom: 1px solid #dedede;
       border-left: 1px solid #dedede;
       background-color: #fff;
+      cursor: default;
     }
     .click-this {
       background-color: #fff;

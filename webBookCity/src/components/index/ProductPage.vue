@@ -36,7 +36,7 @@
           <div v-if="productObj.Id==1" style="line-height: 30px;position: relative;overflow: hidden;height:100px;">
             二维码：
             <div class="img-wrap">
-              <img src="../../../static/images/base64.png" style="width:74px;">
+              <img src="../../../static/images/isgongerweima.png" style="width:74px;">
             </div>
           </div>
           <div v-if="productObj.Id==3" style="line-height: 50px;">

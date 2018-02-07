@@ -2,68 +2,145 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <title id="readerTitle">PDF阅读</title>
-  <link rel="stylesheet" href="../css/pdf.css">
-  <link rel="stylesheet" type="text/css" href="../css/bootstrap.min.css">
-  <link rel="stylesheet" href="../css/message.css">
-  <script src="../js/vue.js"></script>
-  <script src="../js/ajax.js"></script>
-  <script src="../js/jquery-1.11.0.min.js"></script>
-  <script src="../js/bootstrap.min.js"></script>
+    <meta name="renderer" content="webkit"/>
+    <meta charset="UTF-8">
+    <title id="readerTitle">PDF阅读</title>
+    <link rel="shortcut icon" href="../images/logo_28.jpg" />
+    <link rel="stylesheet" href="../css/reader.css">
+    <link rel="stylesheet" type="text/css" href="../css/bootstrap.min.css">
+    <link rel="stylesheet" href="../css/message.css">
+    
+    <script src="../js/vue.js"></script>
+    <script src="../js/jquery-1.11.0.min.js"></script>
+    <script src="../js/ajax.js"></script>
+    <script src="../js/bootstrap.min.js"></script>
+    <script src="../js/localStorage.js"></script>
+    <style>
+        [v-cloak]{
+            display: none;
+        }
+    </style>
 </head>
 
 <body>
-  <div class="pdf-view" :style="{height:winHeight +'px',width:winWidth +'px'}" id="pdfView">
-    <!-- <p class="btns">
-      <button @click="collect">加入收藏</button>
-      <button @click="toggleSiderBar">目录</button>
-      <button @click="prev">上一页</button>
-      <span>{{page_num}} / {{page_count}}</span>
-      <button @click="next">下一页</button>
-      <button @click="rotatePdf">旋转</button>
-      <button @click="addscale">放大</button>
-      <button @click="minus">缩小</button>
-      <button>设备切换</button>
-   </p> -->
-    <iframe :src="'../plug/generic/web/viewer.html' + '?file=' + pdfUrl" frameborder="0" width="100%" height="100%" ref="pdfEle"></iframe>
-    <div class="book-cont-bottom">
-      <span style="font-style: italic;font-family:'微软雅黑'">
-           <b>知识标签：</b>
-           <i v-for="(item,index) in relatedExpList" v-show="relatedExpList.length !== 0">{{item.Title}}</i>
-           <i v-show="relatedExpList.length == 0">暂无标签</i>
-        </span>
-      <span style="font-style: italic;font-family:'微软雅黑'">
-            {{page_num}} / {{page_count}}
-        </span>
-    </div>
-    <!-- 切换设备 -->
-    <div class="modal fade" tabindex="-1" role="dialog" id="equipement">
-      <div class="modal-dialog" role="document" style="width: 480px;height:400px;margin:0 auto">
-        <div class="modal-content">
-          <div class="modal-header nopadding" id="activeTitle">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-            <h4 class="equipement">{{pdfData.Title}}</h4>
-          </div>
-          <div class="modal-body">
-            <ul>
-              <li></li>
-            </ul>
-          </div>
+    <div class="index-cont" :style="{height:winHeight-10 +'px',background:'#e2e3d9'}" id="pdfView" ref="bookCont" @mouseleave="bodyMouseenter = false" @click="closeReaderControl">
+        <div style="position: fixed;left: 0;top:0;z-index: 99999;display: flex;justify-content: center;align-items: center; width: 100%;height: 100%;background: white;" id="loadMenban">
+            <img src="../images/loading.gif" alt="">
         </div>
-        <!-- /.modal-content -->
-      </div>
-      <!-- /.modal-dialog -->
-    </div>
-    <div class="message" id="message">
-      <img class="el-message__img" src="" id="messageType">
-      <div class="el-message__group">
-        <p id="messageText"></p>
-      </div>
-    </div>
-  </div>
-  <script src="../js/message.js"></script>
-  <script>
+
+        <!-- 容器顶部 -->
+        <div class="book-cont-top wrap-cont-top" >
+            <!-- <span class="wrap-cont-top-btn wrap-cont-margin" @click="toBugContent">
+                购买本书
+            </span> -->
+            
+<!--             <div class="book-or-section-lib wrap-cont-switch wrap-cont-margin" >
+                <span :class="!libIsActive?'lib-active':''" @click="libIsActive = false" style="margin-left: -15px">瀑布阅读</span>
+                <span :class="!libIsActive?'':'lib-active'" @click="libIsActive = true">传统翻页</span>
+            </div> -->
+
+            <ul class="wrap-cont-margin" style="margin-right: 0">
+                <li @click.stop="isFontModalShow = false;isBgModalShow = !isBgModalShow;isLibShow = false">
+                    <img src="../images/图片.png" alt="" >
+                    <ul class="bg-colors" v-show="isBgModalShow">
+                        <li style="background: white" @click.stop="setBgColor('#fff')"></li>
+                        <!-- <li style="background: #e2e3d9" @click="setBgColor('#e2e3d9')"></li> -->
+                        <li style="background: #eeeeee" @click.stop="setBgColor('#eeeeee')"></li>
+                        <li style="background: #f6efce" @click.stop="setBgColor('#f6efce')"></li>
+                        <li style="background: #f3e7aa" @click.stop="setBgColor('#f3e7aa')"></li>
+                    </ul>
+
+                    <img src="../images/三角形1.png" class="top-arrow" alt="" v-show="isBgModalShow">
+                </li>
+                <li  @click.stop="isBgModalShow = false;isFontModalShow = !isFontModalShow;isLibShow = false"> 
+                    <img src="../images/字体.png" alt="">
+                    <ul class="bg-colors set-fonts" v-show="isFontModalShow">
+                        <li @click="addscale">A + </li>
+                        <li @click="minus">A - </li>
+                    </ul>
+                    <img src="../images/三角形1.png" class="top-arrow" alt="" v-show="isFontModalShow">
+                </li>
+                <li @click="fullScreen">
+                    <img src="../images/全屏.png" alt="">
+                </li>
+            </ul>
+        </div>
+        
+        <!-- 图书顶部 -->
+        <div class="book-cont-top" ref="bookContTop" :style="{background:bottomBg}">
+            <div class="book-content" >
+                <img src="../images/上一步.png" alt="" class="book-content-back" style="cursor: pointer;top: -5px" @click="backUp"> 
+                <h2>{{PDFTitle}}</h2>
+            </div>
+
+
+
+            <!-- 章节目录 -->
+           <div class="right-bar" :style="{right:'-50px',zIndex:1}">
+              <img src="../images/目录.png" alt="" @click.stop="isLibShow = !isLibShow;isFontModalShow = false;isBgModalShow = false;">
+              <img :src=" !hasCollect ? '../images/收藏(16).png': '../images/收藏(成功6).png'" alt="" @click="collect">
+              <div class="right-bar-switch" v-show="libIsActive">
+                  <span @mouseenter="topActiveArrow = true" @mouseleave="topActiveArrow = false" @click="prev">
+                      <img :src="!topActiveArrow? '../images/箭头深.png' : '../images/箭头浅2.png'" alt="">
+                  </span>
+                  <span @mouseenter="bottomActiveArrow = true" @mouseleave="bottomActiveArrow = false" @click="next">
+                      <img :src="bottomActiveArrow? '../images/箭头浅.png' : '../images/箭头深1.png'" alt="">
+                  </span>
+              </div>
+
+
+              <div class="lib-right" ref="libRight" v-show="isLibShow">
+                  <ul class="lib-right-content">
+                      <li v-for="(item,index) in sectionLibList" @click="changeIframeSrc(item.Src,index);isLibShow = false" v-cloak>
+                          {{item.Title}}
+                      </li>
+                  </ul>
+              </div>
+
+
+              <img src="../images/三角形2.png" class="right-arrow" alt="" v-show="isLibShow">
+            </div>
+        </div>
+
+       
+        <iframe 
+        :src="'../plug/generic/web/viewer.html' + '?file=' + pdfUrl" 
+        frameborder="0" 
+        class="iframe-css" 
+        width="90%" 
+        height="100%" 
+        id="bookContIframe" 
+        ref="pdfEle" 
+        :style="{marginTop:winHeight > 900 ? '-111px' :'-96px'}"
+        ></iframe>
+
+        
+        
+
+
+
+
+        <div class="loading-content" v-show="loading">
+             
+        </div>
+
+        <div class="loading-content load-other" v-show="loading" v-cloak>
+             <!-- <p>{{downLoadPercent}} %</p> -->
+             <p>正在为您排版，请稍候...</p>
+        </div>
+
+
+
+        <div class="message" id="message">
+            <img class="el-message__img" src="" id="messageType">
+            <div class="el-message__group">
+              <p id="messageText"></p>
+            </div>
+        </div>
+     </div>
+    <script src="../js/message.js"></script>
+
+      <script>
   'use strict';
 
   var $vm = new Vue({
@@ -82,7 +159,94 @@
       relatedExpList: [],
       pdfData: {},
       message: null,
-      objectType: null
+      objectType: null,
+
+       ralationLevel: 0,
+        isQueryOpen: true,
+        maplistData: [],
+        isShowLibList: true,
+        isBgModalShow: false, //是否显示背景显示面板
+        isFontModalShow: false, //是否显示字体面板
+        isFullScreen: false, //全屏
+        isLibShow: false, //是否显示目录
+        isBookSearchNextShow:false,
+        topActiveArrow: false,
+        bottomActiveArrow: false,
+        searchKey: '', //文内检索
+
+        curTag:'当前标签', //当前选中的标签
+
+
+        //下面是通用属性
+        //true - 目录  
+        sectionid: '',
+        sectionType: 102, //有102 - 章节 104 - 图书  103 - 标准
+        bookSecret: '',
+        nativeUrl: '',
+        curSectionIndex: 0,
+        libIsActive: true,
+        loading: false,
+        downLoadPercent: 0,
+        libLeft: -300,
+        // libLeft: 0,
+        iframeSrc: '',
+        sectionName: '',
+        radio3: '章节目录',
+        bookIframeBody: null,
+        bookIframeWindow: null,
+        thisIframeSectionTops: [],
+        thisIframeSections: null,
+        firstEle: null, //每次滚动结束保存左上角第一个元素
+        readPercent: 0,
+        bottomBg: 'white',
+        pageNumShow: true,
+        canIaddNote: true,
+        markTime: null,
+        fontCount: 0,
+        isTwoCol: false,
+        countLeft: 0,
+        scrollTimer: null,
+        // scrollAvoid:false,
+        scrollCount: 0,
+        conMenuLeft: 100,
+        conMenuTop: 100,
+        conMenuShow: false,
+        preOrNextSearch: true,
+        menuListDisable: {
+            copy: false,
+            collect: false,
+            bookSearch: false
+        },
+        hasCollect: false,
+        hasMark: false,
+        bodyMouseenter: false,
+        leftArrow: '../images/未选中-左.png',
+        rightArrow: '../images/未选中-右.png',
+        sectionLibList: [
+            // {
+            //     Title: '一、东突厥归隋（584年前后）',
+            //     src: "./OPS/chapter8.html#A73d60164-a993-46f5-b2ff-3493d00b979d",
+            // }
+        ],
+        bookLibList: [
+            // {
+            //     Title: '一、东突厥归隋（584年前后）',
+            //     Id:100,
+            //     hasDown:false,
+            //     
+            // }
+        ],
+        tableofSections: [],
+        fileId: null,
+        message: null,
+        searchConf: null,
+        formId: '',
+        key:'',
+        rootUrl:'',
+        PDFTitle:'',
+        activeIndex:0, //当前是第几页
+
+        expLableData: []
     },
     methods: {
       /**
@@ -96,10 +260,10 @@
           type: "POST",
           url: baseUrl + "/History/Record",
           data: Object.assign({}, {
-            id: _this.objectId,
+            id: _this.sectionid,
             userId: localStorage.userId,
             objectType: _this.objectType,
-            deviceToken: sessionStorage.deviceToken,
+            deviceToken: getCookie('deviceToken'),
             // accessToken:sessionStorage.accessToken,
             apiname: '/History/Record',
             actionType: 3 //操作动作，3-阅读（点击阅读按钮），4-分享，5-打印，6-点赞
@@ -127,7 +291,7 @@
             objectId: _this.objectId,
             type: 104,
             level: 0,
-            deviceToken: sessionStorage.deviceToken,
+            deviceToken: getCookie('deviceToken'),
             // accessToken:sessionStorage.accessToken,
             apiname: '/ExplicitWordLabel/List'
           }, systemParams),
@@ -156,13 +320,14 @@
           type: "GET",
           url: baseUrl + "/Content/Detail",
           data: Object.assign({}, {
-            id: _this.objectId,
-            deviceToken: sessionStorage.deviceToken,
+            id: _this.sectionid,
+            deviceToken: getCookie('deviceToken'),
             // accessToken:sessionStorage.accessToken,
             apiname: '/Content/Detail'
           }, systemParams),
           success: function success(res) {
-            console.log(res);
+            $('#readerTitle').text(res.Data.Title);
+            _this.PDFTitle = res.Data.Title;
             if (res.Success) {
               //根据echats需求，重组数据
               _this.pdfData = res.Data;
@@ -175,6 +340,8 @@
       setWindow: function setWindow() {
         this.winWidth = window.innerWidth;
         this.winHeight = window.innerHeight;
+        $('.book-cont-top').css('width', $('#bookContIframe').get(0).offsetWidth * 0.8 + 'px');
+        $('.book-cont-top').css('width', $('#bookContIframe').get(0).offsetWidth * 0.8 + 'px');
       },
 
 
@@ -186,28 +353,37 @@
        */
       collect: function collect() {
         var _this = this;
-        $.ajax({
-          type: "POST",
-          url: baseUrl + "/Favorite/CreateOrUpdate",
-          data: Object.assign({}, {
-            objectId: _this.objectId,
-            objectType: _this.objectType,
-            deviceToken: sessionStorage.deviceToken,
-            // accessToken:sessionStorage.accessToken,
-            apiname: '/Favorite/CreateOrUpdate'
-          }, systemParams),
-          success: function success(res) {
-            if (res.Success) {
-              if (res.Description.indexOf('取消') !== -1) {
-                ChangeFavoriteIcon(false, 2);
-              } else {
-                ChangeFavoriteIcon(true, 2);
+        this.validSafe(function() {
+           $.ajax({
+              type: "POST",
+              url: baseUrl + "/Favorite/CreateOrUpdate",
+              data: Object.assign({}, {
+                objectids: _this.sectionid,
+                objecttypes: _this.objectType,
+                state:_this.hasCollect ? false:true,
+                deviceToken: getCookie('deviceToken'),
+                // accessToken:sessionStorage.accessToken,
+                apiname: '/Favorite/CreateOrUpdate'
+              }, systemParams),
+              success: function success(res) {
+                if (res.Success) {
+                  if (res.Description.indexOf('取消') !== -1) {
+                    _this.hasCollect = false;
+                  } else {
+                    _this.hasCollect = true;
+                  }
+                  _this.message.showMessage('success', res.Description);
+                } else {
+                  if(res.Description.indexOf('AccessToken') != -1) {
+                      alert('您的登录已过期，请重新登录再试！');
+                      location.href = '/index.html#/login';
+                  }else {
+                      alert(res.Description);
+                      location.href = '/index.html#/login';
+                  }
+                }
               }
-              _this.message.showMessage('success', res.Description);
-            } else {
-              _this.message.showMessage('error', res.Description);
-            }
-          }
+            });
         });
       },
 
@@ -219,18 +395,19 @@
           type: "GET",
           url: baseUrl + "/Content/Detail",
           data: Object.assign({}, {
-            id: _this.objectId,
-            deviceToken: sessionStorage.deviceToken,
+            id: _this.sectionid,
+            deviceToken: getCookie('deviceToken'),
             // accessToken:sessionStorage.accessToken,
             apiname: '/Content/Detail'
           }, systemParams),
           success: function success(res) {
-            console.log(res);
+            $('#readerTitle').text(res.Data.Title);
+            _this.PDFTitle = res.Data.Title;
             if (res.Success) {
               if (res.Data.ExtendData.IsFavorited) {
-                ChangeFavoriteIcon(true, 2);
+                _this.hasCollect = true;
               } else {
-                ChangeFavoriteIcon(false, 2);
+                _this.hasCollect = false;
               }
             } else {
               _this.message.showMessage('error', res.Description);
@@ -238,6 +415,173 @@
           }
         });
       },
+
+
+      /**
+       * [validSafe description]
+       * @Author   罗文
+       * @DateTime 2018-02-01
+       * @param    {Function} callback [验证通过后的回调]
+       * @return   {[type]}            [description]
+       */
+      validSafe(callback) {
+          var fileData = decodeURIComponent(location.href.slice(location.href.indexOf('data=') + 5));
+              fileData = JSON.parse(fileData);
+
+           var _this = this;    
+         //验证登录是否异常
+          $.ajax({
+              type: "GET",
+              url: baseUrl + "/Content/Detail",
+              data: Object.assign({}, {
+                  id:  _this.sectionid,
+                  deviceToken: getCookie('deviceToken'),
+                  apiname: '/Content/Detail'
+              }, systemParams),
+              success: function success(res) {
+                  if (res.Success) {
+                      if(res.Data.ExtendData.AuthorizeToken  &&  res.Data.ExtendData.AuthorizeToken == fileData.authorizeToken) {
+                          // 验证通过
+                          if(callback)  callback();
+                      }else {
+                          alert('登录超时，请重新登录！');
+                          close();
+                      }
+                  } else {
+                      alert(res.Description);
+                      window.close();
+                  }
+              }
+          });
+      },
+
+
+      /**
+         * [closeReaderControl 关闭阅读器的各个菜单栏]
+         * @Author   罗文
+         * @DateTime 2018-01-30
+         * @return   {[type]}   [description]
+         */
+      closeReaderControl() {
+          this.conMenuShow = false;
+          this.isBgModalShow = false;
+          this.isFontModalShow = false;
+          this.isLibShow = false;
+      },
+
+
+      //设置背景色
+      setBgColor: function setBgColor(color) {
+          if (color) {
+              this.pdfWindow.document.body.style.background = color;
+              this.bottomBg = color;
+              // $('#bookCont').css('background',color);
+              $(this.pdfWindow.document).find('#viewer').css('background', color);
+              $(this.$refs.pdfEle).css({
+                  border: '70px solid ' + color,
+                  borderTop: '20px solid ' + color
+              });
+
+
+              $(this.pdfWindow.document).find('.textLayer').each(function(index,item){
+                  $(item).css('background', color);
+              })
+              
+          } else {
+              // color = this.bottomBg;
+              // color = 'rgb('+Math.ceil(Math.random()*255)+','+Math.ceil(Math.random()*255)+','+Math.ceil(Math.random()*255)+')' || color ;
+              this.bookIframeWindow.document.body.style.background = 'white';
+              $(this.$refs.bookCont).css('background', 'white');
+              this.bottomBg = 'white';
+          }
+
+          this.isBgModalShow = false;
+
+        },
+
+
+        //改变iframe链接地址
+        changeIframeSrc: function changeIframeSrc(src, index, clickItemId) {
+            var _this = this;
+
+            // if ((!index && index !== 0) && !src) return;
+            if (src) {
+                var modalDiv = document.createElement('div');
+                    modalDiv.style.cssText = 'position: fixed;left: 0;top:0;z-index: 99999;display: flex;justify-content: center;align-items: center; width: 100%;height: 100%;background: white;';
+                    modalDiv.setAttribute('id', 'loadMenban');
+                    document.body.appendChild(modalDiv);
+
+                var imgNode = document.createElement('img');
+                    imgNode.setAttribute('src', '../images/loading.gif');
+                    document.getElementById('loadMenban').appendChild(imgNode);   
+
+                
+                this.validSafe(function() {
+                    sessionStorage.setItem('sectionid',_this.sectionid);
+                    sessionStorage.setItem('sectionUrl',src);     
+                    sessionStorage.setItem('sectionIndex',index);     
+
+                    _this.pdfUrl = src;
+                    _this.activeIndex = index;
+                });    
+
+            }
+        },
+
+         /**
+         * [backUp 返回操作]
+         * @Author   罗文
+         * @DateTime 2018-01-29
+         * @return   {[type]}   [description]
+         */
+        backUp() {
+           window.opener=null;
+           window.close();
+           sessionStorage.removeItem('sectionid');
+           sessionStorage.removeItem('sectionUrl');
+           // window.history.go(-1);
+        },
+
+
+      /**
+         * [fullScreen 开启关闭全屏]
+         * @Author   罗文
+         * @DateTime 2017-12-18
+         * @return   {[type]}   [description]
+         */
+        fullScreen: function fullScreen() {
+            if (this.isFullScreen) {
+                var el = document;
+                var cfs = el.cancelFullScreen || el.webkitCancelFullScreen || el.mozCancelFullScreen || el.exitFullScreen;
+                if (cfs) {
+                    //typeof cfs != "undefined" && cfs
+                    cfs.call(el);
+                } else if (typeof window.ActiveXObject != "undefined") {
+                    //for IE，这里和fullScreen相同，模拟按下F11键退出全屏
+                    var wscript = new ActiveXObject("WScript.Shell");
+                    if (wscript != null) {
+                        wscript.SendKeys("{F11}");
+                    }
+                }
+
+                this.isFullScreen = false;
+            } else {
+                var el = document.documentElement;
+                var rfs = el.requestFullScreen || el.webkitRequestFullScreen || el.mozRequestFullScreen || el.msRequestFullScreen;
+                if (rfs) {
+                    //typeof rfs != "undefined" && rfs
+                    rfs.call(el);
+                } else if (typeof window.ActiveXObject != "undefined") {
+                    //for IE，这里其实就是模拟了按下键盘的F11，使浏览器全屏
+                    var wscript = new ActiveXObject("WScript.Shell");
+                    if (wscript != null) {
+                        wscript.SendKeys("{F11}");
+                    }
+                }
+
+                this.isFullScreen = true;
+            }
+        },
 
 
       /**
@@ -261,7 +605,7 @@
       },
       toggleSiderBar: function toggleSiderBar() {
         if (this.pdfWindow) {
-          this.pdfWindow.document.querySelector('#sidebarToggle').click();
+          this.pdfWindow.document.getElementById('sidebarToggle').click();
         }
       },
 
@@ -274,7 +618,7 @@
        */
       addscale: function addscale() {
         //放大
-        this.pdfWindow.document.querySelector('#zoomIn').click();
+        this.pdfWindow.document.getElementById('zoomIn').click();
       },
 
 
@@ -286,7 +630,7 @@
        */
       minus: function minus() {
         //缩小
-        this.pdfWindow.document.querySelector('#zoomOut').click();
+        this.pdfWindow.document.getElementById('zoomOut').click();
       },
 
       /**
@@ -297,8 +641,13 @@
        */
       prev: function prev() {
         //上一页
-        this.pdfWindow.document.querySelector('#previous').click();
-        this.setPage();
+        // this.pdfWindow.document.getElementById('previous').click();
+        // this.setPage();
+        if(this.activeIndex > 0) {
+          this.changeIframeSrc(this.sectionLibList[this.activeIndex - 1].Src,this.activeIndex - 1);
+        }else {
+          this.message.showMessage('info','已经是第一页！');
+        }
       },
 
 
@@ -309,8 +658,13 @@
        * @return   {[type]}   [description]
        */
       next: function next() {
-        this.pdfWindow.document.querySelector('#next').click();
-        this.setPage();
+        // this.pdfWindow.document.getElementById('next').click();
+        // this.setPage();
+        if(this.activeIndex < this.sectionLibList.length - 1) {
+          this.changeIframeSrc(this.sectionLibList[this.activeIndex + 1].Src,this.activeIndex + 1);
+        }else {
+          this.message.showMessage('info','已经是最后一页！');
+        }
       },
 
 
@@ -337,34 +691,107 @@
        */
       queueRenderPage: function queueRenderPage(num) {}
     },
+    beforeCreate:function beforeCreate() {
+        // 第一步本地拦截
+        if(!getCookie('bg_user_info') || !getCookie('accessToken') || !JSON.parse(getCookie('bg_user_info')).Id) {
+           alert('您无权观看此资源，请先登录授权！');
+           location.href = '/index.html#/login';
+        }
+        
+        //第二步参数拦截
+        if (location.href.indexOf('data=') !== -1) {
+            var fileData = decodeURIComponent(location.href.slice(location.href.indexOf('data=') + 5));
+
+            fileData = JSON.parse(fileData);
+            
+            if(!fileData.objectId || !fileData.objectType || !fileData.authorizeToken || !fileData.authorizeUrl) {
+                alert('阅读资源所需参数错误，请确认参数！');
+                window.close();
+            }
+
+        }else {
+            alert('阅读资源所需参数错误，请确认参数！');
+            window.close();
+        }
+    },
     created: function created() {
-      // ShowDevTools();
-      // this.objectId = GetArgument().split('&')[0];
-      // this.objectType = GetArgument().split('&')[1];
+      var fileData = decodeURIComponent(location.href.slice(location.href.indexOf('data=') + 5));
+      fileData = JSON.parse(fileData);
+
+      var _this = this;
+
+      $.ajax({
+            type: "POST",
+            url: fileData.authorizeUrl,
+            async:false,
+            data: Object.assign({}, {
+                id: fileData.objectId,
+                authorizeToken:fileData.authorizeToken,
+                deviceToken: getCookie('deviceToken'),
+            }, systemParams),
+            success: function success(res) {
+                if(res.Success) {
+                   _this.sectionid = fileData.objectId;
+                   _this.objectType = fileData.objectType;
+                   _this.key = res.Data.Key;
+
+                   if(res.Data.SplitFileUrls.length !== 0) {
+                      var furl = res.Data.SplitFileUrls[0];
+                      _this.rootUrl = furl.slice(0,furl.lastIndexOf('/') + 1);
+                   }
+                   
+                   res.Data.SplitFileUrls.forEach(function(item,index){
+                      _this.sectionLibList.push({
+                        Src:item,
+                        Title:'目录 '+ index
+                      })
+                   });
+                }else {
+                   // alert(res.Description);
+                   // window.close();
+                }
+            }
+        });
     },
     mounted: function mounted() {
+
       var _this3 = this;
 
       // this.pdfUrl = ReadFile(this.objectId);
-      this.pdfUrl = '../../../compressed.tracemonkey-pldi-09.pdf';
+      // this.pdfUrl = this.sectionLibList[0].Src;
+ 
+      if(!!sessionStorage.sectionUrl && !!sessionStorage.sectionid && !!sessionStorage.sectionIndex && sessionStorage.sectionid == this.sectionid) {
+         this.pdfUrl = sessionStorage.sectionUrl;
+         this.activeIndex = sessionStorage.sectionIndex;
+      }else {
+         this.pdfUrl = this.sectionLibList[0].Src;
+         this.activeIndex = 0;
+      }
+
+
       this.message = new Message();
 
       //添加阅读历史
-      // this.addRecordReadHistory();
+      this.addRecordReadHistory();
       //获取详情
-      // this.getPdfDetail();
+      this.getPdfDetail();
 
       //获取收藏情况
-      // this.gethasCollect()
+      this.gethasCollect()
 
       this.setWindow();
       window.onresize = function() {
         _this3.setWindow();
       };
 
-      setInterval(function() {
-        _this3.setPage();
-      }, 500);
+      //禁止选中
+      document.addEventListener('selectstart', function (e) {
+          e.preventDefault();
+      }, false);
+
+      // setInterval(function() {
+      //   _this3.setPage();
+      // }, 500);
     }
   });
 
@@ -374,111 +801,37 @@
 
   </script>
   <script>
-  document.addEventListener('click', () => {
-    CloseMenueStrip();
-    EnableTabIcon(2); //1-epub 2-pdf 3多媒体
-  }, false)
-
 
   $vm.$refs.pdfEle.onload = function() {
+   
     //清空pafjs默认的记录阅读位置的功能
     localStorage.removeItem('database');
     //获取iframe的window对象
     $vm.$data.pdfWindow = $vm.$refs.pdfEle.contentWindow;
-    $vm.setPage();
-  }
-
-  //打开pdf详情弹出窗
-  function pdfDetail() {
-    //先获取到所属电路包的Id
-    // $.ajax({
-    //      type: "POST",
-    //      url: baseUrl + "/Favorite/CreateOrUpdate",
-    //      data: Object.assign({},{
-    //             objectId:_this.objectId,
-    //             objectType:104
-    //           },systemParams),
-    //      success: function(res){
-    //        console.log(res)
-    //         if (res.Success) {
-
-    //         }else{
-    //           this.message.showMessage('error',res.Description);
-    //         }
-    //      }
-    //   });
-  }
 
 
-  //打开详情/侧边栏
-  function openSidebar() {
-    $vm.toggleSiderBar();
-  }
-
-
-  /**
-   * [toPdfDetail 查看PDF详情]
-   * @Author   罗文
-   * @DateTime 2017-12-07
-   * @return   {[type]}   [description]
-   */
-  function showDetail() {
-    let packageData = GetPackageData(parseInt($vm.$data.objectId));
-    console.log(packageData)
-    if (packageData) {
-      packageData = JSON.parse(packageData);
-      SaveArgument('id=' + packageData.PackageId);
-      switch (packageData.Type) {
-        case '电路包':
-          loadForm('/index.html#/circuitPackage', '详情', packageData.PackageTitle, true);
-          break;
-        case '论文':
-          loadForm('/index.html#/paperDetail', '详情', packageData.PackageTitle, true);
-          break;
-        default:
-          // statements_def
-          break;
-      }
+    function loadPdf() {
+        if ($vm.$data.pdfWindow.PDFViewerApplication.pdfDocument == null) {
+            setTimeout(function() {
+               loadPdf();
+            },100)
+        } else {
+            document.getElementById('loadMenban').parentNode.removeChild(document.getElementById('loadMenban'));
+            $vm.setPage();
+            $vm.addscale();
+            $vm.addscale();
+            $vm.setBgColor($vm.$data.bottomBg);
+        }
     }
-  }
-
-  //打开详情/侧边栏
-  function openSidebar() {
-    $vm.toggleSiderBar();
-  }
 
 
-  //上一页
-  function prevPage() {
-    $vm.prev();
-  }
+    loadPdf();
 
-  //下一页
-  function nextPage() {
-    $vm.next();
-  }
-
-  //旋转
-  function rotate() {
-    $vm.rotatePdf();
-  }
-
-  //放大
-  function scaleLarge() {
-    $vm.addscale()
-  }
-
-  //缩小
-  function scaleMinus() {
-    $vm.minus();
-  }
-
-  //添加收藏
-  function addCollect() {
-    $vm.collect();
+    
   }
 
   </script>
+
 </body>
 
 </html>
